@@ -33,11 +33,16 @@ python3 -m http.server 8000
 
 - Registros de consumo: **IndexedDB** do navegador (persistente, por dispositivo).
 - Configurações (TMB/TDEE): `localStorage`.
-- Banco de alimentos: `data/foods.json` (~1,3 MB), carregado no IndexedDB na primeira
-  visita. Valores por 100 g. Fontes:
-  - **TACO** (Tabela Brasileira de Composição de Alimentos) — ~590 alimentos, PT nativo;
-  - **IBGE/POF** — ~1.920 alimentos, PT nativo;
-  - **USDA SR28** — ~7.490 alimentos, nomes traduzidos por glossário EN→PT;
+- Banco de alimentos: `data/foods.json` (~2,1 MB, 16.666 itens), carregado no IndexedDB
+  na primeira visita. Valores por 100 g. Fontes:
+  - **TACO** (UNICAMP) — ~590 alimentos, PT nativo;
+  - **TBCA** (USP/BRASILFOODS) — ~5.340 alimentos em PT, incluindo preparações e pratos
+    prontos (sushi, feijoada, pizzas, lasanhas, salgados…);
+  - **Curados** (`tools/curados.mjs`) — ~130 itens de vida real ausentes das tabelas
+    oficiais (whey e suplementos, temaki, esfiha, redes de fast food, industrializados),
+    com valores típicos de rótulo (estimativas);
+  - **IBGE/POF** — ~1.880 alimentos, PT nativo;
+  - **USDA SR28** — ~8.720 alimentos, nomes traduzidos por glossário EN→PT;
   - Medidas caseiras: `WEIGHT.txt` do SR28 + tabela de medidas usuais brasileiras.
 
 Para regenerar o banco (baixa os dados brutos das fontes públicas no GitHub):

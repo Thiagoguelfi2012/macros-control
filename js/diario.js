@@ -248,7 +248,8 @@
       placeholder: 'Digite para pesquisar… ex.: arroz, frango, banana',
       render: {
         option: (item, escape) => {
-          const fonte = item.f === 'u' ? 'USDA' : item.f === 't' ? 'TACO' : 'IBGE';
+          const fonte =
+            { t: 'TACO', b: 'TBCA', i: 'IBGE', u: 'USDA', r: 'estimativa de rótulo' }[item.f] || '';
           return `<div>
             <span class="opt-name">${escape(item.n)}</span>
             <span class="opt-meta">${fmt(item.kcal, 0)} kcal · P ${fmt(item.p)} · C ${fmt(item.c)} · G ${fmt(item.g)} (100 g) · ${fonte}</span>

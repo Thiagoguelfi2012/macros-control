@@ -12,11 +12,12 @@
 import { mkdirSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { CURADOS } from './curados.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const RAW_DIR = process.argv[2] || join(ROOT, 'tools', '.cache');
 const OUT = join(ROOT, 'data', 'foods.json');
-const TARGET_TOTAL = 10000;
+const TARGET_TOTAL = 25000; // efetivamente "tudo": inclui todas as fontes
 
 const SOURCES = {
   'FOOD_DES.txt': 'https://raw.githubusercontent.com/alyssaq/usda-sqlite/master/data/FOOD_DES.txt',
@@ -24,6 +25,7 @@ const SOURCES = {
   'WEIGHT.txt': 'https://raw.githubusercontent.com/alyssaq/usda-sqlite/master/data/WEIGHT.txt',
   'taco_TACO.json': 'https://raw.githubusercontent.com/marcelosanto/tabela_taco/main/TACO.json',
   'ibge.sql': 'https://raw.githubusercontent.com/renandspedrosa/tabela-taco-api/master/database/seeders/scripts/ibge.sql',
+  'tbca.txt': 'https://raw.githubusercontent.com/resen-dev/web-scraping-tbca/main/alimentos.txt',
 };
 
 async function ensureRawFiles() {
@@ -164,6 +166,10 @@ const FIRST = {
 
 // Segmentos subsequentes (frases completas entre vírgulas)
 const PHRASES = {
+  'cashew nuts': 'de caju', 'cashew butter': 'manteiga de caju', 'almonds': 'amêndoas',
+  'walnuts': 'nozes', 'english': 'inglês', 'brazilnuts': 'do Pará', 'macadamia nuts': 'macadâmia',
+  'pistachio nuts': 'pistache', 'pecans': 'noz-pecã', 'hazelnuts or filberts': 'avelã',
+  'pine nuts': 'pinoli', 'mixed nuts': 'mix', 'peanuts': 'amendoim',
   'cooked': 'cozido', 'raw': 'cru', 'separable lean and fat': 'carne com gordura',
   'separable lean only': 'somente carne magra', 'canned': 'enlatado', 'boneless': 'sem osso',
   'trimmed to 0" fat': 'sem gordura aparente', 'trimmed to 1/8" fat': 'com pouca gordura aparente',
@@ -675,6 +681,21 @@ const PT_MEASURES = [
   [/^chocolate/i, [['quadrado (25 g)', 25]]],
   [/^granola|^aveia/i, [['colher de sopa', 15]]],
   [/^castanha|^amendoim|^am[êe]ndoa|^nozes/i, [['punhado (30 g)', 30]]],
+  [/^temaki/i, [['unidade (130 g)', 130]]],
+  [/^sushi|^niguiri|^uramaki|^hossomaki|^hot ?roll/i, [['unidade (30 g)', 30]]],
+  [/^sashimi/i, [['fatia (15 g)', 15]]],
+  [/^esfiha|^esfirra/i, [['unidade (80 g)', 80], ['mini (35 g)', 35]]],
+  [/^quibe(?!be)/i, [['unidade (100 g)', 100]]],
+  [/^lasanha/i, [['pedaço (180 g)', 180]]],
+  [/^estrogonofe|^strogonofe/i, [['concha (150 g)', 150]]],
+  [/^feijoada/i, [['concha (140 g)', 140]]],
+  [/^sopa|^caldo|^canja/i, [['concha (130 g)', 130], ['tigela (300 g)', 300]]],
+  [/^panqueca/i, [['unidade (80 g)', 80]]],
+  [/^torta/i, [['fatia (100 g)', 100]]],
+  [/^vitamina|^smoothie/i, [['copo (300 ml)', 300]]],
+  [/^p[ãa]o de queijo/i, [['unidade média (40 g)', 40], ['mini (20 g)', 20]]],
+  [/^sandu[íi]che|^bauru|^misto/i, [['unidade (160 g)', 160]]],
+  [/^omelete/i, [['unidade (140 g)', 140]]],
 ];
 
 const BRAND_RE = /^[A-Z0-9][A-Z0-9&.'\- ]+$/; // segmentos todos em maiúsculas = marca
@@ -803,6 +824,54 @@ function loadIbge() {
   return out;
 }
 
+/* Limpa a descrição da TBCA: remove os parênteses com a lista de ingredientes,
+   o nome científico no fim e expande abreviações (c/, s/, p/). */
+function cleanTbcaName(desc) {
+  let s = desc;
+  // remove grupos parentéticos (aninhados) iterativamente
+  for (let i = 0; i < 6 && /\([^()]*\)/.test(s); i++) s = s.replace(/\([^()]*\)/g, ' ');
+  s = s
+    .replace(/\bc\//gi, 'com ')
+    .replace(/\bs\//gi, 'sem ')
+    .replace(/\bp\//gi, 'para ')
+    .replace(/\s+/g, ' ');
+  let parts = s.split(',').map((p) => p.trim()).filter(Boolean);
+  // descarta segmentos residuais: nome científico latino, "Brazilian recipe" etc.
+  const lixo = /^[A-Z][a-z]+ [a-z]+\.?( |$)|\b(Mart|Lam|Mill|Merr|Osbeck|DC|Duch|Gaertn)\b\.?|recipe$/;
+  parts = parts.filter((p, idx) => idx === 0 || !lixo.test(p));
+  return parts.join(', ');
+}
+
+function loadTbca() {
+  const out = [];
+  for (const line of readFileSync(join(RAW_DIR, 'tbca.txt'), 'utf8').split('\n')) {
+    const t = line.trim().replace(/,\s*$/, '');
+    if (!t.startsWith('{')) continue;
+    let item;
+    try {
+      item = JSON.parse(t);
+    } catch {
+      continue;
+    }
+    const get = (comp) => {
+      const n = (item.nutrientes || []).find(
+        (x) => x.Componente === comp && (comp !== 'Energia' || x.Unidades === 'kcal')
+      );
+      return n ? num(n['Valor por 100g']) : 0;
+    };
+    const nome = cleanTbcaName(item.descricao || '');
+    if (!nome) continue;
+    out.push({
+      nome,
+      kcal: get('Energia'),
+      p: get('Proteína'),
+      c: get('Carboidrato total'),
+      g: get('Lipídios'),
+    });
+  }
+  return out;
+}
+
 /* ------------------------------------------------------------------ */
 /* Montagem                                                            */
 /* ------------------------------------------------------------------ */
@@ -851,7 +920,28 @@ async function main() {
   }
   const nTaco = foods.length;
 
-  // 2) IBGE
+  // 2) TBCA (inclui preparações e pratos prontos, PT nativo)
+  for (const t of loadTbca()) {
+    push(fixEnergy({
+      i: `b${foods.length}`, n: t.nome, f: 'b',
+      kcal: round1(t.kcal), p: round1(t.p), c: round1(t.c), g: round1(t.g),
+      m: ptMeasuresFor(t.nome),
+    }));
+  }
+  const nTbca = foods.length - nTaco;
+
+  // 3) Camada curada de "vida real" (suplementos, salgados, redes, japonesa)
+  let nCurados = 0;
+  for (const cItem of CURADOS) {
+    if (push({
+      i: `r${foods.length}`, n: cItem.n, f: 'r',
+      kcal: round1(cItem.kcal), p: round1(cItem.p), c: round1(cItem.c), g: round1(cItem.g),
+      m: (cItem.m || []).map(([l, gr]) => [l, gr]),
+    })) nCurados++;
+  }
+
+  // 4) IBGE
+  const antesIbge = foods.length;
   for (const t of loadIbge()) {
     push(fixEnergy({
       i: `i${foods.length}`, n: t.nome, f: 'i',
@@ -859,9 +949,9 @@ async function main() {
       m: ptMeasuresFor(t.nome),
     }));
   }
-  const nIbge = foods.length - nTaco;
+  const nIbge = foods.length - antesIbge;
 
-  // 3) SR28 traduzido, até completar TARGET_TOTAL
+  // 5) SR28 traduzido, até completar TARGET_TOTAL
   const sr = loadSr28();
   sr.sort((a, b) => {
     const pa = GROUP_PRIORITY[a.group] ?? 4;
@@ -890,11 +980,11 @@ async function main() {
   mkdirSync(dirname(OUT), { recursive: true });
   // Ao regenerar a base com mudanças relevantes, incremente v e o
   // FOODS_VERSION correspondente em js/db.js para forçar a recarga no navegador.
-  writeFileSync(OUT, JSON.stringify({ v: 2, foods }));
+  writeFileSync(OUT, JSON.stringify({ v: 3, foods }));
 
   const bytes = readFileSync(OUT).length;
   console.log(`foods.json gerado: ${foods.length} alimentos (${(bytes / 1024 / 1024).toFixed(2)} MB)`);
-  console.log(`  TACO: ${nTaco} | IBGE: ${nIbge} | USDA SR28 traduzido: ${nUsda}`);
+  console.log(`  TACO: ${nTaco} | TBCA: ${nTbca} | Curados: ${nCurados} | IBGE: ${nIbge} | USDA SR28 traduzido: ${nUsda}`);
   const comMedidas = foods.filter((f) => f.m && f.m.length).length;
   console.log(`  Alimentos com medidas caseiras (unidades): ${comMedidas}`);
 }

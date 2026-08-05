@@ -1,7 +1,8 @@
 /* Busca de alimentos: normalização de acentos + match por prefixo de tokens.
    Prioriza fontes em português nativo (TACO 't' > IBGE 'i' > USDA 'u'). */
 const FoodSearch = (() => {
-  const SOURCE_RANK = { t: 0, i: 1, u: 2 };
+  // fontes em português nativo (TACO/TBCA/curados) na frente; USDA traduzido por último
+  const SOURCE_RANK = { t: 0, b: 0, r: 0, i: 1, u: 3 };
 
   const normalize = (s) =>
     s
@@ -44,7 +45,7 @@ const FoodSearch = (() => {
       }
       if (!ok) continue;
       if (item.norm.startsWith(q)) score -= 5; // começo exato do nome vale mais
-      score = score * 10 + SOURCE_RANK[item.f.f] * 3 + item.norm.length / 50;
+      score = score * 10 + SOURCE_RANK[item.f.f] * 6 + item.norm.length / 50;
       results.push({ food: item.f, score });
     }
     results.sort((a, b) => a.score - b.score);
