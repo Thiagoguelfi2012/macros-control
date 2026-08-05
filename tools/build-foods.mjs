@@ -893,6 +893,23 @@ const GROUP_PRIORITY = {
   '1700': 4, '3600': 4, '0300': 5, '3500': 6,
 };
 
+// Id estável derivado do nome (FNV-1a em base36): não muda quando a base
+// cresce, então registros antigos continuam apontando para o alimento certo.
+// (Ids posicionais — t12, b340… — mudavam a cada atualização da base.)
+const usedIds = new Set();
+function stableId(prefix, nome) {
+  let h = 0x811c9dc5;
+  const s = norm(nome);
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  let id = prefix + h.toString(36);
+  while (usedIds.has(id)) id += 'x'; // colisão: sufixo determinístico
+  usedIds.add(id);
+  return id;
+}
+
 async function main() {
   await ensureRawFiles();
 
@@ -915,7 +932,7 @@ async function main() {
   // 1) TACO — prioridade máxima na busca
   for (const t of loadTaco()) {
     push(fixEnergy({
-      i: `t${foods.length}`, n: t.nome, f: 't',
+      i: stableId('t', t.nome), n: t.nome, f: 't',
       kcal: round1(t.kcal), p: round1(t.p), c: round1(t.c), g: round1(t.g),
       m: ptMeasuresFor(t.nome),
     }));
@@ -925,7 +942,7 @@ async function main() {
   // 2) TBCA (inclui preparações e pratos prontos, PT nativo)
   for (const t of loadTbca()) {
     push(fixEnergy({
-      i: `b${foods.length}`, n: t.nome, f: 'b',
+      i: stableId('b', t.nome), n: t.nome, f: 'b',
       kcal: round1(t.kcal), p: round1(t.p), c: round1(t.c), g: round1(t.g),
       m: ptMeasuresFor(t.nome),
     }));
@@ -936,7 +953,7 @@ async function main() {
   let nCurados = 0;
   for (const cItem of CURADOS) {
     if (push({
-      i: `r${foods.length}`, n: cItem.n, f: 'r',
+      i: stableId('r', cItem.n), n: cItem.n, f: 'r',
       kcal: round1(cItem.kcal), p: round1(cItem.p), c: round1(cItem.c), g: round1(cItem.g),
       m: (cItem.m || []).map(([l, gr]) => [l, gr]),
     })) nCurados++;
@@ -946,7 +963,7 @@ async function main() {
   const antesIbge = foods.length;
   for (const t of loadIbge()) {
     push(fixEnergy({
-      i: `i${foods.length}`, n: t.nome, f: 'i',
+      i: stableId('i', t.nome), n: t.nome, f: 'i',
       kcal: round1(t.kcal), p: round1(t.p), c: round1(t.c), g: round1(t.g),
       m: ptMeasuresFor(t.nome),
     }));
@@ -982,7 +999,7 @@ async function main() {
   mkdirSync(dirname(OUT), { recursive: true });
   // Ao regenerar a base com mudanças relevantes, incremente v e o
   // FOODS_VERSION correspondente em js/db.js para forçar a recarga no navegador.
-  writeFileSync(OUT, JSON.stringify({ v: 6, foods }));
+  writeFileSync(OUT, JSON.stringify({ v: 7, foods }));
 
   const bytes = readFileSync(OUT).length;
   console.log(`foods.json gerado: ${foods.length} alimentos (${(bytes / 1024 / 1024).toFixed(2)} MB)`);

@@ -48,6 +48,10 @@
       tomSelect.clearOptions();
       (async () => {
         let food = await MacroDB.getFood(entry.foodId);
+        // trava de segurança: se o id apontar para outro alimento (ids antigos
+        // eram posicionais e mudavam a cada atualização da base), ignora e usa
+        // o snapshot do registro
+        if (food && food.n !== entry.nome) food = null;
         // alimento pode ter sido excluído (ex.: alimento próprio): reconstrói
         // um equivalente a partir do snapshot do registro
         if (!food && entry.gramas > 0) {
@@ -82,6 +86,7 @@
       tomSelect.clear(true);
       tomSelect.clearOptions();
       foodSelecionado = null;
+      fallbackFood = null;
       selMedida.innerHTML = '<option value="g">gramas (g)</option>';
       inpQtd.value = 100;
       inpDataHora.value = toLocalInput(new Date());
@@ -96,7 +101,12 @@
   }
 
   async function onFoodChange(foodId) {
-    foodSelecionado = (await MacroDB.getFood(foodId)) || fallbackFood;
+    // o alimento sintetizado do snapshot tem prioridade: o id pode apontar
+    // para outro alimento (ids antigos posicionais) ou não existir mais
+    foodSelecionado =
+      fallbackFood && fallbackFood.i === foodId
+        ? fallbackFood
+        : (await MacroDB.getFood(foodId)) || fallbackFood;
     selMedida.innerHTML = '<option value="g">gramas (g)</option>';
     if (foodSelecionado && foodSelecionado.m) {
       for (const [rotulo, gramas] of foodSelecionado.m) {
