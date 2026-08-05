@@ -27,6 +27,11 @@ python3 -m http.server 8000
   entre períodos); gráfico de calorias por subperíodo com linha do gasto estimado;
   distribuição dos macros; configuração de **gasto basal (TMB)** e **gasto médio
   diário (TDEE)** para exibir o **déficit/superávit calórico** do período.
+- **Alimentos próprios**: no modal de adição, "Não encontrou? Cadastre um alimento
+  próprio" — informe os valores do rótulo em qualquer porção de referência (ex.: dose
+  de 30 g), com nome de porção opcional para registro rápido. Ficam salvos no
+  dispositivo, aparecem no topo da busca como "meu alimento" e podem ser excluídos na
+  lista "Meus alimentos" (registros antigos preservam o snapshot).
 - Tema claro/escuro automático (segue o sistema).
 
 ## Dados

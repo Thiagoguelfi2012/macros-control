@@ -11,6 +11,7 @@
   let tomSelect = null;
   let foodSelecionado = null;
   let editandoId = null; // id do registro em edição (null = novo)
+  let fallbackFood = null; // reconstruído do snapshot quando o alimento foi excluído
 
   const fmt = (n, dec = 1) =>
     Number(n).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: dec });
@@ -44,17 +45,38 @@
       inpDataHora.value = toLocalInput(new Date(entry.ts));
       tomSelect.clear(true);
       tomSelect.clearOptions();
-      MacroDB.getFood(entry.foodId).then((food) => {
+      (async () => {
+        let food = await MacroDB.getFood(entry.foodId);
+        // alimento pode ter sido excluído (ex.: alimento próprio): reconstrói
+        // um equivalente a partir do snapshot do registro
+        if (!food && entry.gramas > 0) {
+          const f100 = 100 / entry.gramas;
+          food = {
+            i: entry.foodId, n: entry.nome, f: 'p',
+            kcal: entry.kcal * f100, p: entry.p * f100, c: entry.c * f100, g: entry.g * f100,
+          };
+          if (entry.medida !== 'g' && entry.qtd > 0) {
+            food.m = [[entry.medida, entry.gramas / entry.qtd]];
+          }
+          fallbackFood = food;
+        } else {
+          fallbackFood = null;
+        }
         if (food) tomSelect.addOption({ ...food });
         tomSelect.setValue(entry.foodId, true);
-      });
-      onFoodChange(entry.foodId).then(() => {
-        // restaura a medida usada no registro
+        await onFoodChange(entry.foodId);
+        // restaura a medida usada no registro; se ela não existe mais,
+        // preserva o total em gramas
         const opts = [...selMedida.options].map((o) => o.value);
-        selMedida.value = opts.includes(entry.medida) ? entry.medida : 'g';
-        inpQtd.value = entry.qtd;
+        if (opts.includes(entry.medida)) {
+          selMedida.value = entry.medida;
+          inpQtd.value = entry.qtd;
+        } else {
+          selMedida.value = 'g';
+          inpQtd.value = entry.gramas;
+        }
         atualizarPreview();
-      });
+      })();
     } else {
       tomSelect.clear(true);
       tomSelect.clearOptions();
@@ -72,7 +94,7 @@
   }
 
   async function onFoodChange(foodId) {
-    foodSelecionado = await MacroDB.getFood(foodId);
+    foodSelecionado = (await MacroDB.getFood(foodId)) || fallbackFood;
     selMedida.innerHTML = '<option value="g">gramas (g)</option>';
     if (foodSelecionado && foodSelecionado.m) {
       for (const [rotulo, gramas] of foodSelecionado.m) {
@@ -154,6 +176,85 @@
     }
     fecharModal();
     render();
+  }
+
+  /* ---- Cadastro de alimento próprio ---- */
+
+  const cadBackdrop = $('#modal-cadastro');
+
+  async function renderMeusAlimentos() {
+    const meus = await MacroDB.getCustomFoods();
+    const wrap = $('#meus-alimentos-wrap');
+    wrap.hidden = meus.length === 0;
+    const lista = $('#meus-alimentos');
+    lista.innerHTML = '';
+    for (const f of meus) {
+      const div = document.createElement('div');
+      div.className = 'meu-alimento';
+      div.innerHTML = `
+        <div class="info">
+          <div class="nm"></div>
+          <div class="mt">${fmt(f.kcal, 0)} kcal · P ${fmt(f.p)} · C ${fmt(f.c)} · G ${fmt(f.g)} (100 g)${f.m && f.m.length ? ` · ${f.m[0][0]}` : ''}</div>
+        </div>
+        <button class="btn-ghost btn-icon btn-danger-text" title="Excluir" aria-label="Excluir">🗑️</button>`;
+      div.querySelector('.nm').textContent = f.n;
+      div.querySelector('button').addEventListener('click', async () => {
+        if (confirm(`Excluir "${f.n}" dos seus alimentos? Registros já feitos não são alterados.`)) {
+          await MacroDB.deleteCustomFood(f.i);
+          FoodSearch.buildIndex(await MacroDB.ensureFoods());
+          renderMeusAlimentos();
+        }
+      });
+      lista.appendChild(div);
+    }
+  }
+
+  function abrirCadastro() {
+    backdrop.classList.remove('open');
+    for (const id of ['cad-nome', 'cad-kcal', 'cad-p', 'cad-c', 'cad-g', 'cad-medida']) $('#' + id).value = '';
+    $('#cad-porcao').value = 100;
+    cadBackdrop.classList.add('open');
+    renderMeusAlimentos();
+    setTimeout(() => $('#cad-nome').focus(), 50);
+  }
+
+  async function salvarCadastro() {
+    const nome = $('#cad-nome').value.trim();
+    const porcao = parseFloat($('#cad-porcao').value) || 100;
+    let kcal = parseFloat($('#cad-kcal').value);
+    const p = parseFloat($('#cad-p').value) || 0;
+    const c = parseFloat($('#cad-c').value) || 0;
+    const g = parseFloat($('#cad-g').value) || 0;
+    if (!nome) {
+      $('#cad-nome').focus();
+      return;
+    }
+    if (!Number.isFinite(kcal)) kcal = 4 * p + 4 * c + 9 * g; // calcula dos macros se vazio
+    const f100 = 100 / porcao;
+    const round1 = (x) => Math.round(x * 10) / 10;
+    const medida = $('#cad-medida').value.trim();
+    const food = {
+      i: `p${Date.now()}`,
+      n: nome,
+      f: 'p',
+      kcal: round1(kcal * f100),
+      p: round1(p * f100),
+      c: round1(c * f100),
+      g: round1(g * f100),
+      m: medida ? [[medida, porcao]] : porcao !== 100 ? [[`porção (${fmt(porcao)} g)`, porcao]] : [],
+    };
+    if (!food.m.length) delete food.m;
+    await MacroDB.addCustomFood(food);
+    FoodSearch.buildIndex(await MacroDB.ensureFoods());
+    cadBackdrop.classList.remove('open');
+    // reabre o modal de adição já com o alimento novo selecionado
+    abrirModal();
+    setTimeout(() => {
+      tomSelect.addOption({ ...food });
+      tomSelect.setValue(food.i, true);
+      onFoodChange(food.i);
+      tomSelect.blur();
+    }, 80);
   }
 
   /* ---- Histórico ---- */
@@ -249,7 +350,7 @@
       render: {
         option: (item, escape) => {
           const fonte =
-            { t: 'TACO', b: 'TBCA', i: 'IBGE', u: 'USDA', r: 'estimativa de rótulo' }[item.f] || '';
+            { t: 'TACO', b: 'TBCA', i: 'IBGE', u: 'USDA', r: 'estimativa de rótulo', p: 'meu alimento' }[item.f] || '';
           return `<div>
             <span class="opt-name">${escape(item.n)}</span>
             <span class="opt-meta">${fmt(item.kcal, 0)} kcal · P ${fmt(item.p)} · C ${fmt(item.c)} · G ${fmt(item.g)} (100 g) · ${fonte}</span>
@@ -283,11 +384,20 @@
     $('#btn-adicionar').addEventListener('click', () => abrirModal());
     $('#btn-cancelar').addEventListener('click', fecharModal);
     $('#btn-salvar').addEventListener('click', salvar);
+    $('#btn-abrir-cadastro').addEventListener('click', abrirCadastro);
+    $('#btn-cad-cancelar').addEventListener('click', () => cadBackdrop.classList.remove('open'));
+    $('#btn-cad-salvar').addEventListener('click', salvarCadastro);
     backdrop.addEventListener('click', (ev) => {
       if (ev.target === backdrop) fecharModal();
     });
+    cadBackdrop.addEventListener('click', (ev) => {
+      if (ev.target === cadBackdrop) cadBackdrop.classList.remove('open');
+    });
     document.addEventListener('keydown', (ev) => {
-      if (ev.key === 'Escape' && backdrop.classList.contains('open')) fecharModal();
+      if (ev.key === 'Escape') {
+        if (cadBackdrop.classList.contains('open')) cadBackdrop.classList.remove('open');
+        else if (backdrop.classList.contains('open')) fecharModal();
+      }
     });
     inpQtd.addEventListener('input', atualizarPreview);
     selMedida.addEventListener('change', atualizarPreview);

@@ -1,7 +1,7 @@
 /* Camada de dados: IndexedDB (alimentos + registros) e localStorage (configurações). */
 const MacroDB = (() => {
   const DB_NAME = 'macros-db';
-  const DB_VERSION = 1;
+  const DB_VERSION = 2;
   const FOODS_URL = 'data/foods.json';
   const FOODS_VERSION = 3; // deve acompanhar o campo v de data/foods.json
   let dbPromise = null;
@@ -19,6 +19,9 @@ const MacroDB = (() => {
         if (!db.objectStoreNames.contains('entries')) {
           const st = db.createObjectStore('entries', { keyPath: 'id', autoIncrement: true });
           st.createIndex('ts', 'ts');
+        }
+        if (!db.objectStoreNames.contains('custom')) {
+          db.createObjectStore('custom', { keyPath: 'i' });
         }
       };
       req.onsuccess = () => resolve(req.result);
@@ -39,39 +42,86 @@ const MacroDB = (() => {
   const LS_KEY = 'entriesFallback';
   const lsAll = () => JSON.parse(localStorage.getItem(LS_KEY) || '[]');
   const lsSave = (arr) => localStorage.setItem(LS_KEY, JSON.stringify(arr));
+  const LS_CUSTOM = 'customFallback';
+  const lsCustom = () => JSON.parse(localStorage.getItem(LS_CUSTOM) || '[]');
+  const lsCustomSave = (arr) => localStorage.setItem(LS_CUSTOM, JSON.stringify(arr));
+
+  /* ---- Alimentos próprios (cadastrados pelo usuário) ---- */
+
+  async function getCustomFoods() {
+    try {
+      const db = await open();
+      return await wrap(tx(db, 'custom', 'readonly').getAll());
+    } catch {
+      return lsCustom();
+    }
+  }
+
+  async function addCustomFood(food) {
+    try {
+      const db = await open();
+      await wrap(tx(db, 'custom', 'readwrite').put(food));
+    } catch {
+      lsCustomSave([...lsCustom().filter((f) => f.i !== food.i), food]);
+    }
+    if (foodsCache) foodsCache = [food, ...foodsCache.filter((f) => f.i !== food.i)];
+    return food;
+  }
+
+  async function deleteCustomFood(id) {
+    try {
+      const db = await open();
+      await wrap(tx(db, 'custom', 'readwrite').delete(id));
+    } catch {
+      lsCustomSave(lsCustom().filter((f) => f.i !== id));
+    }
+    if (foodsCache) foodsCache = foodsCache.filter((f) => f.i !== id);
+  }
 
   /* ---- Alimentos ---- */
 
   async function ensureFoods() {
     if (foodsCache) return foodsCache;
-    // versão standalone (arquivo único): banco embutido na página
+    let base;
     if (typeof window !== 'undefined' && window.FOODS_DATA) {
-      foodsCache = window.FOODS_DATA.foods;
-      return foodsCache;
-    }
-    const db = await open();
-    const storedVersion = Number(localStorage.getItem('foodsVersion') || 0);
-    if (storedVersion === FOODS_VERSION) {
-      const all = await wrap(tx(db, 'foods', 'readonly').getAll());
-      if (all.length > 0) {
-        foodsCache = all;
-        return foodsCache;
+      // versão standalone (arquivo único): banco embutido na página
+      base = window.FOODS_DATA.foods;
+    } else {
+      base = null;
+      try {
+        const db = await open();
+        const storedVersion = Number(localStorage.getItem('foodsVersion') || 0);
+        if (storedVersion === FOODS_VERSION) {
+          const all = await wrap(tx(db, 'foods', 'readonly').getAll());
+          if (all.length > 0) base = all;
+        }
+      } catch {
+        /* IndexedDB indisponível: segue para o fetch */
+      }
+      if (!base) {
+        // primeira visita (ou base atualizada): busca o JSON e persiste
+        const res = await fetch(FOODS_URL);
+        if (!res.ok) throw new Error('Não foi possível carregar data/foods.json');
+        const data = await res.json();
+        base = data.foods;
+        try {
+          const db = await open();
+          await new Promise((resolve, reject) => {
+            const t = db.transaction('foods', 'readwrite');
+            const st = t.objectStore('foods');
+            st.clear();
+            for (const f of base) st.put(f);
+            t.oncomplete = resolve;
+            t.onerror = () => reject(t.error);
+          });
+          localStorage.setItem('foodsVersion', String(data.v));
+        } catch {
+          /* sem persistência da base: recarrega a cada visita */
+        }
       }
     }
-    // primeira visita (ou base atualizada): busca o JSON e persiste
-    const res = await fetch(FOODS_URL);
-    if (!res.ok) throw new Error('Não foi possível carregar data/foods.json');
-    const data = await res.json();
-    foodsCache = data.foods;
-    await new Promise((resolve, reject) => {
-      const t = db.transaction('foods', 'readwrite');
-      const st = t.objectStore('foods');
-      st.clear();
-      for (const f of data.foods) st.put(f);
-      t.oncomplete = resolve;
-      t.onerror = () => reject(t.error);
-    });
-    localStorage.setItem('foodsVersion', String(data.v));
+    const custom = await getCustomFoods();
+    foodsCache = [...custom, ...base];
     return foodsCache;
   }
 
@@ -160,6 +210,9 @@ const MacroDB = (() => {
   return {
     ensureFoods,
     getFood,
+    getCustomFoods,
+    addCustomFood,
+    deleteCustomFood,
     addEntry,
     updateEntry,
     deleteEntry,

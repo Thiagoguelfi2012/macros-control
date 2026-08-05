@@ -14,12 +14,8 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => readFileSync(join(ROOT, p), 'utf8');
 
 const extractMain = (html) => html.match(/<main>([\s\S]*?)<\/main>/)[1];
-const indexHtml = read('index.html');
-const relatoriosHtml = read('relatorios.html');
-const mainDiario = extractMain(indexHtml);
-const mainRelatorios = extractMain(relatoriosHtml);
-const modal = indexHtml.match(/<div class="modal-backdrop"[\s\S]*?<\/div>\s*<\/div>\s*<\/div>/)[0];
-const fab = indexHtml.match(/<button class="btn btn-primary add-fab"[\s\S]*?<\/button>/)[0];
+const mainDiario = extractMain(read('index.html')); // inclui FAB e modais
+const mainRelatorios = extractMain(read('relatorios.html'));
 
 // evita fechar a tag <script> por acidente dentro do JSON
 const foodsJs = `window.FOODS_DATA = ${read('data/foods.json').replace(/</g, '\\u003c')};`;
@@ -48,14 +44,11 @@ ${read('css/app.css')}
 
 <section id="view-diario">
   <main>${mainDiario}</main>
-  ${fab}
 </section>
 
 <section id="view-relatorios" hidden>
   <main>${mainRelatorios}</main>
 </section>
-
-${modal}
 
 <script>${foodsJs}</script>
 <script>
