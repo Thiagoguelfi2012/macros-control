@@ -41,6 +41,7 @@
     editandoId = entry ? entry.id : null;
     $('#modal-titulo').textContent = entry ? 'Editar registro' : 'Adicionar alimento';
     backdrop.classList.add('open');
+    $('#impacto').hidden = true;
     if (entry) {
       inpDataHora.value = toLocalInput(new Date(entry.ts));
       tomSelect.clear(true);
@@ -75,7 +76,7 @@
           selMedida.value = 'g';
           inpQtd.value = entry.gramas;
         }
-        atualizarPreview();
+        atualizarTotaisDia();
       })();
     } else {
       tomSelect.clear(true);
@@ -85,6 +86,7 @@
       inpQtd.value = 100;
       inpDataHora.value = toLocalInput(new Date());
       preview.hidden = true;
+      atualizarTotaisDia();
       setTimeout(() => tomSelect.focus(), 50);
     }
   }
@@ -143,9 +145,71 @@
     };
   }
 
+  // totais do dia escolhido no modal (sem o registro em edição), para o impacto
+  let totaisDia = { kcal: 0, p: 0, c: 0, g: 0 };
+
+  async function atualizarTotaisDia() {
+    const base = inpDataHora.value ? new Date(inpDataHora.value) : new Date();
+    const key = `${base.getFullYear()}-${pad(base.getMonth() + 1)}-${pad(base.getDate())}`;
+    const entries = await MacroDB.getAllEntries();
+    totaisDia = entries.reduce(
+      (acc, e) => {
+        if (e.id === editandoId) return acc;
+        const d = new Date(e.ts);
+        if (`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` !== key) return acc;
+        return { kcal: acc.kcal + e.kcal, p: acc.p + e.p, c: acc.c + e.c, g: acc.g + e.g };
+      },
+      { kcal: 0, p: 0, c: 0, g: 0 }
+    );
+    atualizarPreview();
+  }
+
+  function renderImpacto(r) {
+    const impacto = $('#impacto');
+    const { gastoDiario, metaKcal, metaP, metaC, metaG } = MacroDB.getSettings();
+    const linhas = [
+      ['Calorias', metaKcal || gastoDiario, totaisDia.kcal, r.kcal, 'var(--accent)', 'kcal'],
+      ['Proteínas', metaP, totaisDia.p, r.p, 'var(--s1)', 'g'],
+      ['Carboidratos', metaC, totaisDia.c, r.c, 'var(--s2)', 'g'],
+      ['Gorduras', metaG, totaisDia.g, r.g, 'var(--s3)', 'g'],
+    ].filter(([, meta]) => meta);
+    if (!linhas.length) {
+      impacto.hidden = true;
+      return;
+    }
+    const hoje = new Date();
+    const dia = inpDataHora.value ? new Date(inpDataHora.value) : hoje;
+    const ehHoje = dia.toDateString() === hoje.toDateString();
+    impacto.querySelector('.imp-title').textContent = ehHoje
+      ? 'Impacto na meta de hoje'
+      : `Impacto na meta de ${dia.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}`;
+    const rows = $('#impacto-rows');
+    rows.innerHTML = '';
+    for (const [nome, meta, atual, add, cor, un] of linhas) {
+      const novo = atual + add;
+      const pctBase = Math.min(100, (atual / meta) * 100);
+      const pctAdd = Math.max(0, Math.min(100 - pctBase, (add / meta) * 100));
+      const estoura = novo > meta;
+      const row = document.createElement('div');
+      row.className = 'imp-row';
+      row.innerHTML = `
+        <div class="imp-head">
+          <span>${nome}</span>
+          <span class="imp-vals${estoura ? ' over' : ''}">+${fmt(add, 0)} → <b>${fmt(novo, 0)}</b> / ${fmt(meta, 0)} ${un} · ${fmt((novo / meta) * 100, 0)}%</span>
+        </div>
+        <div class="imp-bar">
+          <i style="width:${pctBase.toFixed(1)}%;background:${cor}"></i>
+          <i class="add" style="width:${pctAdd.toFixed(1)}%;background:${cor}"></i>
+        </div>`;
+      rows.appendChild(row);
+    }
+    impacto.hidden = false;
+  }
+
   function atualizarPreview() {
     if (!foodSelecionado) {
       preview.hidden = true;
+      $('#impacto').hidden = true;
       return;
     }
     const r = calcular();
@@ -155,6 +219,7 @@
     $('#pv-c').textContent = fmt(r.c);
     $('#pv-g').textContent = fmt(r.g);
     preview.hidden = false;
+    renderImpacto(r);
   }
 
   async function salvar() {
@@ -522,6 +587,7 @@
     });
     inpQtd.addEventListener('input', atualizarPreview);
     selMedida.addEventListener('change', atualizarPreview);
+    inpDataHora.addEventListener('input', atualizarTotaisDia); // muda o dia → recalcula o impacto
 
     // versão de página única: re-renderiza ao voltar para a aba (configurações
     // podem ter mudado nos Relatórios)
