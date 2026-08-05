@@ -38,6 +38,24 @@
     --bad-text: #e66767;
   }
 }
+/* toggle explícito de tema (ex.: página hospedada com data-theme na raiz) */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --page: #0d0d0d;
+  --surface: #1a1a19;
+  --ink: #ffffff;
+  --ink-2: #c3c2b7;
+  --muted: #898781;
+  --grid: #2c2c2a;
+  --baseline: #383835;
+  --border: rgba(255, 255, 255, 0.1);
+  --accent: #3987e5;
+  --s1: #3987e5;
+  --s2: #d95926;
+  --s3: #199e70;
+  --good-text: #0ca30c;
+  --bad-text: #e66767;
+}
 
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }

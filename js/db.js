@@ -34,10 +34,21 @@ const MacroDB = (() => {
       req.onerror = () => reject(req.error);
     });
 
+  /* ---- Fallback em localStorage (file://, iframes com IndexedDB bloqueado) ---- */
+
+  const LS_KEY = 'entriesFallback';
+  const lsAll = () => JSON.parse(localStorage.getItem(LS_KEY) || '[]');
+  const lsSave = (arr) => localStorage.setItem(LS_KEY, JSON.stringify(arr));
+
   /* ---- Alimentos ---- */
 
   async function ensureFoods() {
     if (foodsCache) return foodsCache;
+    // versão standalone (arquivo único): banco embutido na página
+    if (typeof window !== 'undefined' && window.FOODS_DATA) {
+      foodsCache = window.FOODS_DATA.foods;
+      return foodsCache;
+    }
     const db = await open();
     const storedVersion = Number(localStorage.getItem('foodsVersion') || 0);
     if (storedVersion === FOODS_VERSION) {
@@ -73,34 +84,63 @@ const MacroDB = (() => {
   // entry: { id?, ts (ISO), foodId, nome, qtd, medida, gramas, kcal, p, c, g }
 
   async function addEntry(entry) {
-    const db = await open();
-    return wrap(tx(db, 'entries', 'readwrite').add(entry));
+    try {
+      const db = await open();
+      return await wrap(tx(db, 'entries', 'readwrite').add(entry));
+    } catch {
+      const arr = lsAll();
+      entry.id = arr.reduce((m, e) => Math.max(m, e.id), 0) + 1;
+      arr.push(entry);
+      lsSave(arr);
+      return entry.id;
+    }
   }
 
   async function updateEntry(entry) {
-    const db = await open();
-    return wrap(tx(db, 'entries', 'readwrite').put(entry));
+    try {
+      const db = await open();
+      return await wrap(tx(db, 'entries', 'readwrite').put(entry));
+    } catch {
+      lsSave(lsAll().map((e) => (e.id === entry.id ? entry : e)));
+      return entry.id;
+    }
   }
 
   async function deleteEntry(id) {
-    const db = await open();
-    return wrap(tx(db, 'entries', 'readwrite').delete(id));
+    try {
+      const db = await open();
+      return await wrap(tx(db, 'entries', 'readwrite').delete(id));
+    } catch {
+      lsSave(lsAll().filter((e) => e.id !== id));
+    }
   }
 
   async function getEntry(id) {
-    const db = await open();
-    return wrap(tx(db, 'entries', 'readonly').get(id));
+    try {
+      const db = await open();
+      return await wrap(tx(db, 'entries', 'readonly').get(id));
+    } catch {
+      return lsAll().find((e) => e.id === id) || null;
+    }
   }
 
   async function getAllEntries() {
-    const db = await open();
-    return wrap(tx(db, 'entries', 'readonly').getAll());
+    try {
+      const db = await open();
+      return await wrap(tx(db, 'entries', 'readonly').getAll());
+    } catch {
+      return lsAll();
+    }
   }
 
   async function getEntriesBetween(startISO, endISO) {
-    const db = await open();
-    const range = IDBKeyRange.bound(startISO, endISO, false, true);
-    return wrap(tx(db, 'entries', 'readonly').index('ts').getAll(range));
+    try {
+      const db = await open();
+      const range = IDBKeyRange.bound(startISO, endISO, false, true);
+      return await wrap(tx(db, 'entries', 'readonly').index('ts').getAll(range));
+    } catch {
+      return lsAll().filter((e) => e.ts >= startISO && e.ts < endISO);
+    }
   }
 
   /* ---- Configurações ---- */

@@ -327,8 +327,15 @@
       render();
     });
 
-    // re-renderiza os gráficos quando o tema do sistema muda (cores dos tokens)
+    // re-renderiza os gráficos quando o tema muda (cores dos tokens): pelo
+    // sistema ou por um toggle que carimbe data-theme na raiz
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', render);
+    new MutationObserver(render).observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme'],
+    });
+    // versão de página única: o diário dispara este evento ao trocar de aba
+    document.addEventListener('relatorios:refresh', render);
 
     render();
   }
