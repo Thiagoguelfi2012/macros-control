@@ -12,14 +12,21 @@ const FoodSearch = (() => {
       .replace(/[̀-ͯ]/g, '')
       .replace(/[^a-z0-9 ]+/g, ' ')
       .replace(/\s+/g, ' ')
-      .trim();
+      .trim()
+      // grafias populares → grafia usada nas tabelas
+      .replace(/\bkibe(s)?\b/g, 'quibe$1')
+      .replace(/\b(mussarela|mozarela|mozzarela|mozzarella)\b/g, 'mucarela')
+      .replace(/\byogur(te?|t)\b/g, 'iogurte')
+      .replace(/\bcatupiri\b/g, 'catupiry');
 
   // palavras de ligação: não contam para o match nem para a posição —
   // "file catupiry" encontra "Filé mignon ao catupiry"
   // ("sem" fica de fora: distingue "temaki sem arroz" de "com arroz")
+  // "mini" também: o tamanho vem da medida caseira, não do nome —
+  // "mini pão de queijo" deve achar o pão de queijo (que tem a medida mini)
   const STOP = new Set([
     'de', 'da', 'do', 'das', 'dos', 'e', 'a', 'o', 'as', 'os', 'ao', 'aos',
-    'em', 'no', 'na', 'nos', 'nas', 'com', 'para',
+    'em', 'no', 'na', 'nos', 'nas', 'com', 'para', 'mini',
   ]);
 
   let indexed = null;
