@@ -27,6 +27,10 @@ python3 -m http.server 8000
   entre períodos); gráfico de calorias por subperíodo com linha do gasto estimado;
   distribuição dos macros; configuração de **gasto basal (TMB)** e **gasto médio
   diário (TDEE)** para exibir o **déficit/superávit calórico** do período.
+- **Dieta alvo**: alvos diários de proteínas/carboidratos/gorduras (com kcal
+  implícitas calculadas). Gera o card "Dieta alvo × consumo" (média diária do
+  período vs alvo, por macro), o anel do alvo no gráfico de distribuição e as
+  barras de progresso de macros no card "Meta de hoje" do Diário.
 - **Alimentos próprios**: no modal de adição, "Não encontrou? Cadastre um alimento
   próprio" — informe os valores do rótulo em qualquer porção de referência (ex.: dose
   de 30 g), com nome de porção opcional para registro rápido. Ficam salvos no

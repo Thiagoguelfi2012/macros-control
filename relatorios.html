@@ -35,6 +35,12 @@
 
     <div class="tiles" id="tiles"></div>
 
+    <div class="chart-card" id="card-alvo" hidden>
+      <h3>Dieta alvo × consumo</h3>
+      <p class="sub" id="alvo-sub">Média diária no período comparada com o alvo configurado</p>
+      <div id="alvo-bars"></div>
+    </div>
+
     <div class="charts-row">
       <div class="chart-card">
         <h3 id="chart-kcal-titulo">Calorias consumidas</h3>
@@ -43,7 +49,7 @@
       </div>
       <div class="chart-card">
         <h3>Distribuição dos macros</h3>
-        <p class="sub">Participação nas calorias do período</p>
+        <p class="sub" id="macros-sub">Participação nas calorias do período</p>
         <div class="chart-wrap small"><canvas id="chart-macros"></canvas></div>
       </div>
     </div>
@@ -63,6 +69,28 @@
         <button class="btn btn-primary" id="btn-salvar-config">Salvar</button>
         <span class="save-ok" id="save-ok" hidden>✓ salvo</span>
       </div>
+    </div>
+
+    <div class="settings-card">
+      <h3>Dieta alvo — macros diários</h3>
+      <p class="sub">Quanto você quer consumir por dia de cada macronutriente. Usado nas barras de acompanhamento acima e no card "Meta de hoje" do Diário.</p>
+      <div class="settings-row">
+        <div class="field">
+          <label for="inp-meta-p">Proteínas (g/dia)</label>
+          <input type="number" id="inp-meta-p" min="0" step="1" placeholder="ex.: 150" />
+        </div>
+        <div class="field">
+          <label for="inp-meta-c">Carboidratos (g/dia)</label>
+          <input type="number" id="inp-meta-c" min="0" step="1" placeholder="ex.: 200" />
+        </div>
+        <div class="field">
+          <label for="inp-meta-g">Gorduras (g/dia)</label>
+          <input type="number" id="inp-meta-g" min="0" step="1" placeholder="ex.: 60" />
+        </div>
+        <button class="btn btn-primary" id="btn-salvar-alvo">Salvar</button>
+        <span class="save-ok" id="save-ok-alvo" hidden>✓ salvo</span>
+      </div>
+      <p class="cad-hint" id="alvo-kcal-hint" style="margin-top:10px"></p>
     </div>
   </main>
 

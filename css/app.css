@@ -193,6 +193,31 @@ main { max-width: 860px; margin: 0 auto; padding: 20px 16px 110px; }
 .hoje-card .hoje-saldo { color: var(--ink-2); font-size: 12.5px; }
 .hoje-card .hoje-config { color: var(--muted); font-size: 13px; }
 .hoje-card .hoje-config a { color: var(--accent); }
+.hoje-macrobars { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+.hm-row { display: grid; grid-template-columns: 16px 1fr auto; align-items: center; gap: 8px; }
+.hm-row .hm-l { font-size: 11.5px; font-weight: 600; color: var(--ink-2); }
+.hm-row .hm-bar { height: 4px; border-radius: 999px; background: var(--grid); overflow: hidden; }
+.hm-row .hm-bar > div { height: 100%; border-radius: 999px; }
+.hm-row .hm-v {
+  font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums;
+  min-width: 74px; text-align: right;
+}
+
+/* ---- Dieta alvo × consumo ---- */
+.alvo-row { margin-bottom: 14px; }
+.alvo-row:last-child { margin-bottom: 2px; }
+.alvo-head {
+  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+  font-size: 13.5px; margin-bottom: 6px;
+}
+.alvo-head .alvo-vals { margin-left: auto; color: var(--ink-2); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.alvo-head .alvo-vals b { color: var(--ink); font-size: 14px; }
+.alvo-bar {
+  height: 8px; border-radius: 999px; background: var(--grid); overflow: hidden;
+  position: relative;
+}
+.alvo-bar > div { height: 100%; border-radius: 999px; }
+.alvo-bar.over { outline: 2px solid var(--bad-text); outline-offset: 1px; }
 
 /* ---- Modal ---- */
 .modal-backdrop {

@@ -286,8 +286,12 @@
       const d = new Date(e.ts);
       return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` === keyHoje;
     });
-    const kcalHoje = doDia.reduce((acc, e) => acc + e.kcal, 0);
-    const { gastoDiario } = MacroDB.getSettings();
+    const tot = doDia.reduce(
+      (acc, e) => ({ kcal: acc.kcal + e.kcal, p: acc.p + e.p, c: acc.c + e.c, g: acc.g + e.g }),
+      { kcal: 0, p: 0, c: 0, g: 0 }
+    );
+    const kcalHoje = tot.kcal;
+    const { gastoDiario, metaP, metaC, metaG } = MacroDB.getSettings();
     const card = document.createElement('section');
     card.className = 'hoje-card';
     if (!gastoDiario) {
@@ -301,6 +305,25 @@
         <div class="hoje-top"><span class="hoje-label">Meta de hoje</span><span class="hoje-kcal"><b>${fmt(kcalHoje, 0)}</b> / ${fmt(gastoDiario, 0)} kcal</span></div>
         <div class="hoje-bar"><div class="${over ? 'over' : ''}" style="width:${pct.toFixed(1)}%"></div></div>
         <div class="hoje-saldo">${over ? `${fmt(kcalHoje - gastoDiario, 0)} kcal acima do gasto diário` : `faltam ${fmt(gastoDiario - kcalHoje, 0)} kcal para o gasto diário`}</div>`;
+    }
+    // progresso dos macros contra a dieta alvo, quando configurada
+    if (metaP || metaC || metaG) {
+      const barras = [
+        ['P', tot.p, metaP, 'var(--s1)'],
+        ['C', tot.c, metaC, 'var(--s2)'],
+        ['G', tot.g, metaG, 'var(--s3)'],
+      ]
+        .filter(([, , alvo]) => alvo)
+        .map(([l, v, alvo, cor]) => {
+          const pctm = Math.min(100, (v / alvo) * 100);
+          return `<div class="hm-row">
+            <span class="hm-l">${l}</span>
+            <div class="hm-bar"><div style="width:${pctm.toFixed(1)}%;background:${cor}"></div></div>
+            <span class="hm-v">${fmt(v, 0)} / ${fmt(alvo, 0)} g</span>
+          </div>`;
+        })
+        .join('');
+      card.insertAdjacentHTML('beforeend', `<div class="hoje-macrobars">${barras}</div>`);
     }
     const link = card.querySelector('.hoje-config a');
     if (link) {
@@ -466,6 +489,10 @@
     });
     inpQtd.addEventListener('input', atualizarPreview);
     selMedida.addEventListener('change', atualizarPreview);
+
+    // versão de página única: re-renderiza ao voltar para a aba (configurações
+    // podem ter mudado nos Relatórios)
+    document.addEventListener('diario:refresh', render);
 
     render();
   }

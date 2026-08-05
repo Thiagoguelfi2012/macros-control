@@ -153,6 +153,48 @@
       ${balancoHtml}`;
   }
 
+  /* ---- Dieta alvo × consumo ---- */
+
+  function renderAlvo(tot, dias) {
+    const { metaP, metaC, metaG } = MacroDB.getSettings();
+    const card = $('#card-alvo');
+    if (!metaP && !metaC && !metaG) {
+      card.hidden = true;
+      return;
+    }
+    card.hidden = false;
+    const macros = [
+      { nome: 'Proteínas', cor: 'var(--s1)', sw: 'sw-p', media: tot.p / dias, alvo: metaP },
+      { nome: 'Carboidratos', cor: 'var(--s2)', sw: 'sw-c', media: tot.c / dias, alvo: metaC },
+      { nome: 'Gorduras', cor: 'var(--s3)', sw: 'sw-g', media: tot.g / dias, alvo: metaG },
+    ];
+    const wrap = $('#alvo-bars');
+    wrap.innerHTML = '';
+    for (const m of macros) {
+      const row = document.createElement('div');
+      row.className = 'alvo-row';
+      if (!m.alvo) {
+        row.innerHTML = `
+          <div class="alvo-head">
+            <span class="macro-chip"><span class="sw ${m.sw}"></span>${m.nome}</span>
+            <span class="alvo-vals"><b>${fmt(m.media, 0)}</b> g/dia · sem alvo definido</span>
+          </div>`;
+        wrap.appendChild(row);
+        continue;
+      }
+      const pct = (m.media / m.alvo) * 100;
+      row.innerHTML = `
+        <div class="alvo-head">
+          <span class="macro-chip"><span class="sw ${m.sw}"></span>${m.nome}</span>
+          <span class="alvo-vals"><b>${fmt(m.media, 0)}</b> / ${fmt(m.alvo, 0)} g por dia · ${fmt(pct, 0)}%</span>
+        </div>
+        <div class="alvo-bar${pct > 110 ? ' over' : ''}">
+          <div style="width:${Math.min(100, pct).toFixed(1)}%;background:${m.cor}"></div>
+        </div>`;
+      wrap.appendChild(row);
+    }
+  }
+
   /* ---- Gráficos ---- */
 
   function renderCharts(buckets, granularidade, tot) {
@@ -234,29 +276,47 @@
       },
     });
 
-    // Distribuição de macros (em kcal)
+    // Distribuição de macros (em kcal): anel externo = consumo; quando há dieta
+    // alvo, anel interno mais claro = distribuição do alvo
     const kcalP = tot.p * 4;
     const kcalC = tot.c * 4;
     const kcalG = tot.g * 9;
+    const { metaP, metaC, metaG } = MacroDB.getSettings();
+    const temAlvo = metaP || metaC || metaG;
+    const datasetsMacros = [
+      {
+        label: 'Consumo',
+        data: [Math.round(kcalP), Math.round(kcalC), Math.round(kcalG)],
+        backgroundColor: [s1, s2, s3],
+        borderColor: surface,
+        borderWidth: 2,
+        hoverOffset: 6,
+      },
+    ];
+    if (temAlvo) {
+      const hexa = (c, a) => c + a; // cores dos tokens são hex #rrggbb
+      datasetsMacros.push({
+        label: 'Alvo',
+        data: [Math.round((metaP || 0) * 4), Math.round((metaC || 0) * 4), Math.round((metaG || 0) * 9)],
+        backgroundColor: [hexa(s1, '73'), hexa(s2, '73'), hexa(s3, '73')],
+        borderColor: surface,
+        borderWidth: 2,
+      });
+    }
+    $('#macros-sub').textContent = temAlvo
+      ? 'Anel externo: consumo · anel interno (claro): dieta alvo'
+      : 'Participação nas calorias do período';
     if (chartMacros) chartMacros.destroy();
     chartMacros = new Chart($('#chart-macros'), {
       type: 'doughnut',
       data: {
         labels: ['Proteínas', 'Carboidratos', 'Gorduras'],
-        datasets: [
-          {
-            data: [Math.round(kcalP), Math.round(kcalC), Math.round(kcalG)],
-            backgroundColor: [s1, s2, s3],
-            borderColor: surface,
-            borderWidth: 2,
-            hoverOffset: 6,
-          },
-        ],
+        datasets: datasetsMacros,
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        cutout: '62%',
+        cutout: '45%',
         plugins: {
           legend: {
             position: 'bottom',
@@ -265,9 +325,9 @@
           tooltip: {
             callbacks: {
               label: (ctx) => {
-                const total = kcalP + kcalC + kcalG;
-                const pct = total > 0 ? ` (${fmt((ctx.parsed / total) * 100, 0)}%)` : '';
-                return ` ${ctx.label}: ${fmt(ctx.parsed, 0)} kcal${pct}`;
+                const totalDs = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                const pct = totalDs > 0 ? ` (${fmt((ctx.parsed / totalDs) * 100, 0)}%)` : '';
+                return ` ${ctx.dataset.label} — ${ctx.label}: ${fmt(ctx.parsed, 0)} kcal${pct}`;
               },
             },
           },
@@ -288,6 +348,7 @@
       { kcal: 0, p: 0, c: 0, g: 0 }
     );
     renderTiles(tot, inicio, fim);
+    renderAlvo(tot, diasDecorridos(inicio, fim));
     renderCharts(agregar(entries, inicio, fim, granularidade), granularidade, tot);
   }
 
@@ -313,15 +374,44 @@
       }
     });
 
-    const { gastoBasal, gastoDiario } = MacroDB.getSettings();
+    const { gastoBasal, gastoDiario, metaP, metaC, metaG } = MacroDB.getSettings();
     if (gastoBasal) $('#inp-basal').value = gastoBasal;
     if (gastoDiario) $('#inp-diario').value = gastoDiario;
+    if (metaP) $('#inp-meta-p').value = metaP;
+    if (metaC) $('#inp-meta-c').value = metaC;
+    if (metaG) $('#inp-meta-g').value = metaG;
     $('#btn-salvar-config').addEventListener('click', () => {
       MacroDB.saveSettings({
         gastoBasal: parseFloat($('#inp-basal').value) || 0,
         gastoDiario: parseFloat($('#inp-diario').value) || 0,
       });
       const ok = $('#save-ok');
+      ok.hidden = false;
+      setTimeout(() => (ok.hidden = true), 2000);
+      render();
+    });
+
+    // dieta alvo: kcal implícitas atualizadas ao digitar, salvar separado
+    const atualizarHintAlvo = () => {
+      const p = parseFloat($('#inp-meta-p').value) || 0;
+      const c = parseFloat($('#inp-meta-c').value) || 0;
+      const g = parseFloat($('#inp-meta-g').value) || 0;
+      const kcal = 4 * p + 4 * c + 9 * g;
+      $('#alvo-kcal-hint').textContent = kcal
+        ? `Essa dieta alvo soma ≈ ${fmt(kcal, 0)} kcal/dia (P ${fmt(p ? (4 * p * 100) / kcal : 0, 0)}% · C ${fmt(c ? (4 * c * 100) / kcal : 0, 0)}% · G ${fmt(g ? (9 * g * 100) / kcal : 0, 0)}% das calorias).`
+        : '';
+    };
+    for (const id of ['inp-meta-p', 'inp-meta-c', 'inp-meta-g']) {
+      $('#' + id).addEventListener('input', atualizarHintAlvo);
+    }
+    atualizarHintAlvo();
+    $('#btn-salvar-alvo').addEventListener('click', () => {
+      MacroDB.saveSettings({
+        metaP: parseFloat($('#inp-meta-p').value) || 0,
+        metaC: parseFloat($('#inp-meta-c').value) || 0,
+        metaG: parseFloat($('#inp-meta-g').value) || 0,
+      });
+      const ok = $('#save-ok-alvo');
       ok.hidden = false;
       setTimeout(() => (ok.hidden = true), 2000);
       render();

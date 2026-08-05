@@ -196,15 +196,25 @@ const MacroDB = (() => {
   /* ---- Configurações ---- */
 
   function getSettings() {
+    const n = (k) => Number(localStorage.getItem(k) || 0) || null;
     return {
-      gastoBasal: Number(localStorage.getItem('gastoBasal') || 0) || null,
-      gastoDiario: Number(localStorage.getItem('gastoDiario') || 0) || null,
+      gastoBasal: n('gastoBasal'),
+      gastoDiario: n('gastoDiario'),
+      metaP: n('metaP'),
+      metaC: n('metaC'),
+      metaG: n('metaG'),
     };
   }
 
-  function saveSettings({ gastoBasal, gastoDiario }) {
-    if (gastoBasal != null) localStorage.setItem('gastoBasal', String(gastoBasal));
-    if (gastoDiario != null) localStorage.setItem('gastoDiario', String(gastoDiario));
+  function saveSettings({ gastoBasal, gastoDiario, metaP, metaC, metaG }) {
+    const set = (k, v) => {
+      if (v != null) localStorage.setItem(k, String(v));
+    };
+    set('gastoBasal', gastoBasal);
+    set('gastoDiario', gastoDiario);
+    set('metaP', metaP);
+    set('metaC', metaC);
+    set('metaG', metaG);
   }
 
   return {

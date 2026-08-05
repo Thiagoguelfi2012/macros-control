@@ -77,6 +77,7 @@ document.querySelectorAll('.topbar nav a[data-view]').forEach((a) => {
     document.querySelectorAll('.topbar nav a[data-view]').forEach((x) => x.classList.toggle('active', x === a));
     document.querySelectorAll('section[id^="view-"]').forEach((s) => (s.hidden = s.id !== a.dataset.view));
     if (a.dataset.view === 'view-relatorios') document.dispatchEvent(new Event('relatorios:refresh'));
+    if (a.dataset.view === 'view-diario') document.dispatchEvent(new Event('diario:refresh'));
   });
 });
 </script>
