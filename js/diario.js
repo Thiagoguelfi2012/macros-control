@@ -251,6 +251,26 @@
     render();
   }
 
+  /* Confirmação em dois toques (diálogos nativos são bloqueados quando o app
+     roda dentro de um iframe, ex.: página hospedada): o primeiro toque arma o
+     botão ("Excluir?"), o segundo confirma; desarma sozinho em 3 s. */
+  function confirmarDoisToques(btn, onConfirm) {
+    if (btn.dataset.armado) {
+      clearTimeout(btn._timerConf);
+      onConfirm();
+      return;
+    }
+    btn.dataset.armado = '1';
+    btn._htmlOriginal = btn.innerHTML;
+    btn.innerHTML = '<span class="conf-txt">Excluir?</span>';
+    btn.classList.add('confirming');
+    btn._timerConf = setTimeout(() => {
+      delete btn.dataset.armado;
+      btn.innerHTML = btn._htmlOriginal;
+      btn.classList.remove('confirming');
+    }, 3000);
+  }
+
   /* ---- Cadastro de alimento próprio ---- */
 
   const cadBackdrop = $('#modal-cadastro');
@@ -271,12 +291,12 @@
         </div>
         <button class="btn-ghost btn-icon btn-danger-text" title="Excluir" aria-label="Excluir">🗑️</button>`;
       div.querySelector('.nm').textContent = f.n;
-      div.querySelector('button').addEventListener('click', async () => {
-        if (confirm(`Excluir "${f.n}" dos seus alimentos? Registros já feitos não são alterados.`)) {
+      div.querySelector('button').addEventListener('click', (ev) => {
+        confirmarDoisToques(ev.currentTarget, async () => {
           await MacroDB.deleteCustomFood(f.i);
           FoodSearch.buildIndex(await MacroDB.ensureFoods());
           renderMeusAlimentos();
-        }
+        });
       });
       lista.appendChild(div);
     }
@@ -502,16 +522,18 @@
         div.addEventListener('keydown', (ev) => {
           if (ev.key === 'Enter' && !ev.target.closest('.icon-btn')) abrirModal(e);
         });
-        div.querySelector('.act-repeat').addEventListener('click', async () => {
+        div.querySelector('.act-repeat').addEventListener('click', async (ev) => {
+          ev.stopPropagation(); // não deixa o clique abrir a edição da linha
           const { id, ...resto } = e;
           await MacroDB.addEntry({ ...resto, ts: new Date().toISOString() });
           render();
         });
-        div.querySelector('.act-del').addEventListener('click', async () => {
-          if (confirm(`Excluir "${e.nome}"?`)) {
+        div.querySelector('.act-del').addEventListener('click', (ev) => {
+          ev.stopPropagation(); // não deixa o clique abrir a edição da linha
+          confirmarDoisToques(ev.currentTarget, async () => {
             await MacroDB.deleteEntry(e.id);
             render();
-          }
+          });
         });
         grupo.appendChild(div);
       }

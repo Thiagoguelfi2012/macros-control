@@ -185,6 +185,12 @@ main { max-width: 860px; margin: 0 auto; padding: 20px 16px 110px; }
 .icon-btn:hover { background: var(--wash); color: var(--ink); }
 .icon-btn.act-del:hover { color: var(--danger); }
 .icon-btn svg { width: 17px; height: 17px; display: block; }
+.icon-btn.confirming {
+  background: var(--danger); color: #ffffff;
+  padding: 6px 10px; border-radius: 8px; line-height: 1.2;
+}
+.icon-btn.confirming:hover { background: var(--danger); color: #ffffff; }
+.conf-txt { font-size: 12.5px; font-weight: 600; white-space: nowrap; }
 
 /* ---- Card "Meta de hoje" ---- */
 .hoje-card {
@@ -1618,6 +1624,26 @@ const FoodSearch = (() => {
     render();
   }
 
+  /* Confirmação em dois toques (diálogos nativos são bloqueados quando o app
+     roda dentro de um iframe, ex.: página hospedada): o primeiro toque arma o
+     botão ("Excluir?"), o segundo confirma; desarma sozinho em 3 s. */
+  function confirmarDoisToques(btn, onConfirm) {
+    if (btn.dataset.armado) {
+      clearTimeout(btn._timerConf);
+      onConfirm();
+      return;
+    }
+    btn.dataset.armado = '1';
+    btn._htmlOriginal = btn.innerHTML;
+    btn.innerHTML = '<span class="conf-txt">Excluir?</span>';
+    btn.classList.add('confirming');
+    btn._timerConf = setTimeout(() => {
+      delete btn.dataset.armado;
+      btn.innerHTML = btn._htmlOriginal;
+      btn.classList.remove('confirming');
+    }, 3000);
+  }
+
   /* ---- Cadastro de alimento próprio ---- */
 
   const cadBackdrop = $('#modal-cadastro');
@@ -1638,12 +1664,12 @@ const FoodSearch = (() => {
         </div>
         <button class="btn-ghost btn-icon btn-danger-text" title="Excluir" aria-label="Excluir">🗑️</button>`;
       div.querySelector('.nm').textContent = f.n;
-      div.querySelector('button').addEventListener('click', async () => {
-        if (confirm(`Excluir "${f.n}" dos seus alimentos? Registros já feitos não são alterados.`)) {
+      div.querySelector('button').addEventListener('click', (ev) => {
+        confirmarDoisToques(ev.currentTarget, async () => {
           await MacroDB.deleteCustomFood(f.i);
           FoodSearch.buildIndex(await MacroDB.ensureFoods());
           renderMeusAlimentos();
-        }
+        });
       });
       lista.appendChild(div);
     }
@@ -1869,16 +1895,18 @@ const FoodSearch = (() => {
         div.addEventListener('keydown', (ev) => {
           if (ev.key === 'Enter' && !ev.target.closest('.icon-btn')) abrirModal(e);
         });
-        div.querySelector('.act-repeat').addEventListener('click', async () => {
+        div.querySelector('.act-repeat').addEventListener('click', async (ev) => {
+          ev.stopPropagation(); // não deixa o clique abrir a edição da linha
           const { id, ...resto } = e;
           await MacroDB.addEntry({ ...resto, ts: new Date().toISOString() });
           render();
         });
-        div.querySelector('.act-del').addEventListener('click', async () => {
-          if (confirm(`Excluir "${e.nome}"?`)) {
+        div.querySelector('.act-del').addEventListener('click', (ev) => {
+          ev.stopPropagation(); // não deixa o clique abrir a edição da linha
+          confirmarDoisToques(ev.currentTarget, async () => {
             await MacroDB.deleteEntry(e.id);
             render();
-          }
+          });
         });
         grupo.appendChild(div);
       }
