@@ -99,7 +99,13 @@ body {
 .topbar nav a.active { color: var(--accent); border-bottom-color: var(--accent); }
 .topbar nav a:hover { color: var(--ink); }
 
-main { max-width: 860px; margin: 0 auto; padding: 20px 16px 90px; }
+main { max-width: 860px; margin: 0 auto; padding: 20px 16px 110px; }
+@media (max-width: 560px) {
+  .topbar .brand .txt { display: none; }
+  .topbar nav { margin-left: 0; }
+  .topbar nav a { padding: 14px 14px; font-size: 15px; }
+  main { padding-top: 14px; }
+}
 
 /* ---- Botões ---- */
 .btn {
@@ -147,17 +153,57 @@ main { max-width: 860px; margin: 0 auto; padding: 20px 16px 90px; }
 .sw-p { background: var(--s1); } .sw-c { background: var(--s2); } .sw-g { background: var(--s3); }
 
 .entry {
-  display: flex; align-items: center; gap: 12px;
-  padding: 10px 16px; border-bottom: 1px solid var(--grid);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-areas:
+    'name kcal acts'
+    'meta macros acts';
+  column-gap: 10px; row-gap: 3px; align-items: center;
+  padding: 10px 14px; border-bottom: 1px solid var(--grid);
+  cursor: pointer;
 }
 .entry:last-child { border-bottom: none; }
-.entry .time { color: var(--muted); font-variant-numeric: tabular-nums; font-size: 13px; width: 42px; }
-.entry .what { flex: 1; min-width: 0; }
-.entry .what .name { font-weight: 500; }
-.entry .what .qty { color: var(--muted); font-size: 13px; }
-.entry .vals { text-align: right; font-size: 13px; color: var(--ink-2); white-space: nowrap; }
-.entry .vals .kcal { font-weight: 600; color: var(--ink); font-size: 14px; }
-.entry .actions { display: flex; gap: 2px; }
+.entry:hover { background: var(--wash); }
+.entry .name {
+  grid-area: name; font-weight: 500; line-height: 1.3;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.entry .kcal { grid-area: kcal; font-weight: 650; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.entry .acts { grid-area: acts; display: flex; align-items: center; }
+.entry .meta {
+  grid-area: meta; color: var(--muted); font-size: 12.5px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.entry .macros {
+  grid-area: macros; color: var(--ink-2); font-size: 12px;
+  text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums;
+}
+.icon-btn {
+  background: none; border: none; padding: 7px; color: var(--muted);
+  cursor: pointer; border-radius: 8px; line-height: 0;
+}
+.icon-btn:hover { background: var(--wash); color: var(--ink); }
+.icon-btn.act-del:hover { color: var(--danger); }
+.icon-btn svg { width: 17px; height: 17px; display: block; }
+
+/* ---- Card "Meta de hoje" ---- */
+.hoje-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  padding: 14px 16px; margin-bottom: 16px;
+}
+.hoje-card .hoje-top { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.hoje-card .hoje-label { font-weight: 700; font-size: 15px; }
+.hoje-card .hoje-kcal { margin-left: auto; color: var(--ink-2); font-size: 14px; font-variant-numeric: tabular-nums; }
+.hoje-card .hoje-kcal b { color: var(--ink); font-size: 18px; }
+.hoje-card .hoje-bar {
+  height: 6px; border-radius: 999px; background: var(--grid);
+  overflow: hidden; margin: 10px 0 8px;
+}
+.hoje-card .hoje-bar > div { height: 100%; border-radius: 999px; background: var(--accent); }
+.hoje-card .hoje-bar > div.over { background: var(--bad-text); }
+.hoje-card .hoje-saldo { color: var(--ink-2); font-size: 12.5px; }
+.hoje-card .hoje-config { color: var(--muted); font-size: 13px; }
+.hoje-card .hoje-config a { color: var(--accent); }
 
 /* ---- Modal ---- */
 .modal-backdrop {
@@ -1301,7 +1347,8 @@ const FoodSearch = (() => {
       for (const [rotulo, gramas] of foodSelecionado.m) {
         const opt = document.createElement('option');
         opt.value = rotulo;
-        opt.textContent = `${rotulo} (${fmt(gramas)} g)`;
+        // rótulos como "dose (30 g)" já trazem as gramas: não duplica
+        opt.textContent = rotulo.includes('(') ? rotulo : `${rotulo} (${fmt(gramas)} g)`;
         selMedida.appendChild(opt);
       }
       // se o alimento tem medida em unidades, sugere 1 unidade como padrão
@@ -1311,6 +1358,13 @@ const FoodSearch = (() => {
       inpQtd.value = 100;
     }
     atualizarPreview();
+    // facilita ajustar a quantidade logo após escolher o alimento
+    if (backdrop.classList.contains('open')) {
+      setTimeout(() => {
+        inpQtd.focus();
+        inpQtd.select();
+      }, 60);
+    }
   }
 
   function gramasPorMedida() {
@@ -1460,14 +1514,67 @@ const FoodSearch = (() => {
 
   /* ---- Histórico ---- */
 
+  const SVG_DEL =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M10 11v6M14 11v6"/></svg>';
+  const SVG_REPEAT =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v5h5"/></svg>';
+
+  // "1 × dose (30 g)" — sem duplicar as gramas quando o rótulo da medida já as traz
+  function qtdStr(e) {
+    if (e.medida === 'g') return `${fmt(e.qtd)} g`;
+    if (e.medida.includes('(')) return `${fmt(e.qtd)} × ${e.medida}`;
+    return `${fmt(e.qtd)} × ${e.medida} (${fmt(e.gramas)} g)`;
+  }
+
+  function renderHoje(entries) {
+    const hoje = new Date();
+    const keyHoje = `${hoje.getFullYear()}-${pad(hoje.getMonth() + 1)}-${pad(hoje.getDate())}`;
+    const doDia = entries.filter((e) => {
+      const d = new Date(e.ts);
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` === keyHoje;
+    });
+    const kcalHoje = doDia.reduce((acc, e) => acc + e.kcal, 0);
+    const { gastoDiario } = MacroDB.getSettings();
+    const card = document.createElement('section');
+    card.className = 'hoje-card';
+    if (!gastoDiario) {
+      card.innerHTML = `
+        <div class="hoje-top"><span class="hoje-label">Meta de hoje</span><span class="hoje-kcal"><b>${fmt(kcalHoje, 0)}</b> kcal</span></div>
+        <div class="hoje-config">Defina seu gasto médio diário em <a href="relatorios.html">Relatórios</a> para acompanhar déficit/superávit aqui.</div>`;
+    } else {
+      const pct = Math.min(100, (kcalHoje / gastoDiario) * 100);
+      const over = kcalHoje > gastoDiario;
+      card.innerHTML = `
+        <div class="hoje-top"><span class="hoje-label">Meta de hoje</span><span class="hoje-kcal"><b>${fmt(kcalHoje, 0)}</b> / ${fmt(gastoDiario, 0)} kcal</span></div>
+        <div class="hoje-bar"><div class="${over ? 'over' : ''}" style="width:${pct.toFixed(1)}%"></div></div>
+        <div class="hoje-saldo">${over ? `${fmt(kcalHoje - gastoDiario, 0)} kcal acima do gasto diário` : `faltam ${fmt(gastoDiario - kcalHoje, 0)} kcal para o gasto diário`}</div>`;
+    }
+    const link = card.querySelector('.hoje-config a');
+    if (link) {
+      link.addEventListener('click', (ev) => {
+        // na versão de página única, troca de aba em vez de navegar
+        const tab = document.querySelector('a[data-view="view-relatorios"]');
+        if (tab) {
+          ev.preventDefault();
+          tab.click();
+        }
+      });
+    }
+    return card;
+  }
+
   async function render() {
     const entries = await MacroDB.getAllEntries();
+    historico.innerHTML = '';
+    historico.appendChild(renderHoje(entries));
     if (!entries.length) {
-      historico.innerHTML = `
-        <div class="empty-state">
+      historico.insertAdjacentHTML(
+        'beforeend',
+        `<div class="empty-state">
           <h2>Nenhum alimento registrado ainda</h2>
           <p>Toque em “+ Adicionar alimento” para registrar sua primeira refeição.</p>
-        </div>`;
+        </div>`
+      );
       return;
     }
     // agrupa por dia (desc); dentro do dia, mais recente primeiro
@@ -1479,7 +1586,6 @@ const FoodSearch = (() => {
       grupos.get(key).push(e);
     }
     const keys = [...grupos.keys()].sort((a, b) => (a < b ? 1 : -1));
-    historico.innerHTML = '';
     for (const key of keys) {
       const itens = grupos.get(key).sort((a, b) => (a.ts < b.ts ? 1 : -1));
       const tot = itens.reduce(
@@ -1501,28 +1607,33 @@ const FoodSearch = (() => {
         </div>`;
       for (const e of itens) {
         const hora = new Date(e.ts).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-        const qtdStr =
-          e.medida === 'g' ? `${fmt(e.qtd)} g` : `${fmt(e.qtd)} × ${e.medida} (${fmt(e.gramas)} g)`;
         const div = document.createElement('div');
         div.className = 'entry';
+        div.setAttribute('role', 'button');
+        div.setAttribute('tabindex', '0');
+        div.title = 'Toque para editar';
         div.innerHTML = `
-          <span class="time">${hora}</span>
-          <div class="what">
-            <div class="name"></div>
-            <div class="qty">${qtdStr}</div>
+          <div class="name"></div>
+          <div class="kcal">${fmt(e.kcal, 0)} kcal</div>
+          <div class="acts">
+            <button class="icon-btn act-repeat" title="Registrar de novo agora" aria-label="Registrar de novo agora">${SVG_REPEAT}</button>
+            <button class="icon-btn act-del" title="Excluir" aria-label="Excluir">${SVG_DEL}</button>
           </div>
-          <div class="vals">
-            <div class="kcal">${fmt(e.kcal, 0)} kcal</div>
-            <div>P ${fmt(e.p)} · C ${fmt(e.c)} · G ${fmt(e.g)}</div>
-          </div>
-          <div class="actions">
-            <button class="btn-ghost btn-icon" title="Editar (inclusive horário)" aria-label="Editar">✏️</button>
-            <button class="btn-ghost btn-icon btn-danger-text" title="Excluir" aria-label="Excluir">🗑️</button>
-          </div>`;
+          <div class="meta">${hora} · ${qtdStr(e)}</div>
+          <div class="macros">P ${fmt(e.p)} · C ${fmt(e.c)} · G ${fmt(e.g)}</div>`;
         div.querySelector('.name').textContent = e.nome;
-        const [btnEditar, btnExcluir] = div.querySelectorAll('.actions button');
-        btnEditar.addEventListener('click', () => abrirModal(e));
-        btnExcluir.addEventListener('click', async () => {
+        div.addEventListener('click', (ev) => {
+          if (!ev.target.closest('.icon-btn')) abrirModal(e);
+        });
+        div.addEventListener('keydown', (ev) => {
+          if (ev.key === 'Enter' && !ev.target.closest('.icon-btn')) abrirModal(e);
+        });
+        div.querySelector('.act-repeat').addEventListener('click', async () => {
+          const { id, ...resto } = e;
+          await MacroDB.addEntry({ ...resto, ts: new Date().toISOString() });
+          render();
+        });
+        div.querySelector('.act-del').addEventListener('click', async () => {
           if (confirm(`Excluir "${e.nome}"?`)) {
             await MacroDB.deleteEntry(e.id);
             render();

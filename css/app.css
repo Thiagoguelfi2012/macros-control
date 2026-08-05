@@ -88,7 +88,13 @@ body {
 .topbar nav a.active { color: var(--accent); border-bottom-color: var(--accent); }
 .topbar nav a:hover { color: var(--ink); }
 
-main { max-width: 860px; margin: 0 auto; padding: 20px 16px 90px; }
+main { max-width: 860px; margin: 0 auto; padding: 20px 16px 110px; }
+@media (max-width: 560px) {
+  .topbar .brand .txt { display: none; }
+  .topbar nav { margin-left: 0; }
+  .topbar nav a { padding: 14px 14px; font-size: 15px; }
+  main { padding-top: 14px; }
+}
 
 /* ---- Botões ---- */
 .btn {
@@ -136,17 +142,57 @@ main { max-width: 860px; margin: 0 auto; padding: 20px 16px 90px; }
 .sw-p { background: var(--s1); } .sw-c { background: var(--s2); } .sw-g { background: var(--s3); }
 
 .entry {
-  display: flex; align-items: center; gap: 12px;
-  padding: 10px 16px; border-bottom: 1px solid var(--grid);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-areas:
+    'name kcal acts'
+    'meta macros acts';
+  column-gap: 10px; row-gap: 3px; align-items: center;
+  padding: 10px 14px; border-bottom: 1px solid var(--grid);
+  cursor: pointer;
 }
 .entry:last-child { border-bottom: none; }
-.entry .time { color: var(--muted); font-variant-numeric: tabular-nums; font-size: 13px; width: 42px; }
-.entry .what { flex: 1; min-width: 0; }
-.entry .what .name { font-weight: 500; }
-.entry .what .qty { color: var(--muted); font-size: 13px; }
-.entry .vals { text-align: right; font-size: 13px; color: var(--ink-2); white-space: nowrap; }
-.entry .vals .kcal { font-weight: 600; color: var(--ink); font-size: 14px; }
-.entry .actions { display: flex; gap: 2px; }
+.entry:hover { background: var(--wash); }
+.entry .name {
+  grid-area: name; font-weight: 500; line-height: 1.3;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.entry .kcal { grid-area: kcal; font-weight: 650; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.entry .acts { grid-area: acts; display: flex; align-items: center; }
+.entry .meta {
+  grid-area: meta; color: var(--muted); font-size: 12.5px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.entry .macros {
+  grid-area: macros; color: var(--ink-2); font-size: 12px;
+  text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums;
+}
+.icon-btn {
+  background: none; border: none; padding: 7px; color: var(--muted);
+  cursor: pointer; border-radius: 8px; line-height: 0;
+}
+.icon-btn:hover { background: var(--wash); color: var(--ink); }
+.icon-btn.act-del:hover { color: var(--danger); }
+.icon-btn svg { width: 17px; height: 17px; display: block; }
+
+/* ---- Card "Meta de hoje" ---- */
+.hoje-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  padding: 14px 16px; margin-bottom: 16px;
+}
+.hoje-card .hoje-top { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.hoje-card .hoje-label { font-weight: 700; font-size: 15px; }
+.hoje-card .hoje-kcal { margin-left: auto; color: var(--ink-2); font-size: 14px; font-variant-numeric: tabular-nums; }
+.hoje-card .hoje-kcal b { color: var(--ink); font-size: 18px; }
+.hoje-card .hoje-bar {
+  height: 6px; border-radius: 999px; background: var(--grid);
+  overflow: hidden; margin: 10px 0 8px;
+}
+.hoje-card .hoje-bar > div { height: 100%; border-radius: 999px; background: var(--accent); }
+.hoje-card .hoje-bar > div.over { background: var(--bad-text); }
+.hoje-card .hoje-saldo { color: var(--ink-2); font-size: 12.5px; }
+.hoje-card .hoje-config { color: var(--muted); font-size: 13px; }
+.hoje-card .hoje-config a { color: var(--accent); }
 
 /* ---- Modal ---- */
 .modal-backdrop {
