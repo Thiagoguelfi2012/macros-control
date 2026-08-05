@@ -156,14 +156,15 @@
   /* ---- Dieta alvo × consumo ---- */
 
   function renderAlvo(tot, dias) {
-    const { metaP, metaC, metaG } = MacroDB.getSettings();
+    const { metaKcal, metaP, metaC, metaG } = MacroDB.getSettings();
     const card = $('#card-alvo');
-    if (!metaP && !metaC && !metaG) {
+    if (!metaKcal && !metaP && !metaC && !metaG) {
       card.hidden = true;
       return;
     }
     card.hidden = false;
     const macros = [
+      { nome: 'Calorias', unidade: 'kcal', cor: 'var(--accent)', sw: '', media: tot.kcal / dias, alvo: metaKcal },
       { nome: 'Proteínas', cor: 'var(--s1)', sw: 'sw-p', media: tot.p / dias, alvo: metaP },
       { nome: 'Carboidratos', cor: 'var(--s2)', sw: 'sw-c', media: tot.c / dias, alvo: metaC },
       { nome: 'Gorduras', cor: 'var(--s3)', sw: 'sw-g', media: tot.g / dias, alvo: metaG },
@@ -171,13 +172,17 @@
     const wrap = $('#alvo-bars');
     wrap.innerHTML = '';
     for (const m of macros) {
+      const un = m.unidade || 'g';
+      const chip = m.sw
+        ? `<span class="macro-chip"><span class="sw ${m.sw}"></span>${m.nome}</span>`
+        : `<span class="macro-chip">${m.nome}</span>`;
       const row = document.createElement('div');
       row.className = 'alvo-row';
       if (!m.alvo) {
         row.innerHTML = `
           <div class="alvo-head">
-            <span class="macro-chip"><span class="sw ${m.sw}"></span>${m.nome}</span>
-            <span class="alvo-vals"><b>${fmt(m.media, 0)}</b> g/dia · sem alvo definido</span>
+            ${chip}
+            <span class="alvo-vals"><b>${fmt(m.media, 0)}</b> ${un}/dia · sem alvo definido</span>
           </div>`;
         wrap.appendChild(row);
         continue;
@@ -185,8 +190,8 @@
       const pct = (m.media / m.alvo) * 100;
       row.innerHTML = `
         <div class="alvo-head">
-          <span class="macro-chip"><span class="sw ${m.sw}"></span>${m.nome}</span>
-          <span class="alvo-vals"><b>${fmt(m.media, 0)}</b> / ${fmt(m.alvo, 0)} g por dia · ${fmt(pct, 0)}%</span>
+          ${chip}
+          <span class="alvo-vals"><b>${fmt(m.media, 0)}</b> / ${fmt(m.alvo, 0)} ${un} por dia · ${fmt(pct, 0)}%</span>
         </div>
         <div class="alvo-bar${pct > 110 ? ' over' : ''}">
           <div style="width:${Math.min(100, pct).toFixed(1)}%;background:${m.cor}"></div>
@@ -374,9 +379,10 @@
       }
     });
 
-    const { gastoBasal, gastoDiario, metaP, metaC, metaG } = MacroDB.getSettings();
+    const { gastoBasal, gastoDiario, metaKcal, metaP, metaC, metaG } = MacroDB.getSettings();
     if (gastoBasal) $('#inp-basal').value = gastoBasal;
     if (gastoDiario) $('#inp-diario').value = gastoDiario;
+    if (metaKcal) $('#inp-meta-kcal').value = metaKcal;
     if (metaP) $('#inp-meta-p').value = metaP;
     if (metaC) $('#inp-meta-c').value = metaC;
     if (metaG) $('#inp-meta-g').value = metaG;
@@ -393,20 +399,31 @@
 
     // dieta alvo: kcal implícitas atualizadas ao digitar, salvar separado
     const atualizarHintAlvo = () => {
+      const kcalAlvo = parseFloat($('#inp-meta-kcal').value) || 0;
       const p = parseFloat($('#inp-meta-p').value) || 0;
       const c = parseFloat($('#inp-meta-c').value) || 0;
       const g = parseFloat($('#inp-meta-g').value) || 0;
-      const kcal = 4 * p + 4 * c + 9 * g;
-      $('#alvo-kcal-hint').textContent = kcal
-        ? `Essa dieta alvo soma ≈ ${fmt(kcal, 0)} kcal/dia (P ${fmt(p ? (4 * p * 100) / kcal : 0, 0)}% · C ${fmt(c ? (4 * c * 100) / kcal : 0, 0)}% · G ${fmt(g ? (9 * g * 100) / kcal : 0, 0)}% das calorias).`
-        : '';
+      const kcalMacros = 4 * p + 4 * c + 9 * g;
+      let txt = '';
+      if (kcalMacros) {
+        txt = `Os macros somam ≈ ${fmt(kcalMacros, 0)} kcal/dia (P ${fmt((4 * p * 100) / kcalMacros, 0)}% · C ${fmt((4 * c * 100) / kcalMacros, 0)}% · G ${fmt((9 * g * 100) / kcalMacros, 0)}% das calorias).`;
+        if (kcalAlvo) {
+          const dif = kcalMacros - kcalAlvo;
+          txt +=
+            Math.abs(dif) <= kcalAlvo * 0.05
+              ? ' Coerente com a meta de calorias. ✓'
+              : ` Atenção: ${fmt(Math.abs(dif), 0)} kcal ${dif > 0 ? 'acima' : 'abaixo'} da meta de ${fmt(kcalAlvo, 0)} kcal.`;
+        }
+      }
+      $('#alvo-kcal-hint').textContent = txt;
     };
-    for (const id of ['inp-meta-p', 'inp-meta-c', 'inp-meta-g']) {
+    for (const id of ['inp-meta-kcal', 'inp-meta-p', 'inp-meta-c', 'inp-meta-g']) {
       $('#' + id).addEventListener('input', atualizarHintAlvo);
     }
     atualizarHintAlvo();
     $('#btn-salvar-alvo').addEventListener('click', () => {
       MacroDB.saveSettings({
+        metaKcal: parseFloat($('#inp-meta-kcal').value) || 0,
         metaP: parseFloat($('#inp-meta-p').value) || 0,
         metaC: parseFloat($('#inp-meta-c').value) || 0,
         metaG: parseFloat($('#inp-meta-g').value) || 0,

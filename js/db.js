@@ -200,18 +200,20 @@ const MacroDB = (() => {
     return {
       gastoBasal: n('gastoBasal'),
       gastoDiario: n('gastoDiario'),
+      metaKcal: n('metaKcal'),
       metaP: n('metaP'),
       metaC: n('metaC'),
       metaG: n('metaG'),
     };
   }
 
-  function saveSettings({ gastoBasal, gastoDiario, metaP, metaC, metaG }) {
+  function saveSettings({ gastoBasal, gastoDiario, metaKcal, metaP, metaC, metaG }) {
     const set = (k, v) => {
       if (v != null) localStorage.setItem(k, String(v));
     };
     set('gastoBasal', gastoBasal);
     set('gastoDiario', gastoDiario);
+    set('metaKcal', metaKcal);
     set('metaP', metaP);
     set('metaC', metaC);
     set('metaG', metaG);

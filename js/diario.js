@@ -291,20 +291,23 @@
       { kcal: 0, p: 0, c: 0, g: 0 }
     );
     const kcalHoje = tot.kcal;
-    const { gastoDiario, metaP, metaC, metaG } = MacroDB.getSettings();
+    const { gastoDiario, metaKcal, metaP, metaC, metaG } = MacroDB.getSettings();
+    // a barra acompanha a meta de calorias da dieta alvo; sem ela, o gasto diário
+    const alvoKcal = metaKcal || gastoDiario;
+    const alvoNome = metaKcal ? 'a meta' : 'o gasto diário';
     const card = document.createElement('section');
     card.className = 'hoje-card';
-    if (!gastoDiario) {
+    if (!alvoKcal) {
       card.innerHTML = `
         <div class="hoje-top"><span class="hoje-label">Meta de hoje</span><span class="hoje-kcal"><b>${fmt(kcalHoje, 0)}</b> kcal</span></div>
-        <div class="hoje-config">Defina seu gasto médio diário em <a href="relatorios.html">Relatórios</a> para acompanhar déficit/superávit aqui.</div>`;
+        <div class="hoje-config">Defina sua dieta alvo ou gasto diário em <a href="relatorios.html">Relatórios</a> para acompanhar sua meta aqui.</div>`;
     } else {
-      const pct = Math.min(100, (kcalHoje / gastoDiario) * 100);
-      const over = kcalHoje > gastoDiario;
+      const pct = Math.min(100, (kcalHoje / alvoKcal) * 100);
+      const over = kcalHoje > alvoKcal;
       card.innerHTML = `
-        <div class="hoje-top"><span class="hoje-label">Meta de hoje</span><span class="hoje-kcal"><b>${fmt(kcalHoje, 0)}</b> / ${fmt(gastoDiario, 0)} kcal</span></div>
+        <div class="hoje-top"><span class="hoje-label">Meta de hoje</span><span class="hoje-kcal"><b>${fmt(kcalHoje, 0)}</b> / ${fmt(alvoKcal, 0)} kcal</span></div>
         <div class="hoje-bar"><div class="${over ? 'over' : ''}" style="width:${pct.toFixed(1)}%"></div></div>
-        <div class="hoje-saldo">${over ? `${fmt(kcalHoje - gastoDiario, 0)} kcal acima do gasto diário` : `faltam ${fmt(gastoDiario - kcalHoje, 0)} kcal para o gasto diário`}</div>`;
+        <div class="hoje-saldo">${over ? `${fmt(kcalHoje - alvoKcal, 0)} kcal acima d${alvoNome === 'a meta' ? 'a meta' : 'o gasto diário'}` : `faltam ${fmt(alvoKcal - kcalHoje, 0)} kcal para ${alvoNome}`}</div>`;
     }
     // progresso dos macros contra a dieta alvo, quando configurada
     if (metaP || metaC || metaG) {

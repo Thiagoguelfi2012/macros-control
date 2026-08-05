@@ -73,8 +73,12 @@
 
     <div class="settings-card">
       <h3>Dieta alvo — macros diários</h3>
-      <p class="sub">Quanto você quer consumir por dia de cada macronutriente. Usado nas barras de acompanhamento acima e no card "Meta de hoje" do Diário.</p>
+      <p class="sub">Quanto você quer consumir por dia. Usado nas barras de acompanhamento acima e no card "Meta de hoje" do Diário.</p>
       <div class="settings-row">
+        <div class="field">
+          <label for="inp-meta-kcal">Calorias (kcal/dia)</label>
+          <input type="number" id="inp-meta-kcal" min="0" step="10" placeholder="ex.: 1900" />
+        </div>
         <div class="field">
           <label for="inp-meta-p">Proteínas (g/dia)</label>
           <input type="number" id="inp-meta-p" min="0" step="1" placeholder="ex.: 150" />
