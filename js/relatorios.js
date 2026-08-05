@@ -129,26 +129,29 @@
           <div class="t-value" style="font-size:14px;font-weight:500;color:var(--muted)">Configure seu gasto médio diário abaixo</div>
         </div>`;
     }
+    // num período de um dia só, "média por dia" repetiria o total: omite
+    const subKcal = dias > 1 ? `média ${fmt(tot.kcal / dias, 0)} kcal/dia` : '&nbsp;';
+    const subMacro = (kcalM, v) => (dias > 1 ? `${pct(kcalM)} · ${fmt(v / dias, 0)} g/dia` : pct(kcalM));
     tiles.innerHTML = `
       <div class="tile">
         <div class="t-label">Calorias</div>
         <div class="t-value">${fmt(tot.kcal, 0)}</div>
-        <div class="t-sub">média ${fmt(tot.kcal / dias, 0)} kcal/dia</div>
+        <div class="t-sub">${subKcal}</div>
       </div>
       <div class="tile">
         <div class="t-label"><span class="sw sw-p"></span>Proteínas</div>
         <div class="t-value">${fmt(tot.p, 0)} g</div>
-        <div class="t-sub">${pct(tot.p * 4)} · ${fmt(tot.p / dias, 0)} g/dia</div>
+        <div class="t-sub">${subMacro(tot.p * 4, tot.p)}</div>
       </div>
       <div class="tile">
         <div class="t-label"><span class="sw sw-c"></span>Carboidratos</div>
         <div class="t-value">${fmt(tot.c, 0)} g</div>
-        <div class="t-sub">${pct(tot.c * 4)} · ${fmt(tot.c / dias, 0)} g/dia</div>
+        <div class="t-sub">${subMacro(tot.c * 4, tot.c)}</div>
       </div>
       <div class="tile">
         <div class="t-label"><span class="sw sw-g"></span>Gorduras</div>
         <div class="t-value">${fmt(tot.g, 0)} g</div>
-        <div class="t-sub">${pct(tot.g * 9)} · ${fmt(tot.g / dias, 0)} g/dia</div>
+        <div class="t-sub">${subMacro(tot.g * 9, tot.g)}</div>
       </div>
       ${balancoHtml}`;
   }
