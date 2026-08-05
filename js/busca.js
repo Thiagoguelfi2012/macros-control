@@ -14,17 +14,30 @@ const FoodSearch = (() => {
       .replace(/\s+/g, ' ')
       .trim();
 
+  // palavras de ligação: não contam para o match nem para a posição —
+  // "file catupiry" encontra "Filé mignon ao catupiry"
+  // ("sem" fica de fora: distingue "temaki sem arroz" de "com arroz")
+  const STOP = new Set([
+    'de', 'da', 'do', 'das', 'dos', 'e', 'a', 'o', 'as', 'os', 'ao', 'aos',
+    'em', 'no', 'na', 'nos', 'nas', 'com', 'para',
+  ]);
+
   let indexed = null;
 
   function buildIndex(foods) {
-    indexed = foods.map((f) => ({ f, norm: normalize(f.n), words: normalize(f.n).split(' ') }));
+    indexed = foods.map((f) => {
+      const words = normalize(f.n).split(' ').filter((w) => !STOP.has(w));
+      return { f, norm: words.join(' '), words };
+    });
   }
 
   function search(query, limit = 50) {
     if (!indexed) return [];
     const q = normalize(query);
     if (!q) return [];
-    const tokens = q.split(' ');
+    let tokens = q.split(' ').filter((t) => !STOP.has(t));
+    if (!tokens.length) tokens = q.split(' ');
+    const qContent = tokens.join(' ');
     const results = [];
     for (const item of indexed) {
       let score = 0;
@@ -45,7 +58,7 @@ const FoodSearch = (() => {
         score += best; // palavras mais no início do nome pontuam melhor
       }
       if (!ok) continue;
-      if (item.norm.startsWith(q)) score -= 5; // começo exato do nome vale mais
+      if (item.norm.startsWith(qContent)) score -= 5; // começo exato do nome vale mais
       score = score * 10 + SOURCE_RANK[item.f.f] * 6 + item.norm.length / 50;
       results.push({ food: item.f, score });
     }

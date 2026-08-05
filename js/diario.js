@@ -309,29 +309,59 @@
         <div class="hoje-bar"><div class="${over ? 'over' : ''}" style="width:${pct.toFixed(1)}%"></div></div>
         <div class="hoje-saldo">${over ? `${fmt(kcalHoje - alvoKcal, 0)} kcal acima d${alvoNome === 'a meta' ? 'a meta' : 'o gasto diário'}` : `faltam ${fmt(alvoKcal - kcalHoje, 0)} kcal para ${alvoNome}`}</div>`;
     }
-    // progresso dos macros contra a dieta alvo, quando configurada
-    if (metaP || metaC || metaG) {
-      const barras = [
-        ['P', tot.p, metaP, 'var(--s1)'],
-        ['C', tot.c, metaC, 'var(--s2)'],
-        ['G', tot.g, metaG, 'var(--s3)'],
-      ]
-        .filter(([, , alvo]) => alvo)
-        .map(([l, v, alvo, cor]) => {
-          const pctm = Math.min(100, (v / alvo) * 100);
-          return `<div class="hm-row">
-            <span class="hm-l">${l}</span>
-            <div class="hm-bar"><div style="width:${pctm.toFixed(1)}%;background:${cor}"></div></div>
-            <span class="hm-v">${fmt(v, 0)} / ${fmt(alvo, 0)} g</span>
+    // accordion de macronutrientes: uma barra de progresso para cada macro
+    const macros = [
+      ['Proteínas', 'sw-p', tot.p, metaP, 'var(--s1)'],
+      ['Carboidratos', 'sw-c', tot.c, metaC, 'var(--s2)'],
+      ['Gorduras', 'sw-g', tot.g, metaG, 'var(--s3)'],
+    ];
+    const temMetaMacro = metaP || metaC || metaG;
+    const rows = macros
+      .map(([nome, sw, v, alvo, cor]) => {
+        if (!alvo) {
+          return `<div class="alvo-row">
+            <div class="alvo-head">
+              <span class="macro-chip"><span class="sw ${sw}"></span>${nome}</span>
+              <span class="alvo-vals"><b>${fmt(v, 0)}</b> g · sem alvo</span>
+            </div>
           </div>`;
-        })
-        .join('');
-      card.insertAdjacentHTML('beforeend', `<div class="hoje-macrobars">${barras}</div>`);
-    }
-    const link = card.querySelector('.hoje-config a');
-    if (link) {
+        }
+        const pctm = (v / alvo) * 100;
+        return `<div class="alvo-row">
+          <div class="alvo-head">
+            <span class="macro-chip"><span class="sw ${sw}"></span>${nome}</span>
+            <span class="alvo-vals"><b>${fmt(v, 0)}</b> / ${fmt(alvo, 0)} g · ${fmt(pctm, 0)}%</span>
+          </div>
+          <div class="alvo-bar${pctm > 110 ? ' over' : ''}">
+            <div style="width:${Math.min(100, pctm).toFixed(1)}%;background:${cor}"></div>
+          </div>
+        </div>`;
+      })
+      .join('');
+    const conteudo = temMetaMacro
+      ? rows
+      : `<div class="hoje-config">Defina os alvos de macros na seção "Dieta alvo" dos <a href="relatorios.html" class="link-rel">Relatórios</a>.</div>`;
+    const aberto = localStorage.getItem('hojeMacrosAberto') !== '0';
+    card.insertAdjacentHTML(
+      'beforeend',
+      `<button class="hoje-acc-toggle${aberto ? '' : ' closed'}" type="button" aria-expanded="${aberto}">
+        Macronutrientes
+        <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="hoje-acc"${aberto ? '' : ' hidden'}>${conteudo}</div>`
+    );
+    const toggle = card.querySelector('.hoje-acc-toggle');
+    const acc = card.querySelector('.hoje-acc');
+    toggle.addEventListener('click', () => {
+      const abrir = acc.hidden;
+      acc.hidden = !abrir;
+      toggle.classList.toggle('closed', !abrir);
+      toggle.setAttribute('aria-expanded', String(abrir));
+      localStorage.setItem('hojeMacrosAberto', abrir ? '1' : '0');
+    });
+    // na versão de página única, links para Relatórios trocam de aba
+    for (const link of card.querySelectorAll('.hoje-config a')) {
       link.addEventListener('click', (ev) => {
-        // na versão de página única, troca de aba em vez de navegar
         const tab = document.querySelector('a[data-view="view-relatorios"]');
         if (tab) {
           ev.preventDefault();
@@ -441,7 +471,7 @@
       render: {
         option: (item, escape) => {
           const fonte =
-            { t: 'TACO', b: 'TBCA', i: 'IBGE', u: 'USDA', r: 'estimativa de rótulo', p: 'meu alimento' }[item.f] || '';
+            { t: 'TACO', b: 'TBCA', i: 'IBGE', u: 'USDA', r: 'estimativa', p: 'meu alimento' }[item.f] || '';
           return `<div>
             <span class="opt-name">${escape(item.n)}</span>
             <span class="opt-meta">${fmt(item.kcal, 0)} kcal · P ${fmt(item.p)} · C ${fmt(item.c)} · G ${fmt(item.g)} (100 g) · ${fonte}</span>
