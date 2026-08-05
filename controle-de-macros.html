@@ -2191,11 +2191,17 @@ const FoodSearch = (() => {
       return;
     }
     card.hidden = false;
+    // o alvo acompanha o período selecionado: alvo diário × dias decorridos
+    // (semana em andamento com 3 dias → alvo de 3 dias)
+    $('#alvo-sub').textContent =
+      dias > 1
+        ? `Consumo do período comparado com o alvo do período (alvo diário × ${dias} dias)`
+        : 'Consumo do dia comparado com o alvo diário';
     const macros = [
-      { nome: 'Calorias', unidade: 'kcal', cor: 'var(--accent)', sw: '', media: tot.kcal / dias, alvo: metaKcal },
-      { nome: 'Proteínas', cor: 'var(--s1)', sw: 'sw-p', media: tot.p / dias, alvo: metaP },
-      { nome: 'Carboidratos', cor: 'var(--s2)', sw: 'sw-c', media: tot.c / dias, alvo: metaC },
-      { nome: 'Gorduras', cor: 'var(--s3)', sw: 'sw-g', media: tot.g / dias, alvo: metaG },
+      { nome: 'Calorias', unidade: 'kcal', cor: 'var(--accent)', sw: '', total: tot.kcal, alvo: metaKcal },
+      { nome: 'Proteínas', cor: 'var(--s1)', sw: 'sw-p', total: tot.p, alvo: metaP },
+      { nome: 'Carboidratos', cor: 'var(--s2)', sw: 'sw-c', total: tot.c, alvo: metaC },
+      { nome: 'Gorduras', cor: 'var(--s3)', sw: 'sw-g', total: tot.g, alvo: metaG },
     ];
     const wrap = $('#alvo-bars');
     wrap.innerHTML = '';
@@ -2210,16 +2216,18 @@ const FoodSearch = (() => {
         row.innerHTML = `
           <div class="alvo-head">
             ${chip}
-            <span class="alvo-vals"><b>${fmt(m.media, 0)}</b> ${un}/dia · sem alvo definido</span>
+            <span class="alvo-vals"><b>${fmt(m.total, 0)}</b> ${un} · sem alvo definido</span>
           </div>`;
         wrap.appendChild(row);
         continue;
       }
-      const pct = (m.media / m.alvo) * 100;
+      const alvoPeriodo = m.alvo * dias;
+      const pct = (m.total / alvoPeriodo) * 100;
+      const media = dias > 1 ? ` · média ${fmt(m.total / dias, 0)}/dia` : '';
       row.innerHTML = `
         <div class="alvo-head">
           ${chip}
-          <span class="alvo-vals"><b>${fmt(m.media, 0)}</b> / ${fmt(m.alvo, 0)} ${un} por dia · ${fmt(pct, 0)}%</span>
+          <span class="alvo-vals"><b>${fmt(m.total, 0)}</b> / ${fmt(alvoPeriodo, 0)} ${un} · ${fmt(pct, 0)}%${media}</span>
         </div>
         <div class="alvo-bar${pct > 110 ? ' over' : ''}">
           <div style="width:${Math.min(100, pct).toFixed(1)}%;background:${m.cor}"></div>
@@ -2230,7 +2238,7 @@ const FoodSearch = (() => {
 
   /* ---- Gráficos ---- */
 
-  function renderCharts(buckets, granularidade, tot) {
+  function renderCharts(buckets, granularidade, tot, dias) {
     const { gastoDiario } = MacroDB.getSettings();
     const ink2 = cssVar('--ink-2');
     const muted = cssVar('--muted');
@@ -2328,9 +2336,14 @@ const FoodSearch = (() => {
     ];
     if (temAlvo) {
       const hexa = (c, a) => c + a; // cores dos tokens são hex #rrggbb
+      // alvo escalado para o período (× dias decorridos), comparável ao consumo
       datasetsMacros.push({
         label: 'Alvo',
-        data: [Math.round((metaP || 0) * 4), Math.round((metaC || 0) * 4), Math.round((metaG || 0) * 9)],
+        data: [
+          Math.round((metaP || 0) * 4 * dias),
+          Math.round((metaC || 0) * 4 * dias),
+          Math.round((metaG || 0) * 9 * dias),
+        ],
         backgroundColor: [hexa(s1, '73'), hexa(s2, '73'), hexa(s3, '73')],
         borderColor: surface,
         borderWidth: 2,
@@ -2381,8 +2394,9 @@ const FoodSearch = (() => {
       { kcal: 0, p: 0, c: 0, g: 0 }
     );
     renderTiles(tot, inicio, fim);
-    renderAlvo(tot, diasDecorridos(inicio, fim));
-    renderCharts(agregar(entries, inicio, fim, granularidade), granularidade, tot);
+    const dias = diasDecorridos(inicio, fim);
+    renderAlvo(tot, dias);
+    renderCharts(agregar(entries, inicio, fim, granularidade), granularidade, tot, dias);
   }
 
   /* ---- Eventos ---- */
