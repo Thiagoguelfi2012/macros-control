@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Relatórios — Controle de Macros</title>
+  <link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="dot"></span> Controle de Macros</div>
+    <nav>
+      <a href="index.html">Diário</a>
+      <a href="relatorios.html" class="active">Relatórios</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="filters">
+      <div class="seg" id="seg-periodo" role="tablist" aria-label="Período">
+        <button data-p="dia">Dia</button>
+        <button data-p="semana" class="active">Semana</button>
+        <button data-p="mes">Mês</button>
+        <button data-p="trimestre">Trimestre</button>
+        <button data-p="semestre">Semestre</button>
+        <button data-p="ano">Ano</button>
+      </div>
+      <div class="range-nav">
+        <button class="btn" id="btn-prev" aria-label="Período anterior">‹</button>
+        <span class="range-label" id="range-label"></span>
+        <button class="btn" id="btn-next" aria-label="Próximo período">›</button>
+      </div>
+    </div>
+
+    <div class="tiles" id="tiles"></div>
+
+    <div class="charts-row">
+      <div class="chart-card">
+        <h3 id="chart-kcal-titulo">Calorias consumidas</h3>
+        <p class="sub" id="chart-kcal-sub">Barras: consumo · Linha tracejada: gasto médio diário configurado</p>
+        <div class="chart-wrap"><canvas id="chart-kcal"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Distribuição dos macros</h3>
+        <p class="sub">Participação nas calorias do período</p>
+        <div class="chart-wrap small"><canvas id="chart-macros"></canvas></div>
+      </div>
+    </div>
+
+    <div class="settings-card">
+      <h3>Configurações de gasto energético</h3>
+      <p class="sub">O gasto médio diário é usado para calcular o déficit ou superávit calórico nos relatórios.</p>
+      <div class="settings-row">
+        <div class="field">
+          <label for="inp-basal">Gasto basal (TMB) — kcal/dia</label>
+          <input type="number" id="inp-basal" min="0" step="10" placeholder="ex.: 1600" />
+        </div>
+        <div class="field">
+          <label for="inp-diario">Gasto médio diário (TDEE) — kcal/dia</label>
+          <input type="number" id="inp-diario" min="0" step="10" placeholder="ex.: 2200" />
+        </div>
+        <button class="btn btn-primary" id="btn-salvar-config">Salvar</button>
+        <span class="save-ok" id="save-ok" hidden>✓ salvo</span>
+      </div>
+    </div>
+  </main>
+
+  <script src="vendor/chart.umd.min.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/relatorios.js"></script>
+</body>
+</html>
