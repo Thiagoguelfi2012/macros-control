@@ -39,9 +39,11 @@
 
   function abrirModal(entry = null) {
     editandoId = entry ? entry.id : null;
-    $('#modal-titulo').textContent = entry ? 'Editar registro' : 'Adicionar alimento';
+    $('#modal-titulo').textContent = entry ? 'Editar registro' : 'Adicionar alimentos';
     backdrop.classList.add('open');
     $('#impacto').hidden = true;
+    $('#btn-incluir').hidden = true;
+    renderCesta(); // refeição montada sobrevive a fechar/reabrir o modal
     if (entry) {
       inpDataHora.value = toLocalInput(new Date(entry.ts));
       tomSelect.clear(true);
@@ -157,6 +159,90 @@
     };
   }
 
+  /* ---- Refeição: vários alimentos de uma vez ---- */
+
+  let cesta = []; // itens já "incluídos na refeição", salvos todos juntos
+
+  const somaCesta = () =>
+    cesta.reduce(
+      (acc, it) => ({ kcal: acc.kcal + it.kcal, p: acc.p + it.p, c: acc.c + it.c, g: acc.g + it.g }),
+      { kcal: 0, p: 0, c: 0, g: 0 }
+    );
+
+  function itemAtual() {
+    const r = calcular();
+    if (!foodSelecionado || r.qtd <= 0) return null;
+    const item = {
+      foodId: foodSelecionado.i,
+      nome: foodSelecionado.n,
+      qtd: r.qtd,
+      medida: selMedida.value,
+      gramas: Math.round(r.gramas * 10) / 10,
+      kcal: Math.round(r.kcal * 10) / 10,
+      p: Math.round(r.p * 10) / 10,
+      c: Math.round(r.c * 10) / 10,
+      g: Math.round(r.g * 10) / 10,
+    };
+    if (foodSelecionado.l) item.ml = 1;
+    return item;
+  }
+
+  function limparSelecao() {
+    tomSelect.clear(true);
+    tomSelect.clearOptions();
+    foodSelecionado = null;
+    selMedida.innerHTML = '<option value="g">gramas (g)</option>';
+    inpQtd.value = 100;
+    atualizarPreview();
+  }
+
+  function atualizarBotaoSalvar() {
+    const n = cesta.length + (foodSelecionado && editandoId == null ? 1 : 0);
+    $('#btn-salvar').textContent = editandoId != null ? 'Salvar' : n > 1 ? `Salvar (${n} itens)` : 'Salvar';
+  }
+
+  function renderCesta() {
+    const wrap = $('#cesta-wrap');
+    if (!cesta.length || editandoId != null) {
+      wrap.hidden = true;
+      return;
+    }
+    wrap.hidden = false;
+    const lista = $('#cesta-itens');
+    lista.innerHTML = '';
+    cesta.forEach((it, idx) => {
+      const row = document.createElement('div');
+      row.className = 'cesta-item';
+      row.innerHTML = `
+        <span class="ci-nome"></span>
+        <span class="ci-qtd">${qtdStr(it)}</span>
+        <span class="ci-kcal">${fmt(it.kcal, 0)} kcal</span>
+        <button class="icon-btn act-del" title="Remover da refeição" aria-label="Remover">${SVG_DEL}</button>`;
+      row.querySelector('.ci-nome').textContent = it.nome;
+      row.querySelector('button').addEventListener('click', () => {
+        cesta.splice(idx, 1);
+        renderCesta();
+        atualizarPreview();
+      });
+      lista.appendChild(row);
+    });
+    const t = somaCesta();
+    $('#cesta-total').innerHTML =
+      `Total: <b>${fmt(t.kcal, 0)}</b> kcal · P <b>${fmt(t.p)}</b> · C <b>${fmt(t.c)}</b> · G <b>${fmt(t.g)}</b> g`;
+  }
+
+  function incluirNaRefeicao() {
+    const item = itemAtual();
+    if (!item) {
+      tomSelect.focus();
+      return;
+    }
+    cesta.push(item);
+    renderCesta();
+    limparSelecao();
+    setTimeout(() => tomSelect.focus(), 50);
+  }
+
   // totais do dia escolhido no modal (sem o registro em edição), para o impacto
   let totaisDia = { kcal: 0, p: 0, c: 0, g: 0 };
 
@@ -179,11 +265,13 @@
   function renderImpacto(r) {
     const impacto = $('#impacto');
     const { gastoDiario, metaKcal, metaP, metaC, metaG } = MacroDB.getSettings();
+    // o impacto considera a refeição inteira: itens já incluídos + o item atual
+    const sc = editandoId == null ? somaCesta() : { kcal: 0, p: 0, c: 0, g: 0 };
     const linhas = [
-      ['Calorias', metaKcal || gastoDiario, totaisDia.kcal, r.kcal, 'var(--accent)', 'kcal'],
-      ['Proteínas', metaP, totaisDia.p, r.p, 'var(--s1)', 'g'],
-      ['Carboidratos', metaC, totaisDia.c, r.c, 'var(--s2)', 'g'],
-      ['Gorduras', metaG, totaisDia.g, r.g, 'var(--s3)', 'g'],
+      ['Calorias', metaKcal || gastoDiario, totaisDia.kcal, r.kcal + sc.kcal, 'var(--accent)', 'kcal'],
+      ['Proteínas', metaP, totaisDia.p, r.p + sc.p, 'var(--s1)', 'g'],
+      ['Carboidratos', metaC, totaisDia.c, r.c + sc.c, 'var(--s2)', 'g'],
+      ['Gorduras', metaG, totaisDia.g, r.g + sc.g, 'var(--s3)', 'g'],
     ].filter(([, meta]) => meta);
     if (!linhas.length) {
       impacto.hidden = true;
@@ -219,11 +307,16 @@
   }
 
   function atualizarPreview() {
+    atualizarBotaoSalvar();
     if (!foodSelecionado) {
       preview.hidden = true;
-      $('#impacto').hidden = true;
+      $('#btn-incluir').hidden = true;
+      // com refeição montada, o impacto continua visível (soma da cesta)
+      if (cesta.length && editandoId == null) renderImpacto({ kcal: 0, p: 0, c: 0, g: 0 });
+      else $('#impacto').hidden = true;
       return;
     }
+    $('#btn-incluir').hidden = editandoId != null;
     const r = calcular();
     if (foodSelecionado.l && r.gramas >= 1000) {
       $('#pv-gramas').textContent = fmt(r.gramas / 1000, 2);
@@ -241,31 +334,33 @@
   }
 
   async function salvar() {
-    if (!foodSelecionado) {
+    if (!inpDataHora.value) return;
+    const ts = new Date(inpDataHora.value).toISOString();
+    // edição: sempre um único registro
+    if (editandoId != null) {
+      const item = itemAtual();
+      if (!item) {
+        tomSelect.focus();
+        return;
+      }
+      await MacroDB.updateEntry({ id: editandoId, ts, ...item });
+      fecharModal();
+      render();
+      return;
+    }
+    // adição: refeição (itens incluídos) + item em configuração, tudo junto
+    const itens = [...cesta];
+    const atual = itemAtual();
+    if (atual) itens.push(atual);
+    if (!itens.length) {
       tomSelect.focus();
       return;
     }
-    const r = calcular();
-    if (r.qtd <= 0 || !inpDataHora.value) return;
-    const entry = {
-      ts: new Date(inpDataHora.value).toISOString(),
-      foodId: foodSelecionado.i,
-      nome: foodSelecionado.n,
-      qtd: r.qtd,
-      medida: selMedida.value,
-      gramas: Math.round(r.gramas * 10) / 10,
-      kcal: Math.round(r.kcal * 10) / 10,
-      p: Math.round(r.p * 10) / 10,
-      c: Math.round(r.c * 10) / 10,
-      g: Math.round(r.g * 10) / 10,
-    };
-    if (foodSelecionado.l) entry.ml = 1;
-    if (editandoId != null) {
-      entry.id = editandoId;
-      await MacroDB.updateEntry(entry);
-    } else {
-      await MacroDB.addEntry(entry);
+    for (const item of itens) {
+      await MacroDB.addEntry({ ts, ...item });
     }
+    cesta = [];
+    renderCesta();
     fecharModal();
     render();
   }
@@ -662,6 +757,7 @@
     $('#btn-adicionar').addEventListener('click', () => abrirModal());
     $('#btn-cancelar').addEventListener('click', fecharModal);
     $('#btn-salvar').addEventListener('click', salvar);
+    $('#btn-incluir').addEventListener('click', incluirNaRefeicao);
     $('#btn-abrir-cadastro').addEventListener('click', abrirCadastro);
     $('#btn-cad-cancelar').addEventListener('click', () => cadBackdrop.classList.remove('open'));
     $('#btn-cad-salvar').addEventListener('click', salvarCadastro);
