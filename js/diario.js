@@ -301,6 +301,7 @@
     $('#btn-cad-salvar').textContent = 'Cadastrar';
     for (const id of ['cad-nome', 'cad-kcal', 'cad-p', 'cad-c', 'cad-g', 'cad-medida']) $('#' + id).value = '';
     $('#cad-porcao').value = 100;
+    $('#cad-liquido').checked = false;
   }
 
   // carrega um alimento próprio no formulário, convertendo os valores por
@@ -320,6 +321,7 @@
     $('#cad-c').value = r1(f.c * fator);
     $('#cad-g').value = r1(f.g * fator);
     $('#cad-medida').value = m && !/^porção \(/.test(m[0]) ? m[0].replace(/\s*\(.*\)$/, '') : '';
+    $('#cad-liquido').checked = !!f.l;
     $('#cad-nome').focus();
     cadBackdrop.querySelector('.modal').scrollTop = 0;
   }
@@ -380,7 +382,9 @@
     const f100 = 100 / porcao;
     const round1 = (x) => Math.round(x * 10) / 10;
     const medida = $('#cad-medida').value.trim();
+    const liquido = $('#cad-liquido').checked;
     const editando = editandoAlimentoId != null;
+    const un = liquido ? 'ml' : 'g';
     const food = {
       i: editando ? editandoAlimentoId : `p${Date.now()}`,
       n: nome,
@@ -389,8 +393,9 @@
       p: round1(p * f100),
       c: round1(c * f100),
       g: round1(g * f100),
-      m: medida ? [[medida, porcao]] : porcao !== 100 ? [[`porção (${fmt(porcao)} g)`, porcao]] : [],
+      m: medida ? [[medida, porcao]] : porcao !== 100 ? [[`porção (${fmt(porcao)} ${un})`, porcao]] : [],
     };
+    if (liquido) food.l = 1;
     if (!food.m.length) delete food.m;
     await MacroDB.addCustomFood(food);
     FoodSearch.buildIndex(await MacroDB.ensureFoods());
