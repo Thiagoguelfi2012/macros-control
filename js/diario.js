@@ -288,6 +288,36 @@
   /* ---- Cadastro de alimento próprio ---- */
 
   const cadBackdrop = $('#modal-cadastro');
+  let editandoAlimentoId = null; // id do alimento próprio em edição (null = novo)
+
+  function resetFormCadastro() {
+    editandoAlimentoId = null;
+    $('#cadastro-titulo').textContent = 'Cadastrar alimento próprio';
+    $('#btn-cad-salvar').textContent = 'Cadastrar';
+    for (const id of ['cad-nome', 'cad-kcal', 'cad-p', 'cad-c', 'cad-g', 'cad-medida']) $('#' + id).value = '';
+    $('#cad-porcao').value = 100;
+  }
+
+  // carrega um alimento próprio no formulário, convertendo os valores por
+  // 100 g de volta para a porção de referência
+  function carregarCadastro(f) {
+    editandoAlimentoId = f.i;
+    $('#cadastro-titulo').textContent = 'Editar alimento próprio';
+    $('#btn-cad-salvar').textContent = 'Salvar alterações';
+    const m = f.m && f.m.length ? f.m[0] : null;
+    const porcao = m ? m[1] : 100;
+    const fator = porcao / 100;
+    const r1 = (x) => Math.round(x * 10) / 10;
+    $('#cad-nome').value = f.n;
+    $('#cad-porcao').value = porcao;
+    $('#cad-kcal').value = r1(f.kcal * fator);
+    $('#cad-p').value = r1(f.p * fator);
+    $('#cad-c').value = r1(f.c * fator);
+    $('#cad-g').value = r1(f.g * fator);
+    $('#cad-medida').value = m && !/^porção \(/.test(m[0]) ? m[0].replace(/\s*\(.*\)$/, '') : '';
+    $('#cad-nome').focus();
+    cadBackdrop.querySelector('.modal').scrollTop = 0;
+  }
 
   async function renderMeusAlimentos() {
     const meus = await MacroDB.getCustomFoods();
@@ -298,16 +328,22 @@
     for (const f of meus) {
       const div = document.createElement('div');
       div.className = 'meu-alimento';
+      div.title = 'Toque para editar';
       div.innerHTML = `
         <div class="info">
           <div class="nm"></div>
           <div class="mt">${fmt(f.kcal, 0)} kcal · P ${fmt(f.p)} · C ${fmt(f.c)} · G ${fmt(f.g)} (100 g)${f.m && f.m.length ? ` · ${f.m[0][0]}` : ''}</div>
         </div>
-        <button class="btn-ghost btn-icon btn-danger-text" title="Excluir" aria-label="Excluir">🗑️</button>`;
+        <button class="icon-btn act-del" title="Excluir" aria-label="Excluir">${SVG_DEL}</button>`;
       div.querySelector('.nm').textContent = f.n;
+      div.addEventListener('click', (ev) => {
+        if (!ev.target.closest('.icon-btn')) carregarCadastro(f);
+      });
       div.querySelector('button').addEventListener('click', (ev) => {
+        ev.stopPropagation();
         confirmarDoisToques(ev.currentTarget, async () => {
           await MacroDB.deleteCustomFood(f.i);
+          if (editandoAlimentoId === f.i) resetFormCadastro();
           FoodSearch.buildIndex(await MacroDB.ensureFoods());
           renderMeusAlimentos();
         });
@@ -318,8 +354,7 @@
 
   function abrirCadastro() {
     backdrop.classList.remove('open');
-    for (const id of ['cad-nome', 'cad-kcal', 'cad-p', 'cad-c', 'cad-g', 'cad-medida']) $('#' + id).value = '';
-    $('#cad-porcao').value = 100;
+    resetFormCadastro();
     cadBackdrop.classList.add('open');
     renderMeusAlimentos();
     setTimeout(() => $('#cad-nome').focus(), 50);
@@ -340,8 +375,9 @@
     const f100 = 100 / porcao;
     const round1 = (x) => Math.round(x * 10) / 10;
     const medida = $('#cad-medida').value.trim();
+    const editando = editandoAlimentoId != null;
     const food = {
-      i: `p${Date.now()}`,
+      i: editando ? editandoAlimentoId : `p${Date.now()}`,
       n: nome,
       f: 'p',
       kcal: round1(kcal * f100),
@@ -353,6 +389,12 @@
     if (!food.m.length) delete food.m;
     await MacroDB.addCustomFood(food);
     FoodSearch.buildIndex(await MacroDB.ensureFoods());
+    if (editando) {
+      // permanece no modal para conferir a lista atualizada
+      resetFormCadastro();
+      renderMeusAlimentos();
+      return;
+    }
     cadBackdrop.classList.remove('open');
     // reabre o modal de adição já com o alimento novo selecionado
     abrirModal();
