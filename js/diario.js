@@ -60,6 +60,7 @@
             i: entry.foodId, n: entry.nome, f: 'p',
             kcal: entry.kcal * f100, p: entry.p * f100, c: entry.c * f100, g: entry.g * f100,
           };
+          if (entry.ml) food.l = 1;
           if (entry.medida !== 'g' && entry.qtd > 0) {
             food.m = [[entry.medida, entry.gramas / entry.qtd]];
           }
@@ -107,7 +108,8 @@
       fallbackFood && fallbackFood.i === foodId
         ? fallbackFood
         : (await MacroDB.getFood(foodId)) || fallbackFood;
-    selMedida.innerHTML = '<option value="g">gramas (g)</option>';
+    // líquidos são medidos em ml (1 ml ≈ 1 g nas tabelas)
+    selMedida.innerHTML = `<option value="g">${foodSelecionado && foodSelecionado.l ? 'mililitros (ml)' : 'gramas (g)'}</option>`;
     if (foodSelecionado && foodSelecionado.m) {
       for (const [rotulo, gramas] of foodSelecionado.m) {
         const opt = document.createElement('option');
@@ -224,6 +226,7 @@
     }
     const r = calcular();
     $('#pv-gramas').textContent = fmt(r.gramas);
+    $('#pv-un').textContent = foodSelecionado.l ? 'ml' : 'g';
     $('#pv-kcal').textContent = fmt(r.kcal, 0);
     $('#pv-p').textContent = fmt(r.p);
     $('#pv-c').textContent = fmt(r.c);
@@ -251,6 +254,7 @@
       c: Math.round(r.c * 10) / 10,
       g: Math.round(r.g * 10) / 10,
     };
+    if (foodSelecionado.l) entry.ml = 1;
     if (editandoId != null) {
       entry.id = editandoId;
       await MacroDB.updateEntry(entry);
@@ -367,11 +371,13 @@
   const SVG_REPEAT =
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v5h5"/></svg>';
 
-  // "1 × dose (30 g)" — sem duplicar as gramas quando o rótulo da medida já as traz
+  // "1 × dose (30 g)" — sem duplicar as gramas quando o rótulo da medida já as
+  // traz; líquidos exibem ml
   function qtdStr(e) {
-    if (e.medida === 'g') return `${fmt(e.qtd)} g`;
+    const un = e.ml ? 'ml' : 'g';
+    if (e.medida === 'g') return `${fmt(e.qtd)} ${un}`;
     if (e.medida.includes('(')) return `${fmt(e.qtd)} × ${e.medida}`;
-    return `${fmt(e.qtd)} × ${e.medida} (${fmt(e.gramas)} g)`;
+    return `${fmt(e.qtd)} × ${e.medida} (${fmt(e.gramas)} ${un})`;
   }
 
   function renderHoje(entries) {

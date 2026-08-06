@@ -910,6 +910,42 @@ function stableId(prefix, nome) {
   return id;
 }
 
+/* ---- Líquidos: unidade base em ml + medidas de copo/lata/garrafa ---- */
+
+// decide pela(s) primeira(s) palavra(s) do nome; versões em pó/sólidas ficam
+// de fora. Obs.: \b do JS falha após acento (pó, café), então os limites são
+// delimitadores explícitos ([ ,)] ou fim).
+const LIQ_START =
+  /^(cerveja|chope|refrigerante|suco|n[ée]ctar|refresco|[áa]gua|leite|bebida|vinho|cacha[çc]a|aguardente|pinga|vodka|whisky|u[íi]sque|rum|gim|gin|licor|champanhe|espumante|sidra|caf[ée]|ch[áa]|mate|chimarr[ãa]o|isot[ôo]nico|energ[ée]tico|vitamina|smoothie|milk-?shake|kombucha|caldo de cana|garapa|coquetel|caipirinha|batida|cappuccino|capuccino|chocolate quente|gemada|gin t[ôo]nica|cuba libre|refrigerantes?)([ ,(]|$)/i;
+const LIQ_EXCL = /(^|[ ,(])p[óo]([ ,)]|$)|desidratad|condensado|em barra|mistura|creme de leite|sorvete/i;
+
+function isLiquid(nome) {
+  return !LIQ_EXCL.test(nome) && LIQ_START.test(nome.trim());
+}
+
+// medidas padrão por tipo de bebida (aplicadas quando o item não tem nenhuma)
+const LIQ_MEASURES = [
+  [/cerveja/i, [['lata (350 ml)', 350], ['long neck (330 ml)', 330], ['garrafa (600 ml)', 600]]],
+  [/chope/i, [['tulipa (300 ml)', 300], ['caldereta (350 ml)', 350]]],
+  [/refrigerante/i, [['lata (350 ml)', 350], ['copo (250 ml)', 250], ['garrafa (600 ml)', 600]]],
+  [/suco|n[ée]ctar|refresco|garapa|caldo de cana/i, [['copo (250 ml)', 250], ['caixinha (200 ml)', 200]]],
+  [/[áa]gua de coco/i, [['copo (250 ml)', 250], ['caixinha (200 ml)', 200]]],
+  [/[áa]gua/i, [['copo (250 ml)', 250], ['garrafa (500 ml)', 500]]],
+  [/leite/i, [['copo (200 ml)', 200], ['xícara (240 ml)', 240]]],
+  [/caf[ée]|cappuccino|capuccino/i, [['xícara pequena (50 ml)', 50], ['xícara (150 ml)', 150]]],
+  [/ch[áa]|mate|kombucha/i, [['xícara (200 ml)', 200], ['copo (300 ml)', 300]]],
+  [/vinho|espumante|champanhe|sidra/i, [['taça (150 ml)', 150]]],
+  [/cacha[çc]a|aguardente|pinga|vodka|whisky|u[íi]sque|rum|gim|gin\b|licor/i, [['dose (50 ml)', 50]]],
+  [/energ[ée]tico/i, [['lata (250 ml)', 250], ['lata (473 ml)', 473]]],
+  [/isot[ôo]nico/i, [['garrafa (500 ml)', 500]]],
+  [/vitamina|smoothie|milk|batida|coquetel|caipirinha|gemada|chocolate quente/i, [['copo (300 ml)', 300]]],
+];
+
+function liquidMeasures(nome) {
+  for (const [re, m] of LIQ_MEASURES) if (re.test(nome)) return m.map(([l, g]) => [l, g]);
+  return [['copo (250 ml)', 250]];
+}
+
 async function main() {
   await ensureRawFiles();
 
@@ -994,18 +1030,29 @@ async function main() {
     }))) nUsda++;
   }
 
+  // líquidos: unidade base vira ml na interface + medidas de copo/lata/garrafa
+  let nLiquidos = 0;
+  for (const f of foods) {
+    if (isLiquid(f.n)) {
+      f.l = 1;
+      nLiquidos++;
+      if (!f.m || !f.m.length) f.m = liquidMeasures(f.n);
+    }
+  }
+
   for (const f of foods) if (!f.m.length) delete f.m;
 
   mkdirSync(dirname(OUT), { recursive: true });
   // Ao regenerar a base com mudanças relevantes, incremente v e o
   // FOODS_VERSION correspondente em js/db.js para forçar a recarga no navegador.
-  writeFileSync(OUT, JSON.stringify({ v: 7, foods }));
+  writeFileSync(OUT, JSON.stringify({ v: 8, foods }));
 
   const bytes = readFileSync(OUT).length;
   console.log(`foods.json gerado: ${foods.length} alimentos (${(bytes / 1024 / 1024).toFixed(2)} MB)`);
   console.log(`  TACO: ${nTaco} | TBCA: ${nTbca} | Curados: ${nCurados} | IBGE: ${nIbge} | USDA SR28 traduzido: ${nUsda}`);
   const comMedidas = foods.filter((f) => f.m && f.m.length).length;
   console.log(`  Alimentos com medidas caseiras (unidades): ${comMedidas}`);
+  console.log(`  Líquidos (unidade base em ml): ${nLiquidos}`);
 }
 
 main().catch((e) => {
