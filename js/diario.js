@@ -225,8 +225,13 @@
       return;
     }
     const r = calcular();
-    $('#pv-gramas').textContent = fmt(r.gramas);
-    $('#pv-un').textContent = foodSelecionado.l ? 'ml' : 'g';
+    if (foodSelecionado.l && r.gramas >= 1000) {
+      $('#pv-gramas').textContent = fmt(r.gramas / 1000, 2);
+      $('#pv-un').textContent = 'L';
+    } else {
+      $('#pv-gramas').textContent = fmt(r.gramas);
+      $('#pv-un').textContent = foodSelecionado.l ? 'ml' : 'g';
+    }
     $('#pv-kcal').textContent = fmt(r.kcal, 0);
     $('#pv-p').textContent = fmt(r.p);
     $('#pv-c').textContent = fmt(r.c);
@@ -413,13 +418,15 @@
   const SVG_REPEAT =
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v5h5"/></svg>';
 
+  // volumes: até 999 ml em ml, a partir de 1 litro em L ("1,2 L")
+  const fmtVol = (ml) => (ml >= 1000 ? `${fmt(ml / 1000, 2)} L` : `${fmt(ml)} ml`);
+
   // "1 × dose (30 g)" — sem duplicar as gramas quando o rótulo da medida já as
-  // traz; líquidos exibem ml
+  // traz; líquidos exibem ml/L
   function qtdStr(e) {
-    const un = e.ml ? 'ml' : 'g';
-    if (e.medida === 'g') return `${fmt(e.qtd)} ${un}`;
+    if (e.medida === 'g') return e.ml ? fmtVol(e.qtd) : `${fmt(e.qtd)} g`;
     if (e.medida.includes('(')) return `${fmt(e.qtd)} × ${e.medida}`;
-    return `${fmt(e.qtd)} × ${e.medida} (${fmt(e.gramas)} ${un})`;
+    return `${fmt(e.qtd)} × ${e.medida} (${e.ml ? fmtVol(e.gramas) : `${fmt(e.gramas)} g`})`;
   }
 
   function renderHoje(entries) {
