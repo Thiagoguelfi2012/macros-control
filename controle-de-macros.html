@@ -2089,11 +2089,23 @@ const FoodSearch = (() => {
     return { inicio, fim, granularidade, label };
   }
 
-  function diasDecorridos(inicio, fim) {
-    const agora = new Date();
-    const limite = new Date(Math.min(fim.getTime(), agora.getTime() + 1));
-    const dias = Math.ceil((limite - inicio) / 86400000);
-    return Math.max(1, Math.min(dias, Math.round((fim - inicio) / 86400000)));
+  // Dias que contam no período: dias completos já passados + o dia de hoje
+  // APENAS se ele já tiver algum registro (de madrugada, antes do café, o dia
+  // novo não entra no déficit/alvo). Retorna 0 se nenhum dia conta ainda.
+  function diasContabilizados(inicio, fim, entries) {
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const fimCompletos = Math.min(fim.getTime(), hoje.getTime());
+    let dias = Math.max(0, Math.round((fimCompletos - inicio.getTime()) / 86400000));
+    if (hoje >= inicio && hoje < fim) {
+      const temRegistroHoje = entries.some((e) => {
+        const d = new Date(e.ts);
+        d.setHours(0, 0, 0, 0);
+        return d.getTime() === hoje.getTime();
+      });
+      if (temRegistroHoje) dias += 1;
+    }
+    return dias;
   }
 
   /* ---- Agregação ---- */
@@ -2130,14 +2142,19 @@ const FoodSearch = (() => {
 
   /* ---- Tiles ---- */
 
-  function renderTiles(tot, inicio, fim) {
+  function renderTiles(tot, dias, diasReais) {
     const { gastoDiario } = MacroDB.getSettings();
-    const dias = diasDecorridos(inicio, fim);
     const tiles = $('#tiles');
     const kcalMacro = tot.p * 4 + tot.c * 4 + tot.g * 9;
     const pct = (v) => (kcalMacro > 0 ? `${fmt((v / kcalMacro) * 100, 0)}% das kcal` : '—');
     let balancoHtml;
-    if (gastoDiario) {
+    if (gastoDiario && diasReais === 0) {
+      balancoHtml = `
+        <div class="tile balance">
+          <div class="t-label">Déficit / superávit</div>
+          <div class="t-value" style="font-size:14px;font-weight:500;color:var(--muted)">Sem registros no período ainda</div>
+        </div>`;
+    } else if (gastoDiario) {
       const gasto = gastoDiario * dias;
       const saldo = tot.kcal - gasto; // >0 = superávit, <0 = déficit
       const ehDeficit = saldo <= 0;
@@ -2393,8 +2410,9 @@ const FoodSearch = (() => {
       (acc, e) => ({ kcal: acc.kcal + e.kcal, p: acc.p + e.p, c: acc.c + e.c, g: acc.g + e.g }),
       { kcal: 0, p: 0, c: 0, g: 0 }
     );
-    renderTiles(tot, inicio, fim);
-    const dias = diasDecorridos(inicio, fim);
+    const diasReais = diasContabilizados(inicio, fim, entries);
+    const dias = Math.max(1, diasReais);
+    renderTiles(tot, dias, diasReais);
     renderAlvo(tot, dias);
     renderCharts(agregar(entries, inicio, fim, granularidade), granularidade, tot, dias);
   }
