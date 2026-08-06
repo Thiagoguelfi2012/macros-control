@@ -5,6 +5,7 @@
   let offset = 0; // 0 = período atual, -1 = anterior…
   let chartKcal = null;
   let chartMacros = null;
+  let chartAcum = null;
 
   const fmt = (n, dec = 1) =>
     Number(n).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: dec });
@@ -171,6 +172,97 @@
         <div class="t-sub">${subMacro(tot.g * 9, tot.g)}</div>
       </div>
       ${balancoHtml}`;
+  }
+
+  /* ---- Déficit calórico acumulado ---- */
+
+  function renderAcumulado(entries, inicio, fim) {
+    const { gastoDiario } = MacroDB.getSettings();
+    const card = $('#card-acum');
+    const pad2 = (n) => String(n).padStart(2, '0');
+    const chave = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+    // consumo por dia
+    const porDia = new Map();
+    for (const e of entries) {
+      const k = chave(new Date(e.ts));
+      porDia.set(k, (porDia.get(k) || 0) + e.kcal);
+    }
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const labels = [];
+    const data = [];
+    let acc = 0;
+    for (const d = new Date(inicio); d < fim; d.setDate(d.getDate() + 1)) {
+      if (d > hoje) break;
+      const k = chave(d);
+      // hoje só conta se já tiver registro (mesma regra do card de déficit)
+      if (d.getTime() === hoje.getTime() && !porDia.has(k)) break;
+      acc += (porDia.get(k) || 0) - gastoDiario;
+      labels.push(d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }));
+      data.push(Math.round(acc));
+    }
+    if (!gastoDiario || data.length < 2) {
+      card.hidden = true;
+      if (chartAcum) {
+        chartAcum.destroy();
+        chartAcum = null;
+      }
+      return;
+    }
+    card.hidden = false;
+    card.dataset.final = String(data[data.length - 1]);
+    const good = cssVar('--good-text');
+    const bad = cssVar('--bad-text');
+    const muted = cssVar('--muted');
+    const grid = cssVar('--grid');
+    const baseline = cssVar('--baseline');
+    if (chartAcum) chartAcum.destroy();
+    chartAcum = new Chart($('#chart-acum'), {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Saldo acumulado',
+            data,
+            borderWidth: 2,
+            pointRadius: 0,
+            pointHoverRadius: 4,
+            tension: 0.15,
+            borderColor: data[data.length - 1] <= 0 ? good : bad,
+            segment: { borderColor: (c) => (c.p1.parsed.y <= 0 ? good : bad) },
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => {
+                const v = ctx.parsed.y;
+                return ` ${v <= 0 ? 'Déficit' : 'Superávit'} acumulado: ${fmt(Math.abs(v), 0)} kcal`;
+              },
+            },
+          },
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            border: { color: baseline },
+            ticks: { color: muted, font: { size: 11 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 8 },
+          },
+          y: {
+            grid: { color: (c) => (c.tick.value === 0 ? baseline : grid), drawTicks: false },
+            border: { display: false },
+            ticks: { color: muted, font: { size: 11 }, maxTicksLimit: 6 },
+          },
+        },
+      },
+    });
   }
 
   /* ---- Dieta alvo × consumo ---- */
@@ -388,6 +480,7 @@
     const diasReais = diasContabilizados(inicio, fim, entries);
     const dias = Math.max(1, diasReais);
     renderTiles(tot, dias, diasReais);
+    renderAcumulado(entries, inicio, fim);
     renderAlvo(tot, dias);
     renderCharts(agregar(entries, inicio, fim, granularidade), granularidade, tot, dias);
   }
