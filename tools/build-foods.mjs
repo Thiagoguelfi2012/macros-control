@@ -696,6 +696,51 @@ const PT_MEASURES = [
   [/^p[ãa]o de queijo/i, [['unidade média (40 g)', 40], ['mini (20 g)', 20]]],
   [/^sandu[íi]che|^bauru|^misto/i, [['unidade (160 g)', 160]]],
   [/^omelete/i, [['unidade (140 g)', 140]]],
+  // ---- unidades médias para cortes e itens que vêm "por peça" ----
+  // (os padrões usam delimitadores explícitos: \b do JS falha após acento,
+  //  e "asa" solto casaria com "massa")
+  [/sassami|filezinho/i, [['unidade (50 g)', 50]]],
+  [/fil[ée] de frango|frango.*fil[ée]/i, [['filé (100 g)', 100]]],
+  [/coxinha da asa/i, [['unidade (35 g)', 35]]],
+  [/sobrecoxa/i, [['unidade (100 g)', 100]]],
+  [/(^|[ ,(])coxa/i, [['unidade (65 g)', 65]]],
+  [/(^|[ ,(])asa(s)?([ ,)]|$)/i, [['unidade (30 g)', 30]]],
+  [/fil[ée] mignon/i, [['medalhão (100 g)', 100]]],
+  [/(^|[ ,(])bife|[àa] milanesa/i, [['bife médio (100 g)', 100]]],
+  [/alm[ôo]ndega/i, [['unidade (30 g)', 30]]],
+  [/nugget/i, [['unidade (20 g)', 20]]],
+  [/(til[áa]pia|merluza|pescada|linguado|salm[ãa]o|peixe|bacalhau).*fil[ée]|fil[ée].*(til[áa]pia|merluza|pescada)/i, [['filé (120 g)', 120]]],
+  [/^camar[ãa]o/i, [['unidade (10 g)', 10], ['porção (100 g)', 100]]],
+  [/^kani/i, [['unidade (20 g)', 20]]],
+  [/^p[êe]ssego/i, [['unidade (120 g)', 120]]],
+  [/^ameixa.*(seca|passa)/i, [['unidade (10 g)', 10]]],
+  [/^ameixa/i, [['unidade (60 g)', 60]]],
+  [/^damasco.*seco/i, [['unidade (8 g)', 8]]],
+  [/^damasco/i, [['unidade (35 g)', 35]]],
+  [/^figo/i, [['unidade (60 g)', 60]]],
+  [/^caju[, ]/i, [['unidade (60 g)', 60]]],
+  [/^carambola/i, [['unidade (90 g)', 90]]],
+  [/^cereja/i, [['unidade (8 g)', 8]]],
+  [/^lichia/i, [['unidade (20 g)', 20]]],
+  [/^jabuticaba/i, [['unidade (8 g)', 8]]],
+  [/^pitanga/i, [['unidade (7 g)', 7]]],
+  [/^n[êe]spera/i, [['unidade (40 g)', 40]]],
+  [/^pepino/i, [['unidade (200 g)', 200]]],
+  [/^piment[ãa]o/i, [['unidade (120 g)', 120]]],
+  [/^beterraba/i, [['unidade (160 g)', 160]]],
+  [/^abobrinha/i, [['unidade (250 g)', 250]]],
+  [/^berinjela/i, [['unidade (250 g)', 250]]],
+  [/^chuchu/i, [['unidade (300 g)', 300]]],
+  [/^quiabo/i, [['unidade (10 g)', 10]]],
+  [/^rabanete/i, [['unidade (20 g)', 20]]],
+  [/^alho([, ]|$)/i, [['dente (3 g)', 3]]],
+  [/^milho, verde/i, [['espiga (grãos, 100 g)', 100], ['colher de sopa', 25]]],
+  [/^azeitona/i, [['unidade (4 g)', 4]]],
+  [/bisnaguinha|bisnaga/i, [['unidade (20 g)', 20]]],
+  [/^torrada/i, [['unidade (8 g)', 8]]],
+  [/^bombom/i, [['unidade (21 g)', 21]]],
+  [/^bala([, ]|$)/i, [['unidade (5 g)', 5]]],
+  [/^p[ãa]o de mel/i, [['unidade (60 g)', 60]]],
 ];
 
 const BRAND_RE = /^[A-Z0-9][A-Z0-9&.'\- ]+$/; // segmentos todos em maiúsculas = marca
@@ -1045,7 +1090,7 @@ async function main() {
   mkdirSync(dirname(OUT), { recursive: true });
   // Ao regenerar a base com mudanças relevantes, incremente v e o
   // FOODS_VERSION correspondente em js/db.js para forçar a recarga no navegador.
-  writeFileSync(OUT, JSON.stringify({ v: 8, foods }));
+  writeFileSync(OUT, JSON.stringify({ v: 9, foods }));
 
   const bytes = readFileSync(OUT).length;
   console.log(`foods.json gerado: ${foods.length} alimentos (${(bytes / 1024 / 1024).toFixed(2)} MB)`);
