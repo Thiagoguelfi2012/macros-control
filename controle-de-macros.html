@@ -2570,8 +2570,7 @@ const FoodSearch = (() => {
     const s3 = cssVar('--s3');
 
     const labels = buckets.map((b) => b.label);
-    // barras empilhadas por macronutriente (em kcal) + "outras" para as
-    // calorias que não vêm de macro (ex.: álcool), fechando o total real
+    // barras empilhadas por macronutriente (em kcal)
     const mkStack = (label, cor, valor) => ({
       label,
       data: buckets.map((b) => Math.round(valor(b))),
@@ -2588,7 +2587,6 @@ const FoodSearch = (() => {
       mkStack('Proteínas', s1, (b) => b.p * 4),
       mkStack('Carboidratos', s2, (b) => b.c * 4),
       mkStack('Gorduras', s3, (b) => b.g * 9),
-      mkStack('Álcool/outras', cssVar('--baseline'), (b) => Math.max(0, b.kcal - 4 * b.p - 4 * b.c - 9 * b.g)),
     ];
     let temLinha = false;
     if (gastoDiario && granularidade !== 'hora') {
@@ -2636,7 +2634,8 @@ const FoodSearch = (() => {
                 const barra = items.find((i) => i.dataset.type !== 'line');
                 if (!barra) return '';
                 const b = buckets[barra.dataIndex];
-                return b.kcal > 0 ? `Total: ${fmt(b.kcal, 0)} kcal` : '';
+                const total = 4 * b.p + 4 * b.c + 9 * b.g;
+                return total > 0 ? `Total: ${fmt(total, 0)} kcal` : '';
               },
             },
           },
