@@ -16,6 +16,7 @@
   --s3: #1baf7a; /* gordura */
   --good-text: #006300;
   --bad-text: #b02a2a;
+  --alvo-line: #4a3aa7;
   --danger: #d03b3b;
   --wash: rgba(42, 120, 214, 0.08);
 }
@@ -36,6 +37,7 @@
     --s3: #199e70;
     --good-text: #0ca30c;
     --bad-text: #e66767;
+    --alvo-line: #9085e9;
   }
 }
 /* toggle explícito de tema (ex.: página hospedada com data-theme na raiz) */
@@ -55,6 +57,7 @@
   --s3: #199e70;
   --good-text: #0ca30c;
   --bad-text: #e66767;
+  --alvo-line: #9085e9;
 }
 
 * { box-sizing: border-box; }

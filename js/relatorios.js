@@ -358,24 +358,43 @@
       mkStack('Carboidratos', s2, (b) => b.c * 4),
       mkStack('Gorduras', s3, (b) => b.g * 9),
     ];
-    let temLinha = false;
-    if (gastoDiario && granularidade !== 'hora') {
-      const alvo = buckets.map((b) => (granularidade === 'mes' ? gastoDiario * b.dias : gastoDiario));
-      datasets.push({
-        type: 'line',
-        label: granularidade === 'mes' ? 'Gasto estimado no mês' : 'Gasto médio diário',
-        data: alvo,
-        borderColor: muted,
-        borderWidth: 2,
-        borderDash: [6, 4],
-        pointRadius: 0,
-        pointHoverRadius: 4,
-        fill: false,
-      });
-      temLinha = true;
+    const { metaKcal } = MacroDB.getSettings();
+    const linhas = [];
+    if (granularidade !== 'hora') {
+      const porBalde = (v) => buckets.map((b) => (granularidade === 'mes' ? v * b.dias : v));
+      if (gastoDiario) {
+        datasets.push({
+          type: 'line',
+          label: granularidade === 'mes' ? 'Gasto estimado no mês' : 'Gasto médio diário',
+          data: porBalde(gastoDiario),
+          stack: 'linha-gasto',
+          borderColor: muted,
+          borderWidth: 2,
+          borderDash: [6, 4],
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          fill: false,
+        });
+        linhas.push('gasto estimado');
+      }
+      if (metaKcal) {
+        datasets.push({
+          type: 'line',
+          label: 'Dieta alvo',
+          data: porBalde(metaKcal),
+          stack: 'linha-alvo',
+          borderColor: cssVar('--alvo-line'),
+          borderWidth: 2,
+          borderDash: [3, 3],
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          fill: false,
+        });
+        linhas.push('dieta alvo');
+      }
     }
-    $('#chart-kcal-sub').textContent = temLinha
-      ? 'Barras: calorias por macronutriente · Linha tracejada: gasto estimado'
+    $('#chart-kcal-sub').textContent = linhas.length
+      ? `Barras: calorias por macronutriente · Linha${linhas.length > 1 ? 's' : ''} tracejada${linhas.length > 1 ? 's' : ''}: ${linhas.join(' e ')}`
       : 'Calorias por macronutriente no período';
 
     if (chartKcal) chartKcal.destroy();
