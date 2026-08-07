@@ -87,29 +87,36 @@
   /* ---- Agregação ---- */
 
   function agregar(entries, inicio, fim, granularidade) {
+    const soma = (b, e) => {
+      b.kcal += e.kcal;
+      b.p += e.p;
+      b.c += e.c;
+      b.g += e.g;
+    };
+    const vazio = { kcal: 0, p: 0, c: 0, g: 0 };
     let buckets = [];
     if (granularidade === 'hora') {
-      buckets = Array.from({ length: 24 }, (_, h) => ({ label: `${String(h).padStart(2, '0')}h`, kcal: 0 }));
-      for (const e of entries) buckets[new Date(e.ts).getHours()].kcal += e.kcal;
+      buckets = Array.from({ length: 24 }, (_, h) => ({ label: `${String(h).padStart(2, '0')}h`, ...vazio }));
+      for (const e of entries) soma(buckets[new Date(e.ts).getHours()], e);
     } else if (granularidade === 'diaSemana') {
-      buckets = DIAS_SEMANA.map((d) => ({ label: d, kcal: 0 }));
-      for (const e of entries) buckets[(new Date(e.ts).getDay() + 6) % 7].kcal += e.kcal;
+      buckets = DIAS_SEMANA.map((d) => ({ label: d, ...vazio }));
+      for (const e of entries) soma(buckets[(new Date(e.ts).getDay() + 6) % 7], e);
     } else if (granularidade === 'diaMes') {
       const nDias = Math.round((fim - inicio) / 86400000);
-      buckets = Array.from({ length: nDias }, (_, i) => ({ label: String(i + 1), kcal: 0 }));
-      for (const e of entries) buckets[new Date(e.ts).getDate() - 1].kcal += e.kcal;
+      buckets = Array.from({ length: nDias }, (_, i) => ({ label: String(i + 1), ...vazio }));
+      for (const e of entries) soma(buckets[new Date(e.ts).getDate() - 1], e);
     } else {
       // por mês
       const meses = [];
       const c = new Date(inicio);
       while (c < fim) {
-        meses.push({ label: MESES[c.getMonth()], mes: c.getMonth(), ano: c.getFullYear(), kcal: 0, dias: new Date(c.getFullYear(), c.getMonth() + 1, 0).getDate() });
+        meses.push({ label: MESES[c.getMonth()], mes: c.getMonth(), ano: c.getFullYear(), ...vazio, dias: new Date(c.getFullYear(), c.getMonth() + 1, 0).getDate() });
         c.setMonth(c.getMonth() + 1);
       }
       for (const e of entries) {
         const d = new Date(e.ts);
         const b = meses.find((m) => m.mes === d.getMonth() && m.ano === d.getFullYear());
-        if (b) b.kcal += e.kcal;
+        if (b) soma(b, e);
       }
       buckets = meses;
     }
@@ -333,18 +340,25 @@
     const s3 = cssVar('--s3');
 
     const labels = buckets.map((b) => b.label);
-    const dados = buckets.map((b) => Math.round(b.kcal));
+    // barras empilhadas por macronutriente (em kcal) + "outras" para as
+    // calorias que não vêm de macro (ex.: álcool), fechando o total real
+    const mkStack = (label, cor, valor) => ({
+      label,
+      data: buckets.map((b) => Math.round(valor(b))),
+      backgroundColor: cor,
+      stack: 'kcal',
+      borderColor: surface,
+      borderWidth: 1.5,
+      borderSkipped: false,
+      maxBarThickness: 26,
+      barPercentage: 0.65,
+      categoryPercentage: 0.8,
+    });
     const datasets = [
-      {
-        label: 'Consumo (kcal)',
-        data: dados,
-        backgroundColor: s1,
-        borderRadius: { topLeft: 4, topRight: 4 },
-        borderSkipped: 'bottom',
-        maxBarThickness: 26,
-        barPercentage: 0.65,
-        categoryPercentage: 0.8,
-      },
+      mkStack('Proteínas', s1, (b) => b.p * 4),
+      mkStack('Carboidratos', s2, (b) => b.c * 4),
+      mkStack('Gorduras', s3, (b) => b.g * 9),
+      mkStack('Álcool/outras', cssVar('--baseline'), (b) => Math.max(0, b.kcal - 4 * b.p - 4 * b.c - 9 * b.g)),
     ];
     let temLinha = false;
     if (gastoDiario && granularidade !== 'hora') {
@@ -363,8 +377,8 @@
       temLinha = true;
     }
     $('#chart-kcal-sub').textContent = temLinha
-      ? 'Barras: consumo · Linha tracejada: gasto estimado'
-      : 'Consumo de calorias no período';
+      ? 'Barras: calorias por macronutriente · Linha tracejada: gasto estimado'
+      : 'Calorias por macronutriente no período';
 
     if (chartKcal) chartKcal.destroy();
     chartKcal = new Chart($('#chart-kcal'), {
@@ -376,22 +390,36 @@
         interaction: { mode: 'index', intersect: false },
         plugins: {
           legend: {
-            display: temLinha,
+            display: true,
             labels: { color: ink2, usePointStyle: true, pointStyleWidth: 10, boxHeight: 8, font: { size: 12 } },
           },
           tooltip: {
+            filter: (ctx) => ctx.dataset.type === 'line' || ctx.parsed.y > 0,
             callbacks: {
-              label: (ctx) => ` ${ctx.dataset.label}: ${fmt(ctx.parsed.y, 0)} kcal`,
+              label: (ctx) => {
+                if (ctx.dataset.type === 'line') return ` ${ctx.dataset.label}: ${fmt(ctx.parsed.y, 0)} kcal`;
+                const b = buckets[ctx.dataIndex];
+                const gramas = { Proteínas: b.p, Carboidratos: b.c, Gorduras: b.g }[ctx.dataset.label];
+                return ` ${ctx.dataset.label}: ${fmt(ctx.parsed.y, 0)} kcal${gramas != null ? ` (${fmt(gramas, 0)} g)` : ''}`;
+              },
+              footer: (items) => {
+                const barra = items.find((i) => i.dataset.type !== 'line');
+                if (!barra) return '';
+                const b = buckets[barra.dataIndex];
+                return b.kcal > 0 ? `Total: ${fmt(b.kcal, 0)} kcal` : '';
+              },
             },
           },
         },
         scales: {
           x: {
+            stacked: true,
             grid: { display: false },
             border: { color: cssVar('--baseline') },
             ticks: { color: muted, font: { size: 11 }, maxRotation: 0, autoSkip: true },
           },
           y: {
+            stacked: true,
             beginAtZero: true,
             grid: { color: grid, drawTicks: false },
             border: { display: false },
