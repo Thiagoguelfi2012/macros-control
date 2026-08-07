@@ -416,15 +416,35 @@
               label: (ctx) => {
                 if (ctx.dataset.type === 'line') return ` ${ctx.dataset.label}: ${fmt(ctx.parsed.y, 0)} kcal`;
                 const b = buckets[ctx.dataIndex];
-                const gramas = { Proteínas: b.p, Carboidratos: b.c, Gorduras: b.g }[ctx.dataset.label];
-                return ` ${ctx.dataset.label}: ${fmt(ctx.parsed.y, 0)} kcal${gramas != null ? ` (${fmt(gramas, 0)} g)` : ''}`;
+                const { metaP, metaC, metaG } = MacroDB.getSettings();
+                const info = {
+                  Proteínas: [b.p, metaP],
+                  Carboidratos: [b.c, metaC],
+                  Gorduras: [b.g, metaG],
+                }[ctx.dataset.label];
+                if (!info) return ` ${ctx.dataset.label}: ${fmt(ctx.parsed.y, 0)} kcal`;
+                const [gramas, metaDia] = info;
+                // alvo do balde: diário nas visões por dia; × dias na visão mensal
+                // (no filtro Dia, cada barra é 1 hora — % do alvo não se aplica)
+                const alvo =
+                  metaDia && granularidade !== 'hora'
+                    ? granularidade === 'mes'
+                      ? metaDia * b.dias
+                      : metaDia
+                    : null;
+                const pctAlvo = alvo ? ` · ${fmt((gramas / alvo) * 100, 0)}% do alvo` : '';
+                return ` ${ctx.dataset.label}: ${fmt(gramas, 0)} g (${fmt(ctx.parsed.y, 0)} kcal)${pctAlvo}`;
               },
               footer: (items) => {
                 const barra = items.find((i) => i.dataset.type !== 'line');
                 if (!barra) return '';
                 const b = buckets[barra.dataIndex];
                 const total = 4 * b.p + 4 * b.c + 9 * b.g;
-                return total > 0 ? `Total: ${fmt(total, 0)} kcal` : '';
+                if (total <= 0) return '';
+                const { metaKcal: mk } = MacroDB.getSettings();
+                const alvoKcal =
+                  mk && granularidade !== 'hora' ? (granularidade === 'mes' ? mk * b.dias : mk) : null;
+                return `Total: ${fmt(total, 0)} kcal${alvoKcal ? ` · ${fmt((total / alvoKcal) * 100, 0)}% da meta` : ''}`;
               },
             },
           },
