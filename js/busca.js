@@ -3,7 +3,7 @@
 const FoodSearch = (() => {
   // alimentos do usuário primeiro; fontes em português nativo (TACO/TBCA/curados)
   // na frente; USDA traduzido por último
-  const SOURCE_RANK = { p: -1, t: 0, b: 0, r: 0, i: 1, u: 3 };
+  const SOURCE_RANK = { p: -1, t: 0, b: 0, r: 0, m: 0, i: 1, u: 3 };
 
   const normalize = (s) =>
     s
@@ -14,6 +14,7 @@ const FoodSearch = (() => {
       .replace(/\s+/g, ' ')
       .trim()
       // grafias populares → grafia usada nas tabelas
+      .replace(/\bmiojo\b/g, 'macarrao instantaneo')
       .replace(/\bkibe(s)?\b/g, 'quibe$1')
       .replace(/\b(mussarela|mozarela|mozzarela|mozzarella)\b/g, 'mucarela')
       .replace(/\byogur(te?|t)\b/g, 'iogurte')
@@ -52,20 +53,30 @@ const FoodSearch = (() => {
       for (const t of tokens) {
         // cada token da consulta precisa ser prefixo de alguma palavra do nome
         let best = -1;
+        let exato = false;
         for (let w = 0; w < item.words.length; w++) {
-          if (item.words[w].startsWith(t)) {
+          if (item.words[w] === t) {
             best = w;
-            break;
+            exato = true;
+            break; // palavra idêntica vale mais que prefixo ("bis" ≠ "biscoito")
           }
+          if (best === -1 && item.words[w].startsWith(t)) best = w;
         }
         if (best === -1) {
           ok = false;
           break;
         }
-        score += best; // palavras mais no início do nome pontuam melhor
+        score += best - (exato ? 3 : 0); // início do nome e match exato pontuam melhor
       }
       if (!ok) continue;
-      if (item.norm.startsWith(qContent)) score -= 5; // começo exato do nome vale mais
+      // começo exato do nome vale mais — mas só em fronteira de palavra,
+      // senão "bis" ganharia o bônus em "biscoito"
+      if (
+        item.norm.startsWith(qContent) &&
+        (item.norm.length === qContent.length || item.norm[qContent.length] === ' ')
+      ) {
+        score -= 5;
+      }
       score = score * 10 + SOURCE_RANK[item.f.f] * 6 + item.norm.length / 50;
       results.push({ food: item.f, score });
     }

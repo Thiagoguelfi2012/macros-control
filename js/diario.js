@@ -723,7 +723,7 @@
       render: {
         option: (item, escape) => {
           const fonte =
-            { t: 'TACO', b: 'TBCA', i: 'IBGE', u: 'USDA', r: 'estimativa', p: 'meu alimento' }[item.f] || '';
+            { t: 'TACO', b: 'TBCA', i: 'IBGE', u: 'USDA', r: 'estimativa', m: 'rótulo da marca', p: 'meu alimento' }[item.f] || '';
           return `<div>
             <span class="opt-name">${escape(item.n)}</span>
             <span class="opt-meta">${fmt(item.kcal, 0)} kcal · P ${fmt(item.p)} · C ${fmt(item.c)} · G ${fmt(item.g)} (100 g) · ${fonte}</span>

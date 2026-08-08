@@ -13,6 +13,7 @@ import { mkdirSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { CURADOS } from './curados.mjs';
+import { MARCAS } from './marcas.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const RAW_DIR = process.argv[2] || join(ROOT, 'tools', '.cache');
@@ -996,11 +997,12 @@ async function main() {
 
   const foods = [];
   const seen = new Set();
-  const push = (food) => {
+  const push = (food, permiteZerado = false) => {
     const key = norm(food.n);
     if (!key || seen.has(key)) return false;
-    // sem nenhum valor nutricional (ex.: '*' na TACO): descarta — outra fonte cobre
-    if (!food.kcal && !food.p && !food.c && !food.g) return false;
+    // sem nenhum valor nutricional (ex.: '*' na TACO): descarta — outra fonte
+    // cobre. Curados/marcas podem ser legitimamente zero (Coca zero, creatina).
+    if (!permiteZerado && !food.kcal && !food.p && !food.c && !food.g) return false;
     seen.add(key);
     foods.push(food);
     return true;
@@ -1037,10 +1039,22 @@ async function main() {
       i: stableId('r', cItem.n), n: cItem.n, f: 'r',
       kcal: round1(cItem.kcal), p: round1(cItem.p), c: round1(cItem.c), g: round1(cItem.g),
       m: (cItem.m || []).map(([l, gr]) => [l, gr]),
-    })) nCurados++;
+    }, true)) nCurados++;
   }
 
-  // 4) IBGE
+  // 4) Marcas brasileiras (valores de rótulo)
+  let nMarcas = 0;
+  for (const it of MARCAS) {
+    const food = {
+      i: stableId('m', it.n), n: it.n, f: 'm',
+      kcal: round1(it.kcal), p: round1(it.p), c: round1(it.c), g: round1(it.g),
+      m: (it.m || []).map(([l, gr]) => [l, gr]),
+    };
+    if (it.l) food.l = 1;
+    if (push(food, true)) nMarcas++;
+  }
+
+  // 5) IBGE
   const antesIbge = foods.length;
   for (const t of loadIbge()) {
     push(fixEnergy({
@@ -1090,11 +1104,11 @@ async function main() {
   mkdirSync(dirname(OUT), { recursive: true });
   // Ao regenerar a base com mudanças relevantes, incremente v e o
   // FOODS_VERSION correspondente em js/db.js para forçar a recarga no navegador.
-  writeFileSync(OUT, JSON.stringify({ v: 9, foods }));
+  writeFileSync(OUT, JSON.stringify({ v: 11, foods }));
 
   const bytes = readFileSync(OUT).length;
   console.log(`foods.json gerado: ${foods.length} alimentos (${(bytes / 1024 / 1024).toFixed(2)} MB)`);
-  console.log(`  TACO: ${nTaco} | TBCA: ${nTbca} | Curados: ${nCurados} | IBGE: ${nIbge} | USDA SR28 traduzido: ${nUsda}`);
+  console.log(`  TACO: ${nTaco} | TBCA: ${nTbca} | Curados: ${nCurados} | Marcas: ${nMarcas} | IBGE: ${nIbge} | USDA SR28 traduzido: ${nUsda}`);
   const comMedidas = foods.filter((f) => f.m && f.m.length).length;
   console.log(`  Alimentos com medidas caseiras (unidades): ${comMedidas}`);
   console.log(`  Líquidos (unidade base em ml): ${nLiquidos}`);
