@@ -163,6 +163,32 @@
 
   let cesta = []; // itens já "incluídos na refeição", salvos todos juntos
 
+  // Celular em segundo plano descarta a página e a recarrega na volta: a
+  // refeição em montagem é persistida e restaurada (expira em 12 h).
+  const LS_CESTA = 'cestaRefeicao';
+
+  function salvarCesta() {
+    try {
+      if (cesta.length) localStorage.setItem(LS_CESTA, JSON.stringify({ t: Date.now(), itens: cesta }));
+      else localStorage.removeItem(LS_CESTA);
+    } catch {
+      /* sem persistência da cesta */
+    }
+  }
+
+  function restaurarCesta() {
+    try {
+      const salvo = JSON.parse(localStorage.getItem(LS_CESTA) || 'null');
+      if (salvo && Array.isArray(salvo.itens) && Date.now() - salvo.t < 12 * 3600000) {
+        cesta = salvo.itens;
+      } else {
+        localStorage.removeItem(LS_CESTA);
+      }
+    } catch {
+      /* sem persistência da cesta */
+    }
+  }
+
   const somaCesta = () =>
     cesta.reduce(
       (acc, it) => ({ kcal: acc.kcal + it.kcal, p: acc.p + it.p, c: acc.c + it.c, g: acc.g + it.g }),
@@ -221,6 +247,7 @@
       row.querySelector('.ci-nome').textContent = it.nome;
       row.querySelector('button').addEventListener('click', () => {
         cesta.splice(idx, 1);
+        salvarCesta();
         renderCesta();
         atualizarPreview();
       });
@@ -238,6 +265,7 @@
       return;
     }
     cesta.push(item);
+    salvarCesta();
     renderCesta();
     limparSelecao();
     setTimeout(() => tomSelect.focus(), 50);
@@ -360,6 +388,7 @@
       await MacroDB.addEntry({ ts, ...item });
     }
     cesta = [];
+    salvarCesta();
     renderCesta();
     fecharModal();
     render();
@@ -781,7 +810,10 @@
     // podem ter mudado nos Relatórios)
     document.addEventListener('diario:refresh', render);
 
+    restaurarCesta();
     render();
+    // refeição recuperada de uma recarga: reabre o modal onde o usuário parou
+    if (cesta.length) abrirModal();
   }
 
   init().catch((e) => {
