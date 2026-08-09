@@ -102,6 +102,25 @@
       </div>
       <p class="cad-hint" id="alvo-kcal-hint" style="margin-top:10px"></p>
     </div>
+
+    <div class="settings-card">
+      <h3>Backup e transferência</h3>
+      <p class="sub">Seus dados ficam somente neste navegador. Exporte um arquivo com registros, alimentos próprios e configurações — para guardar de segurança ou levar a outro aparelho, onde basta importar. A importação soma com o que já existe: nada é apagado e registros repetidos são ignorados.</p>
+      <div class="settings-row">
+        <button class="btn btn-primary" id="btn-exportar">Exportar dados</button>
+        <button class="btn" id="btn-importar">Importar backup…</button>
+        <input type="file" id="inp-importar" accept=".json,application/json,text/plain" hidden />
+        <button class="btn" id="backup-toggle">Copiar/colar em texto</button>
+      </div>
+      <div id="backup-texto-wrap" hidden style="margin-top:10px">
+        <textarea id="backup-texto" class="backup-texto" rows="5" placeholder="Cole aqui o texto de um backup para importar — ou gere o texto do backup atual para copiar."></textarea>
+        <div class="settings-row" style="margin-top:8px">
+          <button class="btn" id="btn-backup-gerar-texto">Gerar e copiar texto</button>
+          <button class="btn" id="btn-backup-importar-texto">Importar do texto</button>
+        </div>
+      </div>
+      <p class="cad-hint" id="backup-status" style="margin-top:10px"></p>
+    </div>
   </main>
 
   <script src="vendor/chart.umd.min.js"></script>

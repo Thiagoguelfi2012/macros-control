@@ -71,6 +71,19 @@ body {
   overscroll-behavior-y: contain; /* o pull-to-refresh é nosso (js/refresh.js) */
 }
 
+/* ---- Backup (copiar/colar em texto) ---- */
+.backup-texto {
+  width: 100%;
+  box-sizing: border-box;
+  font: 12px/1.4 ui-monospace, 'Cascadia Mono', Menlo, Consolas, monospace;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: var(--surface);
+  color: var(--ink);
+  resize: vertical;
+}
+
 /* ---- Pull-to-refresh ---- */
 .ptr {
   position: fixed;

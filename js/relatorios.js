@@ -573,13 +573,16 @@
       }
     });
 
-    const { gastoBasal, gastoDiario, metaKcal, metaP, metaC, metaG } = MacroDB.getSettings();
-    if (gastoBasal) $('#inp-basal').value = gastoBasal;
-    if (gastoDiario) $('#inp-diario').value = gastoDiario;
-    if (metaKcal) $('#inp-meta-kcal').value = metaKcal;
-    if (metaP) $('#inp-meta-p').value = metaP;
-    if (metaC) $('#inp-meta-c').value = metaC;
-    if (metaG) $('#inp-meta-g').value = metaG;
+    function preencherConfig() {
+      const { gastoBasal, gastoDiario, metaKcal, metaP, metaC, metaG } = MacroDB.getSettings();
+      if (gastoBasal) $('#inp-basal').value = gastoBasal;
+      if (gastoDiario) $('#inp-diario').value = gastoDiario;
+      if (metaKcal) $('#inp-meta-kcal').value = metaKcal;
+      if (metaP) $('#inp-meta-p').value = metaP;
+      if (metaC) $('#inp-meta-c').value = metaC;
+      if (metaG) $('#inp-meta-g').value = metaG;
+    }
+    preencherConfig();
     $('#btn-salvar-config').addEventListener('click', () => {
       MacroDB.saveSettings({
         gastoBasal: parseFloat($('#inp-basal').value) || 0,
@@ -626,6 +629,120 @@
       ok.hidden = false;
       setTimeout(() => (ok.hidden = true), 2000);
       render();
+    });
+
+    /* ---- Backup: exportar/importar registros, alimentos próprios e config ---- */
+
+    const backupStatus = $('#backup-status');
+    const setStatusBackup = (txt, erro = false) => {
+      backupStatus.textContent = txt;
+      backupStatus.style.color = erro ? 'var(--bad-text)' : '';
+    };
+
+    async function gerarBackup() {
+      const [entries, custom] = await Promise.all([MacroDB.getAllEntries(), MacroDB.getCustomFoods()]);
+      return {
+        app: 'controle-de-macros',
+        versao: 1,
+        exportadoEm: new Date().toISOString(),
+        settings: MacroDB.getSettings(),
+        custom,
+        entries,
+      };
+    }
+
+    async function importarBackup(obj) {
+      if (!obj || !Array.isArray(obj.entries)) {
+        throw new Error('o conteúdo não parece um backup deste app');
+      }
+      // soma sem duplicar: um registro idêntico (mesmo instante, alimento e
+      // quantidade) já presente é ignorado
+      const atuais = await MacroDB.getAllEntries();
+      const chave = (e) => `${e.ts}|${e.nome}|${e.gramas}|${e.kcal}`;
+      const vistos = new Set(atuais.map(chave));
+      let novos = 0;
+      for (const e of obj.entries) {
+        if (!e || !e.ts || !e.nome || vistos.has(chave(e))) continue;
+        const { id, ...resto } = e;
+        await MacroDB.addEntry(resto);
+        vistos.add(chave(e));
+        novos++;
+      }
+      const customs = (Array.isArray(obj.custom) ? obj.custom : []).filter((f) => f && f.i && f.n);
+      for (const f of customs) await MacroDB.addCustomFood(f);
+      if (obj.settings) MacroDB.saveSettings(obj.settings);
+      preencherConfig();
+      // alimentos próprios importados entram na busca (versão de página única)
+      if (typeof FoodSearch !== 'undefined') FoodSearch.buildIndex(await MacroDB.ensureFoods());
+      document.dispatchEvent(new Event('diario:refresh'));
+      render();
+      return { novos, repetidos: obj.entries.length - novos, customs: customs.length };
+    }
+
+    const resumoImport = (r) =>
+      `Importado: ${r.novos} registro${r.novos === 1 ? '' : 's'} novo${r.novos === 1 ? '' : 's'}` +
+      (r.repetidos ? ` (${r.repetidos} já existia${r.repetidos === 1 ? '' : 'm'})` : '') +
+      `, ${r.customs} alimento${r.customs === 1 ? '' : 's'} próprio${r.customs === 1 ? '' : 's'} e configurações aplicadas.`;
+
+    $('#btn-exportar').addEventListener('click', async () => {
+      const b = await gerarBackup();
+      const blob = new Blob([JSON.stringify(b)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `controle-de-macros-backup-${b.exportadoEm.slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+      setStatusBackup(
+        `Backup gerado com ${b.entries.length} registros e ${b.custom.length} alimentos próprios. ` +
+          'Se o download não aparecer, use o "Copiar/colar em texto".'
+      );
+    });
+
+    $('#btn-importar').addEventListener('click', () => $('#inp-importar').click());
+    $('#inp-importar').addEventListener('change', async (ev) => {
+      const file = ev.target.files[0];
+      ev.target.value = '';
+      if (!file) return;
+      try {
+        const r = await importarBackup(JSON.parse(await file.text()));
+        setStatusBackup(resumoImport(r));
+      } catch (e) {
+        setStatusBackup(`Não foi possível importar: ${e.message}`, true);
+      }
+    });
+
+    // fallback sem downloads/arquivos (ex.: página hospedada em iframe)
+    $('#backup-toggle').addEventListener('click', () => {
+      const w = $('#backup-texto-wrap');
+      w.hidden = !w.hidden;
+    });
+    $('#btn-backup-gerar-texto').addEventListener('click', async () => {
+      const b = await gerarBackup();
+      const ta = $('#backup-texto');
+      ta.value = JSON.stringify(b);
+      ta.select();
+      let copiado = false;
+      try {
+        await navigator.clipboard.writeText(ta.value);
+        copiado = true;
+      } catch {
+        /* sem permissão de clipboard: o texto fica selecionado para copiar */
+      }
+      setStatusBackup(
+        `Texto do backup gerado (${b.entries.length} registros)${copiado ? ' e copiado para a área de transferência' : ' — copie o texto selecionado'}.`
+      );
+    });
+    $('#btn-backup-importar-texto').addEventListener('click', async () => {
+      try {
+        const txt = $('#backup-texto').value.trim();
+        if (!txt) throw new Error('cole o texto do backup na caixa acima');
+        const r = await importarBackup(JSON.parse(txt));
+        setStatusBackup(resumoImport(r));
+      } catch (e) {
+        setStatusBackup(`Não foi possível importar: ${e.message}`, true);
+      }
     });
 
     // re-renderiza os gráficos quando o tema muda (cores dos tokens): pelo
