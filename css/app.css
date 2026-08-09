@@ -68,6 +68,41 @@ body {
   font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
   font-size: 15px;
   line-height: 1.45;
+  overscroll-behavior-y: contain; /* o pull-to-refresh é nosso (js/refresh.js) */
+}
+
+/* ---- Pull-to-refresh ---- */
+.ptr {
+  position: fixed;
+  top: -48px;
+  left: 50%;
+  transform: translate(-50%, 0);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 60;
+  transition: opacity 0.15s;
+}
+.ptr.visible { opacity: 1; }
+.ptr.armed { color: var(--accent); }
+.ptr svg { width: 20px; height: 20px; }
+.ptr .ptr-arrow { transition: transform 0.2s; }
+.ptr.armed .ptr-arrow { transform: rotate(180deg); }
+.ptr .ptr-spin { display: none; }
+.ptr.spinning .ptr-arrow { display: none; }
+.ptr.spinning .ptr-spin { display: block; animation: ptr-girar 0.8s linear infinite; }
+.ptr.spinning { transition: opacity 0.15s, transform 0.2s; }
+@keyframes ptr-girar {
+  to { transform: rotate(360deg); }
 }
 
 /* ---- Cabeçalho / navegação ---- */

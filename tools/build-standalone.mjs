@@ -70,6 +70,9 @@ ${read('js/diario.js')}
 ${read('js/relatorios.js')}
 </script>
 <script>
+${read('js/refresh.js')}
+</script>
+<script>
 // troca de abas da versão de página única
 document.querySelectorAll('.topbar nav a[data-view]').forEach((a) => {
   a.addEventListener('click', (ev) => {
