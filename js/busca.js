@@ -10,6 +10,8 @@ const FoodSearch = (() => {
       .toLowerCase()
       .normalize('NFD')
       .replace(/[̀-ͯ]/g, '')
+      // apóstrofos somem em vez de virar espaço: "hellmann's" ↔ "hellmanns"
+      .replace(/[''´`]/g, '')
       .replace(/[^a-z0-9 ]+/g, ' ')
       .replace(/\s+/g, ' ')
       .trim()
