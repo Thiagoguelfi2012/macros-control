@@ -3029,20 +3029,75 @@ const FoodSearch = (() => {
       (r.repetidos ? ` (${r.repetidos} já existia${r.repetidos === 1 ? '' : 'm'})` : '') +
       `, ${r.customs} alimento${r.customs === 1 ? '' : 's'} próprio${r.customs === 1 ? '' : 's'} e configurações aplicadas.`;
 
+    // hospedada, a página roda dentro de um iframe: downloads podem ser
+    // bloqueados pelo sandbox — daí as camadas de fallback na exportação
+    const embutido = (() => {
+      try {
+        return window.self !== window.top;
+      } catch {
+        return true;
+      }
+    })();
+
     $('#btn-exportar').addEventListener('click', async () => {
       const b = await gerarBackup();
-      const blob = new Blob([JSON.stringify(b)], { type: 'application/json' });
+      const nome = `controle-de-macros-backup-${b.exportadoEm.slice(0, 10)}.json`;
+      const json = JSON.stringify(b);
+      const resumo =
+        `${b.entries.length} registro${b.entries.length === 1 ? '' : 's'} e ` +
+        `${b.custom.length} alimento${b.custom.length === 1 ? '' : 's'} próprio${b.custom.length === 1 ? '' : 's'}`;
+
+      // 1) celular: folha de compartilhar com o arquivo .json — permite
+      // "Salvar em Arquivos"/Drive e funciona onde o download é bloqueado
+      if (navigator.canShare) {
+        try {
+          const file = new File([json], nome, { type: 'application/json' });
+          if (navigator.canShare({ files: [file] })) {
+            await navigator.share({ files: [file], title: nome });
+            setStatusBackup(`Backup exportado (${resumo}): ${nome}.`);
+            return;
+          }
+        } catch (e) {
+          if (e.name === 'AbortError') {
+            setStatusBackup('Exportação cancelada.');
+            return;
+          }
+          /* compartilhar bloqueado: tenta o download direto */
+        }
+      }
+
+      // 2) download direto do .json
+      const blob = new Blob([json], { type: 'application/json' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = `controle-de-macros-backup-${b.exportadoEm.slice(0, 10)}.json`;
+      a.download = nome;
       document.body.appendChild(a);
       a.click();
       a.remove();
       setTimeout(() => URL.revokeObjectURL(a.href), 10000);
-      setStatusBackup(
-        `Backup gerado com ${b.entries.length} registros e ${b.custom.length} alimentos próprios. ` +
-          'Se o download não aparecer, use o "Copiar/colar em texto".'
-      );
+
+      // 3) embutido num iframe o download pode ser bloqueado sem aviso:
+      // deixa o texto do backup pronto para copiar como garantia
+      if (embutido) {
+        const ta = $('#backup-texto');
+        $('#backup-texto-wrap').hidden = false;
+        ta.value = json;
+        let copiado = false;
+        try {
+          await navigator.clipboard.writeText(json);
+          copiado = true;
+        } catch {
+          /* sem permissão de clipboard */
+        }
+        setStatusBackup(
+          `Backup gerado (${resumo}). Se o download de ${nome} não apareceu, o navegador o bloqueou dentro desta página — ` +
+            (copiado
+              ? 'o texto do backup já foi copiado para a área de transferência: cole e salve onde preferir.'
+              : 'copie o texto do backup abaixo e salve onde preferir.')
+        );
+      } else {
+        setStatusBackup(`Backup exportado (${resumo}): ${nome}.`);
+      }
     });
 
     $('#btn-importar').addEventListener('click', () => $('#inp-importar').click());
