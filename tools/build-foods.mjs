@@ -1104,7 +1104,7 @@ async function main() {
   mkdirSync(dirname(OUT), { recursive: true });
   // Ao regenerar a base com mudanças relevantes, incremente v e o
   // FOODS_VERSION correspondente em js/db.js para forçar a recarga no navegador.
-  writeFileSync(OUT, JSON.stringify({ v: 14, foods }));
+  writeFileSync(OUT, JSON.stringify({ v: 15, foods }));
 
   const bytes = readFileSync(OUT).length;
   console.log(`foods.json gerado: ${foods.length} alimentos (${(bytes / 1024 / 1024).toFixed(2)} MB)`);

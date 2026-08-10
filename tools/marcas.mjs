@@ -739,4 +739,18 @@ export const MARCAS = [
   { n: "Óleo de soja Liza", kcal: 900, p: 0, c: 0, g: 100, l: 1, m: [["colher de sopa (13 ml)", 13], ["fio (5 ml)", 5]] },
   { n: "Molho de pimenta Tabasco", kcal: 12, p: 1, c: 2, g: 0, m: [["colher de chá (5 g)", 5]] },
   { n: "Mostarda Hemmer escura", kcal: 90, p: 5, c: 10, g: 3, m: [["colher de sopa (12 g)", 12]] },
+  // ---- Expansão 5: linha completa de wheys (isolados e concentrados) ----
+  { n: "Whey isolado Iso Triple Zero Integralmédica", kcal: 353, p: 83, c: 3, g: 0.7, m: [["dose (30 g)", 30], ["scoop (30 g)", 30]] },
+  { n: "Nutri Whey Protein Integralmédica (concentrado)", kcal: 382, p: 73.5, c: 11.8, g: 4.4, m: [["dose (34 g)", 34], ["scoop (34 g)", 34]] },
+  { n: "Whey isolado Isofort Vitafor", kcal: 367, p: 83, c: 1.5, g: 0.5, m: [["dose (30 g)", 30], ["sachê (30 g)", 30]] },
+  { n: "Whey isolado ISO 100 Dymatize (hidrolisado)", kcal: 375, p: 78, c: 6, g: 1.6, m: [["dose (32 g)", 32], ["scoop (32 g)", 32]] },
+  { n: "Whey Gold Standard 100% Optimum Nutrition", kcal: 395, p: 79, c: 10, g: 3.3, m: [["dose (30 g)", 30], ["scoop (30 g)", 30]] },
+  { n: "Whey 100% Max Titanium (concentrado)", kcal: 403, p: 70, c: 19, g: 6, m: [["dose (30 g)", 30], ["scoop (30 g)", 30]] },
+  { n: "Whey isolado Iso Whey Max Titanium", kcal: 370, p: 87, c: 3.3, g: 1, m: [["dose (30 g)", 30]] },
+  { n: "Best Whey Atlhetica Nutrition (concentrado)", kcal: 391, p: 69, c: 17, g: 5.7, m: [["dose (35 g)", 35], ["scoop (35 g)", 35]] },
+  { n: "Whey 100% Black Skull", kcal: 390, p: 67, c: 20, g: 5, m: [["dose (30 g)", 30]] },
+  { n: "Whey isolado Nitro Tech Iso Muscletech", kcal: 370, p: 81, c: 6, g: 1.5, m: [["dose (32 g)", 32]] },
+  { n: "Whey zero lactose Verde Campo Natural Whey", kcal: 380, p: 80, c: 8, g: 3, m: [["dose (30 g)", 30]] },
+  { n: "Creatina Integralmédica", kcal: 0, p: 0, c: 0, g: 0, m: [["dose (3 g)", 3], ["dose (5 g)", 5]] },
+  { n: "Creatina Soldiers Nutrition", kcal: 0, p: 0, c: 0, g: 0, m: [["dose (3 g)", 3], ["dose (5 g)", 5]] },
 ];
