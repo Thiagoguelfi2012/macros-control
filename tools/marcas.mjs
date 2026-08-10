@@ -667,4 +667,76 @@ export const MARCAS = [
   { n: "Café solúvel Nescafé Original (pó)", kcal: 350, p: 15, c: 65, g: 0.5, m: [["colher de chá (2 g)", 2]] },
   { n: "Cappuccino Três Corações clássico (pó)", kcal: 430, p: 10, c: 70, g: 12, m: [["colher de sopa (10 g)", 10], ["porção (20 g)", 20]] },
   { n: "Café com leite 3 Corações (pó preparado)", kcal: 60, p: 1.5, c: 10, g: 1.5, l: 1, m: [["xícara (150 ml)", 150]] },
+  // ---- Expansão 4: pães Visconti/Nutrella, Polenguinho, congelados Bem Brasil,
+  //      sopas, pipocas, doces Kinder/Ferrero, sobremesas, destilados etc. ----
+
+  // Pães e bolinhos (marcas que faltavam)
+  { n: "Pão de forma Visconti tradicional", kcal: 253, p: 8, c: 47.5, g: 3, m: [["fatia (25 g)", 25], ["2 fatias (50 g)", 50]] },
+  { n: "Pão de forma integral Visconti", kcal: 240, p: 9.5, c: 44, g: 3, m: [["fatia (25 g)", 25], ["2 fatias (50 g)", 50]] },
+  { n: "Bisnaguinha Visconti", kcal: 300, p: 8, c: 55, g: 5, m: [["unidade (20 g)", 20]] },
+  { n: "Bolinho Visconti duplo chocolate", kcal: 390, p: 5, c: 52, g: 17.5, m: [["unidade (40 g)", 40]] },
+  { n: "Pão de forma Nutrella original", kcal: 250, p: 9, c: 45, g: 3.3, m: [["fatia (25 g)", 25], ["2 fatias (50 g)", 50]] },
+  { n: "Pão de forma Nutrella 12 grãos", kcal: 245, p: 11, c: 40, g: 4.5, m: [["fatia (25 g)", 25], ["2 fatias (50 g)", 50]] },
+  { n: "Rap10 tradicional (tortilha wrap)", kcal: 305, p: 8.5, c: 53, g: 6.5, m: [["unidade (35 g)", 35]] },
+  { n: "Rap10 integral (tortilha wrap)", kcal: 290, p: 9.5, c: 49, g: 6, m: [["unidade (35 g)", 35]] },
+
+  // Queijos e sobremesas lácteas
+  { n: "Polenguinho original (Polenghi)", kcal: 265, p: 17.6, c: 2.9, g: 20.5, m: [["unidade (17 g)", 17]] },
+  { n: "Polenguinho light (Polenghi)", kcal: 211, p: 21, c: 3, g: 13, m: [["unidade (17 g)", 17]] },
+  { n: "Queijo parmesão ralado Vigor", kcal: 453, p: 35, c: 4, g: 33, m: [["colher de sopa (10 g)", 10], ["sachê (50 g)", 50]] },
+  { n: "Sobremesa Danette chocolate (Danone)", kcal: 122, p: 2.7, c: 20, g: 3.3, m: [["pote (90 g)", 90]] },
+  { n: "Sobremesa Chandelle chocolate (Nestlé)", kcal: 130, p: 3, c: 21, g: 3.7, m: [["pote (90 g)", 90]] },
+
+  // Congelados Bem Brasil
+  { n: "Batata palito congelada Bem Brasil (assada)", kcal: 150, p: 2.4, c: 24, g: 4.7, m: [["porção (100 g)", 100]] },
+  { n: "Batata rústica congelada Bem Brasil (assada)", kcal: 140, p: 2.5, c: 23, g: 4, m: [["porção (100 g)", 100]] },
+  { n: "Mandioca palito congelada Bem Brasil (assada)", kcal: 165, p: 1.3, c: 30, g: 4, m: [["porção (100 g)", 100]] },
+  { n: "Polenta palito congelada Bem Brasil (frita)", kcal: 150, p: 2, c: 25, g: 4.5, m: [["porção (100 g)", 100]] },
+
+  // Pastas e geleias
+  { n: "Amendocrem tradicional (creme de amendoim)", kcal: 533, p: 13, c: 40, g: 36, m: [["colher de sopa (15 g)", 15]] },
+  { n: "Geleia Queensberry morango", kcal: 240, p: 0.4, c: 58, g: 0, m: [["colher de sopa (20 g)", 20]] },
+  { n: "Geleia Queensberry diet morango", kcal: 120, p: 0.5, c: 29, g: 0, m: [["colher de sopa (20 g)", 20]] },
+  { n: "Achocolatado Ovomaltine flocos crocantes", kcal: 430, p: 7, c: 75, g: 10, m: [["colher de sopa (10 g)", 10], ["porção (20 g)", 20]] },
+
+  // Sopas e caldos
+  { n: "Sopa instantânea Vono creme de galinha", kcal: 365, p: 8, c: 60, g: 10, m: [["sachê (17 g)", 17]] },
+  { n: "Sopa instantânea Vono creme de queijo", kcal: 375, p: 7.5, c: 58, g: 12, m: [["sachê (17 g)", 17]] },
+  { n: "Caldo Knorr galinha (cubo)", kcal: 250, p: 8, c: 15, g: 17, m: [["cubo (9,5 g)", 9.5]] },
+  { n: "Caldo Knorr carne (cubo)", kcal: 245, p: 8, c: 14, g: 17, m: [["cubo (9,5 g)", 9.5]] },
+  { n: "Feijoada enlatada Bordon", kcal: 155, p: 9, c: 11, g: 8, m: [["porção (250 g)", 250], ["lata (830 g)", 830]] },
+  { n: "Seleta de legumes Quero (drenada)", kcal: 60, p: 2.5, c: 10, g: 0.8, m: [["lata drenada (170 g)", 170], ["colher de sopa (25 g)", 25]] },
+
+  // Pipocas
+  { n: "Pipoca de micro-ondas Yoki manteiga (estourada)", kcal: 440, p: 8, c: 57, g: 19, m: [["porção (25 g de milho)", 25], ["pacote estourado (100 g)", 100]] },
+  { n: "Pipoca de micro-ondas Yoki natural com sal (estourada)", kcal: 400, p: 10, c: 62, g: 12, m: [["porção (25 g de milho)", 25], ["pacote estourado (100 g)", 100]] },
+  { n: "Pipoca pronta Yoki cinema (balde)", kcal: 480, p: 7, c: 55, g: 26, m: [["porção (25 g)", 25]] },
+
+  // Chocolates e doces que faltavam
+  { n: "Kinder Bueno", kcal: 570, p: 8.6, c: 49.5, g: 37.3, m: [["unidade (43 g)", 43], ["barrinha (21,5 g)", 21.5]] },
+  { n: "Kinder Ovo (chocolate)", kcal: 566, p: 8.8, c: 53.5, g: 35, m: [["unidade (20 g)", 20]] },
+  { n: "Ferrero Rocher", kcal: 577, p: 7.3, c: 44.2, g: 42.7, m: [["unidade (12,5 g)", 12.5], ["3 unidades (37,5 g)", 37.5]] },
+  { n: "Paçoquita (Santa Helena)", kcal: 487, p: 12.5, c: 52.5, g: 25, m: [["unidade (21 g)", 21]] },
+  { n: "Bala de gelatina Fini Tubes morango", kcal: 335, p: 5, c: 78, g: 0, m: [["porção (30 g)", 30], ["unidade (7 g)", 7]] },
+  { n: "Bala de gelatina Fini Beijos morango", kcal: 340, p: 5, c: 79, g: 0, m: [["porção (30 g)", 30]] },
+  { n: "Bala Halls extra forte", kcal: 395, p: 0, c: 98, g: 0, m: [["unidade (2,5 g)", 2.5]] },
+  { n: "Chiclete Trident menta", kcal: 165, p: 0, c: 65, g: 0, m: [["unidade (1,9 g)", 1.9]] },
+
+  // Refrigerantes regionais e bebidas
+  { n: "Refrigerante Sukita laranja", kcal: 47, p: 0, c: 11.8, g: 0, l: 1, m: [["lata (350 ml)", 350], ["copo (250 ml)", 250]] },
+  { n: "Refrigerante Itubaína", kcal: 44, p: 0, c: 11, g: 0, l: 1, m: [["lata (350 ml)", 350], ["garrafa (600 ml)", 600]] },
+  { n: "Refrigerante Guaraná Jesus", kcal: 48, p: 0, c: 12, g: 0, l: 1, m: [["lata (350 ml)", 350]] },
+  { n: "Refrigerante Kuat guaraná", kcal: 40, p: 0, c: 10, g: 0, l: 1, m: [["lata (350 ml)", 350]] },
+  { n: "Suco Prats laranja integral", kcal: 45, p: 0.7, c: 10, g: 0, l: 1, m: [["copo (200 ml)", 200], ["garrafa (900 ml)", 900]] },
+
+  // Destilados (dose)
+  { n: "Cachaça 51", kcal: 220, p: 0, c: 0, g: 0, l: 1, m: [["dose (50 ml)", 50]] },
+  { n: "Vodka Smirnoff", kcal: 220, p: 0, c: 0, g: 0, l: 1, m: [["dose (50 ml)", 50]] },
+  { n: "Whisky Johnnie Walker Red Label", kcal: 220, p: 0, c: 0, g: 0, l: 1, m: [["dose (50 ml)", 50]] },
+  { n: "Gin Tanqueray", kcal: 263, p: 0, c: 0, g: 0, l: 1, m: [["dose (50 ml)", 50]] },
+
+  // Óleos e temperos
+  { n: "Óleo de soja Liza", kcal: 900, p: 0, c: 0, g: 100, l: 1, m: [["colher de sopa (13 ml)", 13], ["fio (5 ml)", 5]] },
+  { n: "Molho de pimenta Tabasco", kcal: 12, p: 1, c: 2, g: 0, m: [["colher de chá (5 g)", 5]] },
+  { n: "Mostarda Hemmer escura", kcal: 90, p: 5, c: 10, g: 3, m: [["colher de sopa (12 g)", 12]] },
 ];
