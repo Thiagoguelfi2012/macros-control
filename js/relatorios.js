@@ -1,8 +1,8 @@
 /* Tela Relatórios: filtros de período, totais, déficit/superávit e gráficos. */
 (() => {
   const $ = (sel) => document.querySelector(sel);
-  let periodo = 'semana';
-  let offset = 0; // 0 = período atual, -1 = anterior…
+  let periodo = 7; // tamanho da janela em dias (1, 7, 15, 30, 90, 365)
+  let offset = 0; // 0 = janela atual (terminando hoje), -1 = janela anterior…
   let chartKcal = null;
   let chartMacros = null;
   let chartAcum = null;
@@ -21,46 +21,27 @@
   function intervalo() {
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
-    let inicio, fim, granularidade, label;
-    if (periodo === 'dia') {
-      inicio = new Date(hoje);
-      inicio.setDate(inicio.getDate() + offset);
-      fim = new Date(inicio);
-      fim.setDate(fim.getDate() + 1);
+    const n = periodo;
+    // janela móvel de n dias terminando hoje; o offset desloca em janelas inteiras
+    const fim = new Date(hoje);
+    fim.setDate(fim.getDate() + 1 + offset * n);
+    const inicio = new Date(fim);
+    inicio.setDate(inicio.getDate() - n);
+    const fimVis = new Date(fim.getTime() - 86400000);
+    let granularidade, label;
+    if (n === 1) {
       granularidade = 'hora';
-      label = inicio.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
-    } else if (periodo === 'semana') {
-      const diaSemana = (hoje.getDay() + 6) % 7; // segunda = 0
-      inicio = new Date(hoje);
-      inicio.setDate(inicio.getDate() - diaSemana + offset * 7);
-      fim = new Date(inicio);
-      fim.setDate(fim.getDate() + 7);
-      granularidade = 'diaSemana';
-      const fimVis = new Date(fim - 86400000);
-      label = `${inicio.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} – ${fimVis.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}`;
-    } else if (periodo === 'mes') {
-      inicio = new Date(hoje.getFullYear(), hoje.getMonth() + offset, 1);
-      fim = new Date(hoje.getFullYear(), hoje.getMonth() + offset + 1, 1);
-      granularidade = 'diaMes';
-      label = inicio.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-      label = label.charAt(0).toUpperCase() + label.slice(1);
-    } else if (periodo === 'trimestre') {
-      const tri = Math.floor(hoje.getMonth() / 3) + offset;
-      inicio = new Date(hoje.getFullYear(), tri * 3, 1);
-      fim = new Date(hoje.getFullYear(), tri * 3 + 3, 1);
-      granularidade = 'mes';
-      label = `${Math.floor(inicio.getMonth() / 3) + 1}º trimestre de ${inicio.getFullYear()}`;
-    } else if (periodo === 'semestre') {
-      const sem = Math.floor(hoje.getMonth() / 6) + offset;
-      inicio = new Date(hoje.getFullYear(), sem * 6, 1);
-      fim = new Date(hoje.getFullYear(), sem * 6 + 6, 1);
-      granularidade = 'mes';
-      label = `${Math.floor(inicio.getMonth() / 6) + 1}º semestre de ${inicio.getFullYear()}`;
+      label =
+        offset === 0
+          ? 'Hoje'
+          : fimVis.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
     } else {
-      inicio = new Date(hoje.getFullYear() + offset, 0, 1);
-      fim = new Date(hoje.getFullYear() + offset + 1, 0, 1);
-      granularidade = 'mes';
-      label = String(inicio.getFullYear());
+      // até 90 dias: uma barra por dia; 1 ano: uma barra por mês
+      granularidade = n >= 180 ? 'mes' : 'dia';
+      label =
+        offset === 0
+          ? `Últimos ${n} dias`
+          : `${inicio.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} – ${fimVis.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}`;
     }
     return { inicio, fim, granularidade, label };
   }
@@ -98,17 +79,26 @@
     if (granularidade === 'hora') {
       buckets = Array.from({ length: 24 }, (_, h) => ({ label: `${String(h).padStart(2, '0')}h`, ...vazio }));
       for (const e of entries) soma(buckets[new Date(e.ts).getHours()], e);
-    } else if (granularidade === 'diaSemana') {
-      buckets = DIAS_SEMANA.map((d) => ({ label: d, ...vazio }));
-      for (const e of entries) soma(buckets[(new Date(e.ts).getDay() + 6) % 7], e);
-    } else if (granularidade === 'diaMes') {
+    } else if (granularidade === 'dia') {
       const nDias = Math.round((fim - inicio) / 86400000);
-      buckets = Array.from({ length: nDias }, (_, i) => ({ label: String(i + 1), ...vazio }));
-      for (const e of entries) soma(buckets[new Date(e.ts).getDate() - 1], e);
+      const curta = nDias <= 7; // janela curta: dia da semana ajuda na leitura
+      buckets = Array.from({ length: nDias }, (_, i) => {
+        const d = new Date(inicio);
+        d.setDate(d.getDate() + i);
+        const dm = `${d.getDate()}/${d.getMonth() + 1}`;
+        return { label: curta ? `${DIAS_SEMANA[(d.getDay() + 6) % 7]} ${dm}` : dm, ...vazio };
+      });
+      for (const e of entries) {
+        const d = new Date(e.ts);
+        d.setHours(0, 0, 0, 0);
+        const idx = Math.round((d - inicio) / 86400000);
+        if (idx >= 0 && idx < buckets.length) soma(buckets[idx], e);
+      }
     } else {
-      // por mês
+      // por mês (janela de 1 ano); meses parciais nas pontas recebem só os
+      // registros dentro da janela
       const meses = [];
-      const c = new Date(inicio);
+      const c = new Date(inicio.getFullYear(), inicio.getMonth(), 1);
       while (c < fim) {
         meses.push({ label: MESES[c.getMonth()], mes: c.getMonth(), ano: c.getFullYear(), ...vazio, dias: new Date(c.getFullYear(), c.getMonth() + 1, 0).getDate() });
         c.setMonth(c.getMonth() + 1);
@@ -558,7 +548,7 @@
       const btn = ev.target.closest('button[data-p]');
       if (!btn) return;
       for (const b of $('#seg-periodo').children) b.classList.toggle('active', b === btn);
-      periodo = btn.dataset.p;
+      periodo = Number(btn.dataset.p);
       offset = 0;
       render();
     });
