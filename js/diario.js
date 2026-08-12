@@ -660,7 +660,7 @@
         'beforeend',
         `<div class="empty-state">
           <h2>Nenhum alimento registrado ainda</h2>
-          <p>Toque em “+ Adicionar alimento” para registrar sua primeira refeição.</p>
+          <p>Toque em “+ Adicionar” para registrar sua primeira refeição.</p>
         </div>`
       );
       return;
