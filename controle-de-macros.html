@@ -715,6 +715,45 @@ main { max-width: 860px; margin: 0 auto; padding: 20px 16px 110px; }
       </div>
       <p class="cad-hint" id="backup-status" style="margin-top:10px"></p>
     </div>
+
+    <div class="settings-card">
+      <h3>Conta e sincronização entre aparelhos</h3>
+      <p class="sub">Crie uma conta (e-mail e senha) para guardar seus registros na nuvem e manter celular e computador sincronizados. A sincronização soma com o que já existe em cada aparelho — quem usava só o modo local pode importar o backup antigo acima, que ele sobe junto. Sem conta, o app continua funcionando 100% local.</p>
+      <div id="s-login">
+        <div class="settings-row">
+          <div class="field">
+            <label for="s-email">E-mail</label>
+            <input type="email" id="s-email" autocomplete="email" placeholder="voce@exemplo.com" />
+          </div>
+          <div class="field">
+            <label for="s-senha">Senha</label>
+            <input type="password" id="s-senha" autocomplete="current-password" placeholder="mínimo 6 caracteres" />
+          </div>
+        </div>
+        <div class="settings-row" style="margin-top:8px">
+          <button class="btn btn-primary" id="s-entrar">Entrar</button>
+          <button class="btn" id="s-criar">Criar conta</button>
+        </div>
+      </div>
+      <div class="settings-row" id="s-conectado" hidden>
+        <button class="btn" id="s-sync">Sincronizar agora</button>
+        <button class="btn" id="s-sair">Sair</button>
+      </div>
+      <p class="cad-hint" id="s-status" style="margin-top:10px"></p>
+      <div id="s-config" hidden style="margin-top:10px">
+        <div class="field">
+          <label for="s-url">URL do projeto Supabase</label>
+          <input type="url" id="s-url" placeholder="https://xxxx.supabase.co" />
+        </div>
+        <div class="field" style="margin-top:8px">
+          <label for="s-key">Chave pública (anon key)</label>
+          <input type="text" id="s-key" placeholder="eyJhbGciOi…" />
+        </div>
+        <div class="settings-row" style="margin-top:8px">
+          <button class="btn" id="s-salvar-config">Salvar configuração</button>
+        </div>
+      </div>
+    </div>
   </main>
 </section>
 
@@ -1216,6 +1255,20 @@ const MacroDB = (() => {
     return dbPromise;
   }
 
+  /* ---- Notificação de mudanças (usada pela sincronização) ---- */
+
+  const changeListeners = [];
+  const onChange = (fn) => changeListeners.push(fn);
+  const notifyChange = (tipo) => {
+    for (const fn of changeListeners) {
+      try {
+        fn(tipo);
+      } catch {
+        /* ouvinte não pode quebrar a gravação */
+      }
+    }
+  };
+
   const tx = (db, store, mode) => db.transaction(store, mode).objectStore(store);
   const wrap = (req) =>
     new Promise((resolve, reject) => {
@@ -1251,6 +1304,7 @@ const MacroDB = (() => {
       lsCustomSave([...lsCustom().filter((f) => f.i !== food.i), food]);
     }
     if (foodsCache) foodsCache = [food, ...foodsCache.filter((f) => f.i !== food.i)];
+    notifyChange('custom');
     return food;
   }
 
@@ -1262,6 +1316,7 @@ const MacroDB = (() => {
       lsCustomSave(lsCustom().filter((f) => f.i !== id));
     }
     if (foodsCache) foodsCache = foodsCache.filter((f) => f.i !== id);
+    notifyChange('custom');
   }
 
   /* ---- Alimentos ---- */
@@ -1320,35 +1375,40 @@ const MacroDB = (() => {
   // entry: { id?, ts (ISO), foodId, nome, qtd, medida, gramas, kcal, p, c, g }
 
   async function addEntry(entry) {
+    let id;
     try {
       const db = await open();
-      return await wrap(tx(db, 'entries', 'readwrite').add(entry));
+      id = await wrap(tx(db, 'entries', 'readwrite').add(entry));
     } catch {
       const arr = lsAll();
       entry.id = arr.reduce((m, e) => Math.max(m, e.id), 0) + 1;
       arr.push(entry);
       lsSave(arr);
-      return entry.id;
+      id = entry.id;
     }
+    notifyChange('entries');
+    return id;
   }
 
   async function updateEntry(entry) {
     try {
       const db = await open();
-      return await wrap(tx(db, 'entries', 'readwrite').put(entry));
+      await wrap(tx(db, 'entries', 'readwrite').put(entry));
     } catch {
       lsSave(lsAll().map((e) => (e.id === entry.id ? entry : e)));
-      return entry.id;
     }
+    notifyChange('entries');
+    return entry.id;
   }
 
   async function deleteEntry(id) {
     try {
       const db = await open();
-      return await wrap(tx(db, 'entries', 'readwrite').delete(id));
+      await wrap(tx(db, 'entries', 'readwrite').delete(id));
     } catch {
       lsSave(lsAll().filter((e) => e.id !== id));
     }
+    notifyChange('entries');
   }
 
   async function getEntry(id) {
@@ -1403,9 +1463,51 @@ const MacroDB = (() => {
     set('metaP', metaP);
     set('metaC', metaC);
     set('metaG', metaG);
+    notifyChange('settings');
+  }
+
+  /* ---- Backup (exportar/importar/sincronizar) ---- */
+
+  async function exportBackup() {
+    const [entries, custom] = await Promise.all([getAllEntries(), getCustomFoods()]);
+    return {
+      app: 'controle-de-macros',
+      versao: 1,
+      exportadoEm: new Date().toISOString(),
+      settings: getSettings(),
+      custom,
+      entries,
+    };
+  }
+
+  // Soma um backup com o que já existe: registros idênticos (mesmo instante,
+  // alimento e quantidade) são ignorados, alimentos próprios atualizados por
+  // id e configurações não nulas aplicadas por cima.
+  async function mergeBackup(obj) {
+    if (!obj || !Array.isArray(obj.entries)) {
+      throw new Error('o conteúdo não parece um backup deste app');
+    }
+    const atuais = await getAllEntries();
+    const chave = (e) => `${e.ts}|${e.nome}|${e.gramas}|${e.kcal}`;
+    const vistos = new Set(atuais.map(chave));
+    let novos = 0;
+    for (const e of obj.entries) {
+      if (!e || !e.ts || !e.nome || vistos.has(chave(e))) continue;
+      const { id, ...resto } = e;
+      await addEntry(resto);
+      vistos.add(chave(e));
+      novos++;
+    }
+    const customs = (Array.isArray(obj.custom) ? obj.custom : []).filter((f) => f && f.i && f.n);
+    for (const f of customs) await addCustomFood(f);
+    if (obj.settings) saveSettings(obj.settings);
+    return { novos, repetidos: obj.entries.length - novos, customs: customs.length };
   }
 
   return {
+    onChange,
+    exportBackup,
+    mergeBackup,
     ensureFoods,
     getFood,
     getCustomFoods,
@@ -1513,6 +1615,279 @@ const FoodSearch = (() => {
   }
 
   return { buildIndex, search, normalize };
+})();
+
+</script>
+<script>
+/* Conta e sincronização via Supabase (plano gratuito): login por e-mail/senha
+   (Supabase Auth) e backup em uma tabela com RLS — cada usuário só enxerga a
+   própria linha. Sem SDK: chamadas REST diretas (Auth/GoTrue + PostgREST).
+   A sincronização reaproveita a regra do importar (MacroDB.mergeBackup):
+   baixa o remoto, soma com o local sem duplicar e sobe a união — por isso o
+   histórico antigo de quem usava só local entra pelo importar/exportar e, na
+   sequência, sobe para a nuvem sozinho. */
+const SupabaseSync = (() => {
+  // Projeto padrão (pode ficar vazio: os valores configurados na tela de
+  // Relatórios, salvos no navegador, têm prioridade). A anon key é pública
+  // por design — a segurança vem das políticas RLS no banco.
+  const DEFAULT_URL = '';
+  const DEFAULT_ANON_KEY = '';
+  const TABELA = 'backups';
+
+  const cfg = () => ({
+    url: (localStorage.getItem('sbUrl') || DEFAULT_URL).replace(/\/+$/, ''),
+    key: localStorage.getItem('sbAnonKey') || DEFAULT_ANON_KEY,
+  });
+
+  const estado = {
+    configurado: !!(cfg().url && cfg().key),
+    conectado: false,
+    email: '',
+    ultimaSync: localStorage.getItem('sbUltimaSync') || '',
+    ocupado: false,
+    erro: '',
+    aviso: '',
+  };
+  let sessao = null; // { access_token, refresh_token, expires_at, user_id, email }
+  let timerUpload = null;
+  const ouvintes = [];
+
+  const avisar = () => {
+    for (const fn of ouvintes) {
+      try {
+        fn(estado);
+      } catch {
+        /* ouvinte não pode derrubar a sincronização */
+      }
+    }
+  };
+
+  function salvarSessao() {
+    if (sessao) localStorage.setItem('sbSessao', JSON.stringify(sessao));
+    else localStorage.removeItem('sbSessao');
+  }
+
+  function carregarSessao() {
+    try {
+      sessao = JSON.parse(localStorage.getItem('sbSessao') || 'null');
+    } catch {
+      sessao = null;
+    }
+    if (sessao) {
+      estado.conectado = true;
+      estado.email = sessao.email || '';
+    }
+  }
+
+  const traduzErro = (msg) => {
+    const m = String(msg || '');
+    if (/invalid login credentials/i.test(m)) return 'e-mail ou senha incorretos';
+    if (/already registered/i.test(m)) return 'este e-mail já tem conta — use Entrar';
+    if (/password should be/i.test(m)) return 'senha muito curta (mínimo 6 caracteres)';
+    if (/rate limit/i.test(m)) return 'muitas tentativas — aguarde um instante';
+    if (/failed to fetch|networkerror|load failed/i.test(m))
+      return 'sem conexão com o servidor (rede indisponível ou bloqueada neste ambiente)';
+    return m;
+  };
+
+  async function chamarAuth(caminho, body) {
+    const { url, key } = cfg();
+    let r;
+    try {
+      r = await fetch(`${url}/auth/v1/${caminho}`, {
+        method: 'POST',
+        headers: { apikey: key, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+    } catch (e) {
+      throw new Error(traduzErro(e.message));
+    }
+    const dados = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      throw new Error(traduzErro(dados.msg || dados.error_description || dados.message || `erro ${r.status}`));
+    }
+    return dados;
+  }
+
+  function adotarSessao(dados) {
+    sessao = {
+      access_token: dados.access_token,
+      refresh_token: dados.refresh_token,
+      expires_at: Date.now() + (dados.expires_in || 3600) * 1000,
+      user_id: dados.user && dados.user.id,
+      email: (dados.user && dados.user.email) || '',
+    };
+    estado.conectado = true;
+    estado.email = sessao.email;
+    estado.erro = '';
+    salvarSessao();
+  }
+
+  async function renovarSessao() {
+    const dados = await chamarAuth('token?grant_type=refresh_token', {
+      refresh_token: sessao.refresh_token,
+    });
+    adotarSessao(dados);
+  }
+
+  async function garantirToken() {
+    if (!sessao) throw new Error('não conectado');
+    if (Date.now() > sessao.expires_at - 60000) await renovarSessao();
+    return sessao.access_token;
+  }
+
+  async function api(caminho, opts = {}) {
+    const { url, key } = cfg();
+    const token = await garantirToken();
+    let r;
+    try {
+      r = await fetch(`${url}/rest/v1/${caminho}`, {
+        ...opts,
+        headers: {
+          apikey: key,
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          ...(opts.headers || {}),
+        },
+      });
+    } catch (e) {
+      throw new Error(traduzErro(e.message));
+    }
+    if (r.status === 401) {
+      // token recusado: renova uma vez e repete
+      await renovarSessao();
+      return api(caminho, opts);
+    }
+    if (!r.ok) throw new Error(`o servidor respondeu ${r.status}`);
+    return r;
+  }
+
+  async function baixarRemoto() {
+    const r = await api(`${TABELA}?select=dados`);
+    const linhas = await r.json();
+    return (linhas[0] && linhas[0].dados) || null;
+  }
+
+  async function subirBackup() {
+    const backup = await MacroDB.exportBackup();
+    await api(TABELA, {
+      method: 'POST',
+      headers: { Prefer: 'resolution=merge-duplicates' },
+      body: JSON.stringify([
+        { user_id: sessao.user_id, dados: backup, atualizado_em: new Date().toISOString() },
+      ]),
+    });
+    estado.ultimaSync = new Date().toISOString();
+    localStorage.setItem('sbUltimaSync', estado.ultimaSync);
+  }
+
+  async function sincronizar() {
+    if (!estado.conectado || estado.ocupado) return;
+    estado.ocupado = true;
+    estado.erro = '';
+    avisar();
+    try {
+      const remoto = await baixarRemoto();
+      if (remoto) {
+        const r = await MacroDB.mergeBackup(remoto);
+        if (r.novos || r.customs) {
+          // alimentos próprios vindos da nuvem entram na busca
+          if (typeof FoodSearch !== 'undefined') FoodSearch.buildIndex(await MacroDB.ensureFoods());
+          document.dispatchEvent(new Event('diario:refresh'));
+          document.dispatchEvent(new Event('relatorios:refresh'));
+        }
+      }
+      await subirBackup();
+    } catch (e) {
+      if (e.message === 'não conectado') sair();
+      else estado.erro = e.message;
+    }
+    estado.ocupado = false;
+    avisar();
+  }
+
+  async function entrar(email, senha) {
+    estado.erro = '';
+    estado.aviso = '';
+    avisar();
+    try {
+      adotarSessao(await chamarAuth('token?grant_type=password', { email, password: senha }));
+      avisar();
+      await sincronizar();
+    } catch (e) {
+      estado.erro = e.message;
+      avisar();
+    }
+  }
+
+  async function criarConta(email, senha) {
+    estado.erro = '';
+    estado.aviso = '';
+    avisar();
+    try {
+      const dados = await chamarAuth('signup', { email, password: senha });
+      if (dados.access_token) {
+        adotarSessao(dados);
+        avisar();
+        await sincronizar();
+      } else {
+        // projeto com confirmação de e-mail ligada
+        estado.aviso = 'conta criada — confirme no link enviado ao seu e-mail e depois toque em Entrar';
+        avisar();
+      }
+    } catch (e) {
+      estado.erro = e.message;
+      avisar();
+    }
+  }
+
+  function sair() {
+    sessao = null;
+    salvarSessao();
+    estado.conectado = false;
+    estado.email = '';
+    estado.erro = '';
+    avisar();
+  }
+
+  function setConfig(url, key) {
+    localStorage.setItem('sbUrl', url.trim().replace(/\/+$/, ''));
+    localStorage.setItem('sbAnonKey', key.trim());
+    location.reload();
+  }
+
+  // mudanças locais (registros, alimentos próprios, configurações — inclusive
+  // um importar de backup antigo) sobem em rajada única após 4 s de calmaria
+  MacroDB.onChange(() => {
+    if (!estado.conectado) return;
+    clearTimeout(timerUpload);
+    timerUpload = setTimeout(async () => {
+      try {
+        await subirBackup();
+        estado.erro = '';
+      } catch (e) {
+        estado.erro = e.message;
+      }
+      avisar();
+    }, 4000);
+  });
+
+  carregarSessao();
+  // sessão salva de uma visita anterior: sincroniza ao abrir
+  if (estado.conectado && estado.configurado) setTimeout(() => sincronizar(), 800);
+
+  return {
+    entrar,
+    criarConta,
+    sair,
+    sincronizar,
+    setConfig,
+    configurado: () => estado.configurado,
+    onEstado: (fn) => {
+      ouvintes.push(fn);
+      fn(estado);
+    },
+  };
 })();
 
 </script>
@@ -2974,44 +3349,16 @@ const FoodSearch = (() => {
       backupStatus.style.color = erro ? 'var(--bad-text)' : '';
     };
 
-    async function gerarBackup() {
-      const [entries, custom] = await Promise.all([MacroDB.getAllEntries(), MacroDB.getCustomFoods()]);
-      return {
-        app: 'controle-de-macros',
-        versao: 1,
-        exportadoEm: new Date().toISOString(),
-        settings: MacroDB.getSettings(),
-        custom,
-        entries,
-      };
-    }
+    const gerarBackup = () => MacroDB.exportBackup();
 
     async function importarBackup(obj) {
-      if (!obj || !Array.isArray(obj.entries)) {
-        throw new Error('o conteúdo não parece um backup deste app');
-      }
-      // soma sem duplicar: um registro idêntico (mesmo instante, alimento e
-      // quantidade) já presente é ignorado
-      const atuais = await MacroDB.getAllEntries();
-      const chave = (e) => `${e.ts}|${e.nome}|${e.gramas}|${e.kcal}`;
-      const vistos = new Set(atuais.map(chave));
-      let novos = 0;
-      for (const e of obj.entries) {
-        if (!e || !e.ts || !e.nome || vistos.has(chave(e))) continue;
-        const { id, ...resto } = e;
-        await MacroDB.addEntry(resto);
-        vistos.add(chave(e));
-        novos++;
-      }
-      const customs = (Array.isArray(obj.custom) ? obj.custom : []).filter((f) => f && f.i && f.n);
-      for (const f of customs) await MacroDB.addCustomFood(f);
-      if (obj.settings) MacroDB.saveSettings(obj.settings);
+      const r = await MacroDB.mergeBackup(obj);
       preencherConfig();
       // alimentos próprios importados entram na busca (versão de página única)
       if (typeof FoodSearch !== 'undefined') FoodSearch.buildIndex(await MacroDB.ensureFoods());
       document.dispatchEvent(new Event('diario:refresh'));
       render();
-      return { novos, repetidos: obj.entries.length - novos, customs: customs.length };
+      return r;
     }
 
     const resumoImport = (r) =>
@@ -3134,6 +3481,45 @@ const FoodSearch = (() => {
         setStatusBackup(`Não foi possível importar: ${e.message}`, true);
       }
     });
+
+    /* ---- Conta e sincronização (Supabase) ---- */
+
+    if (typeof SupabaseSync !== 'undefined') {
+      const sStatus = $('#s-status');
+      SupabaseSync.onEstado((e) => {
+        $('#s-login').hidden = e.conectado || !e.configurado;
+        $('#s-conectado').hidden = !e.conectado;
+        $('#s-config').hidden = e.configurado;
+        let txt;
+        if (!e.configurado) {
+          txt = 'Para ativar, informe abaixo a URL e a chave pública do projeto Supabase (instruções no README).';
+        } else if (e.conectado) {
+          txt = `Conectado como ${e.email || 'sua conta'}.`;
+          if (e.ocupado) txt += ' Sincronizando…';
+          else if (e.ultimaSync) txt += ` Última sincronização: ${new Date(e.ultimaSync).toLocaleString('pt-BR')}.`;
+        } else {
+          txt = 'Não conectado — seus dados seguem apenas neste aparelho.';
+        }
+        if (e.aviso) txt += ` ${e.aviso}.`;
+        if (e.erro) txt += ` (${e.erro})`;
+        sStatus.textContent = txt;
+      });
+      const credenciais = () => [$('#s-email').value.trim(), $('#s-senha').value];
+      $('#s-entrar').addEventListener('click', () => SupabaseSync.entrar(...credenciais()));
+      $('#s-criar').addEventListener('click', () => SupabaseSync.criarConta(...credenciais()));
+      $('#s-senha').addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter') SupabaseSync.entrar(...credenciais());
+      });
+      $('#s-sair').addEventListener('click', () => SupabaseSync.sair());
+      $('#s-sync').addEventListener('click', () => SupabaseSync.sincronizar());
+      $('#s-salvar-config').addEventListener('click', () => {
+        const url = $('#s-url').value.trim();
+        const key = $('#s-key').value.trim();
+        if (url && key) SupabaseSync.setConfig(url, key);
+      });
+      // a sincronização pode trazer configurações novas de outro aparelho
+      document.addEventListener('relatorios:refresh', preencherConfig);
+    }
 
     // re-renderiza os gráficos quando o tema muda (cores dos tokens): pelo
     // sistema ou por um toggle que carimbe data-theme na raiz

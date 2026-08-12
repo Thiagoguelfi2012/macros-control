@@ -30,6 +30,20 @@ const MacroDB = (() => {
     return dbPromise;
   }
 
+  /* ---- Notificação de mudanças (usada pela sincronização) ---- */
+
+  const changeListeners = [];
+  const onChange = (fn) => changeListeners.push(fn);
+  const notifyChange = (tipo) => {
+    for (const fn of changeListeners) {
+      try {
+        fn(tipo);
+      } catch {
+        /* ouvinte não pode quebrar a gravação */
+      }
+    }
+  };
+
   const tx = (db, store, mode) => db.transaction(store, mode).objectStore(store);
   const wrap = (req) =>
     new Promise((resolve, reject) => {
@@ -65,6 +79,7 @@ const MacroDB = (() => {
       lsCustomSave([...lsCustom().filter((f) => f.i !== food.i), food]);
     }
     if (foodsCache) foodsCache = [food, ...foodsCache.filter((f) => f.i !== food.i)];
+    notifyChange('custom');
     return food;
   }
 
@@ -76,6 +91,7 @@ const MacroDB = (() => {
       lsCustomSave(lsCustom().filter((f) => f.i !== id));
     }
     if (foodsCache) foodsCache = foodsCache.filter((f) => f.i !== id);
+    notifyChange('custom');
   }
 
   /* ---- Alimentos ---- */
@@ -134,35 +150,40 @@ const MacroDB = (() => {
   // entry: { id?, ts (ISO), foodId, nome, qtd, medida, gramas, kcal, p, c, g }
 
   async function addEntry(entry) {
+    let id;
     try {
       const db = await open();
-      return await wrap(tx(db, 'entries', 'readwrite').add(entry));
+      id = await wrap(tx(db, 'entries', 'readwrite').add(entry));
     } catch {
       const arr = lsAll();
       entry.id = arr.reduce((m, e) => Math.max(m, e.id), 0) + 1;
       arr.push(entry);
       lsSave(arr);
-      return entry.id;
+      id = entry.id;
     }
+    notifyChange('entries');
+    return id;
   }
 
   async function updateEntry(entry) {
     try {
       const db = await open();
-      return await wrap(tx(db, 'entries', 'readwrite').put(entry));
+      await wrap(tx(db, 'entries', 'readwrite').put(entry));
     } catch {
       lsSave(lsAll().map((e) => (e.id === entry.id ? entry : e)));
-      return entry.id;
     }
+    notifyChange('entries');
+    return entry.id;
   }
 
   async function deleteEntry(id) {
     try {
       const db = await open();
-      return await wrap(tx(db, 'entries', 'readwrite').delete(id));
+      await wrap(tx(db, 'entries', 'readwrite').delete(id));
     } catch {
       lsSave(lsAll().filter((e) => e.id !== id));
     }
+    notifyChange('entries');
   }
 
   async function getEntry(id) {
@@ -217,9 +238,51 @@ const MacroDB = (() => {
     set('metaP', metaP);
     set('metaC', metaC);
     set('metaG', metaG);
+    notifyChange('settings');
+  }
+
+  /* ---- Backup (exportar/importar/sincronizar) ---- */
+
+  async function exportBackup() {
+    const [entries, custom] = await Promise.all([getAllEntries(), getCustomFoods()]);
+    return {
+      app: 'controle-de-macros',
+      versao: 1,
+      exportadoEm: new Date().toISOString(),
+      settings: getSettings(),
+      custom,
+      entries,
+    };
+  }
+
+  // Soma um backup com o que já existe: registros idênticos (mesmo instante,
+  // alimento e quantidade) são ignorados, alimentos próprios atualizados por
+  // id e configurações não nulas aplicadas por cima.
+  async function mergeBackup(obj) {
+    if (!obj || !Array.isArray(obj.entries)) {
+      throw new Error('o conteúdo não parece um backup deste app');
+    }
+    const atuais = await getAllEntries();
+    const chave = (e) => `${e.ts}|${e.nome}|${e.gramas}|${e.kcal}`;
+    const vistos = new Set(atuais.map(chave));
+    let novos = 0;
+    for (const e of obj.entries) {
+      if (!e || !e.ts || !e.nome || vistos.has(chave(e))) continue;
+      const { id, ...resto } = e;
+      await addEntry(resto);
+      vistos.add(chave(e));
+      novos++;
+    }
+    const customs = (Array.isArray(obj.custom) ? obj.custom : []).filter((f) => f && f.i && f.n);
+    for (const f of customs) await addCustomFood(f);
+    if (obj.settings) saveSettings(obj.settings);
+    return { novos, repetidos: obj.entries.length - novos, customs: customs.length };
   }
 
   return {
+    onChange,
+    exportBackup,
+    mergeBackup,
     ensureFoods,
     getFood,
     getCustomFoods,

@@ -629,44 +629,16 @@
       backupStatus.style.color = erro ? 'var(--bad-text)' : '';
     };
 
-    async function gerarBackup() {
-      const [entries, custom] = await Promise.all([MacroDB.getAllEntries(), MacroDB.getCustomFoods()]);
-      return {
-        app: 'controle-de-macros',
-        versao: 1,
-        exportadoEm: new Date().toISOString(),
-        settings: MacroDB.getSettings(),
-        custom,
-        entries,
-      };
-    }
+    const gerarBackup = () => MacroDB.exportBackup();
 
     async function importarBackup(obj) {
-      if (!obj || !Array.isArray(obj.entries)) {
-        throw new Error('o conteúdo não parece um backup deste app');
-      }
-      // soma sem duplicar: um registro idêntico (mesmo instante, alimento e
-      // quantidade) já presente é ignorado
-      const atuais = await MacroDB.getAllEntries();
-      const chave = (e) => `${e.ts}|${e.nome}|${e.gramas}|${e.kcal}`;
-      const vistos = new Set(atuais.map(chave));
-      let novos = 0;
-      for (const e of obj.entries) {
-        if (!e || !e.ts || !e.nome || vistos.has(chave(e))) continue;
-        const { id, ...resto } = e;
-        await MacroDB.addEntry(resto);
-        vistos.add(chave(e));
-        novos++;
-      }
-      const customs = (Array.isArray(obj.custom) ? obj.custom : []).filter((f) => f && f.i && f.n);
-      for (const f of customs) await MacroDB.addCustomFood(f);
-      if (obj.settings) MacroDB.saveSettings(obj.settings);
+      const r = await MacroDB.mergeBackup(obj);
       preencherConfig();
       // alimentos próprios importados entram na busca (versão de página única)
       if (typeof FoodSearch !== 'undefined') FoodSearch.buildIndex(await MacroDB.ensureFoods());
       document.dispatchEvent(new Event('diario:refresh'));
       render();
-      return { novos, repetidos: obj.entries.length - novos, customs: customs.length };
+      return r;
     }
 
     const resumoImport = (r) =>
@@ -789,6 +761,45 @@
         setStatusBackup(`Não foi possível importar: ${e.message}`, true);
       }
     });
+
+    /* ---- Conta e sincronização (Supabase) ---- */
+
+    if (typeof SupabaseSync !== 'undefined') {
+      const sStatus = $('#s-status');
+      SupabaseSync.onEstado((e) => {
+        $('#s-login').hidden = e.conectado || !e.configurado;
+        $('#s-conectado').hidden = !e.conectado;
+        $('#s-config').hidden = e.configurado;
+        let txt;
+        if (!e.configurado) {
+          txt = 'Para ativar, informe abaixo a URL e a chave pública do projeto Supabase (instruções no README).';
+        } else if (e.conectado) {
+          txt = `Conectado como ${e.email || 'sua conta'}.`;
+          if (e.ocupado) txt += ' Sincronizando…';
+          else if (e.ultimaSync) txt += ` Última sincronização: ${new Date(e.ultimaSync).toLocaleString('pt-BR')}.`;
+        } else {
+          txt = 'Não conectado — seus dados seguem apenas neste aparelho.';
+        }
+        if (e.aviso) txt += ` ${e.aviso}.`;
+        if (e.erro) txt += ` (${e.erro})`;
+        sStatus.textContent = txt;
+      });
+      const credenciais = () => [$('#s-email').value.trim(), $('#s-senha').value];
+      $('#s-entrar').addEventListener('click', () => SupabaseSync.entrar(...credenciais()));
+      $('#s-criar').addEventListener('click', () => SupabaseSync.criarConta(...credenciais()));
+      $('#s-senha').addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter') SupabaseSync.entrar(...credenciais());
+      });
+      $('#s-sair').addEventListener('click', () => SupabaseSync.sair());
+      $('#s-sync').addEventListener('click', () => SupabaseSync.sincronizar());
+      $('#s-salvar-config').addEventListener('click', () => {
+        const url = $('#s-url').value.trim();
+        const key = $('#s-key').value.trim();
+        if (url && key) SupabaseSync.setConfig(url, key);
+      });
+      // a sincronização pode trazer configurações novas de outro aparelho
+      document.addEventListener('relatorios:refresh', preencherConfig);
+    }
 
     // re-renderiza os gráficos quando o tema muda (cores dos tokens): pelo
     // sistema ou por um toggle que carimbe data-theme na raiz

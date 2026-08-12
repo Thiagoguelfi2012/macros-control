@@ -64,6 +64,9 @@ ${read('js/db.js')}
 ${read('js/busca.js')}
 </script>
 <script>
+${read('js/sync.js')}
+</script>
+<script>
 ${read('js/diario.js')}
 </script>
 <script>
