@@ -17,11 +17,14 @@ python3 -m http.server 8000
 
 ## Funcionalidades
 
-- **Diário** (`index.html`): botão "Adicionar alimento" abre um modal com busca
-  estilo select2 (Tom Select) sobre **10.000 alimentos**; quantidade em **gramas ou
-  medidas caseiras** (unidade, fatia, xícara, concha…) com prévia dos macros; data e
+- **Diário** (`index.html`): botão "+ Adicionar" abre um modal com busca estilo
+  select2 (Tom Select) sobre **~17.500 alimentos** (TACO, **TBCA**, IBGE, USDA,
+  marcas brasileiras e pratos curados); quantidade em **gramas, mililitros ou
+  medidas caseiras** (unidade, fatia, xícara, concha, lata, dose…) com prévia dos
+  macros; monta refeição com vários itens de uma vez (com impacto na meta antes de
+  salvar) e a refeição em montagem sobrevive ao app ir para segundo plano; data e
   hora registradas (e editáveis depois). Histórico agrupado por dia, em ordem
-  descendente, com totais por dia e ações de editar/excluir por registro.
+  descendente, com totais por dia e ações de repetir/editar/excluir por registro.
 - **Relatórios** (`relatorios.html`): totais de calorias/proteínas/carboidratos/
   gorduras com filtros por **janelas móveis** (1, 7, 15, 30, 90 dias e 1 ano, com
   navegação entre janelas); gráfico de calorias por dia/mês com linha do gasto
@@ -70,10 +73,10 @@ chamadas são REST puras no navegador (sem SDK). Configuração (uma vez):
 
 3. (Recomendado) Em **Authentication → Sign In / Up → Email**, desligue
    "Confirm email" para o login funcionar sem etapa de confirmação.
-4. Em **Settings → API**, copie a **Project URL** e a **anon key** e cole no card
-   "Conta e sincronização" dos Relatórios (uma vez por aparelho) — ou grave-as em
-   `DEFAULT_URL`/`DEFAULT_ANON_KEY` no `js/sync.js` para valerem para todos os
-   aparelhos. A anon key é pública por design; a proteção vem das políticas RLS.
+4. Em **Settings → API**, copie a **Project URL** e a **anon key**. Elas já estão
+   gravadas em `DEFAULT_URL`/`DEFAULT_ANON_KEY` no `js/sync.js` (valem para todos os
+   aparelhos); para apontar para outro projeto, use o card "Conta e sincronização"
+   dos Relatórios. A anon key é pública por design; a proteção vem das políticas RLS.
 
 Como sincroniza: baixa o backup remoto, soma com o local (mesma regra do importar —
 nada é apagado, registros idênticos não duplicam) e sobe a união. Mudanças locais
@@ -85,19 +88,32 @@ externas — use o app no endereço próprio (GitHub Pages) ou no arquivo standa
 
 ## Dados
 
-- Registros de consumo: **IndexedDB** do navegador (persistente, por dispositivo).
-- Configurações (TMB/TDEE): `localStorage`.
-- Banco de alimentos: `data/foods.json` (~2,1 MB, 16.666 itens), carregado no IndexedDB
-  na primeira visita. Valores por 100 g. Fontes:
-  - **TACO** (UNICAMP) — ~590 alimentos, PT nativo;
-  - **TBCA** (USP/BRASILFOODS) — ~5.340 alimentos em PT, incluindo preparações e pratos
-    prontos (sushi, feijoada, pizzas, lasanhas, salgados…);
-  - **Curados** (`tools/curados.mjs`) — ~130 itens de vida real ausentes das tabelas
-    oficiais (whey e suplementos, temaki, esfiha, redes de fast food, industrializados),
-    com valores típicos de rótulo (estimativas);
-  - **IBGE/POF** — ~1.880 alimentos, PT nativo;
-  - **USDA SR28** — ~8.720 alimentos, nomes traduzidos por glossário EN→PT;
-  - Medidas caseiras: `WEIGHT.txt` do SR28 + tabela de medidas usuais brasileiras.
+- Registros de consumo: **IndexedDB** do navegador (com fallback em `localStorage`
+  quando o IndexedDB é bloqueado, ex.: `file://` e iframes).
+- Configurações (TMB/TDEE e dieta alvo): `localStorage`.
+- Banco de alimentos: `data/foods.json` (~2,3 MB, **17.496 itens**, ~10.900 com
+  medidas caseiras e ~890 líquidos medidos em ml/L), carregado no IndexedDB na
+  primeira visita. Valores por 100 g (ou 100 ml). Fontes, na ordem de prioridade da
+  busca:
+
+  | Fonte | Itens | O que traz |
+  | --- | ---: | --- |
+  | **TACO** (UNICAMP) | 590 | alimentos brasileiros in natura e preparados, PT nativo |
+  | **TBCA** (USP/BRASILFOODS) | 5.340 | a maior fonte em PT: além dos alimentos, muita **preparação e prato pronto** — sushi, feijoada, pizzas, lasanhas, salgados, bolos, saladas, com variações "com/sem sal", "com/sem óleo", frito/assado/cozido |
+  | **Marcas** (`tools/marcas.mjs`) | 593 | produtos de marcas brasileiras com valores de rótulo (iogurtes, leites, queijos, congelados, biscoitos, chocolates, bebidas, suplementos…) |
+  | **Curados** (`tools/curados.mjs`) | 383 | pratos de vida real ausentes das tabelas: temaki e sushi, esfihas e salgados de festa, docinhos, fast food, frutos do mar, churrasco, bolos de confeitaria |
+  | **IBGE/POF** | 1.873 | alimentos e preparações, PT nativo |
+  | **USDA SR28** | 8.717 | complemento, nomes traduzidos por glossário EN→PT |
+
+  Medidas caseiras: `WEIGHT.txt` do SR28 + tabela de medidas usuais brasileiras
+  (`tools/build-foods.mjs`), incluindo pesos médios por unidade (filé de sassami
+  ~50 g, coxa ~65 g, bife ~100 g…) e medidas de líquidos (lata, garrafa, copo, dose).
+
+  A busca (`js/busca.js`) normaliza acentos e grafias populares (kibe→quibe,
+  mussarela→mucarela, miojo→macarrão instantâneo), ignora palavras de ligação
+  ("filé catupiry" acha "Filé mignon ao catupiry") e ordena priorizando as fontes em
+  português — alimentos próprios primeiro, depois TACO/TBCA/marcas/curados, IBGE e,
+  por último, o USDA traduzido.
 
 Para regenerar o banco (baixa os dados brutos das fontes públicas no GitHub):
 

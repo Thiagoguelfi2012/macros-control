@@ -9,8 +9,9 @@ const SupabaseSync = (() => {
   // Projeto padrão (pode ficar vazio: os valores configurados na tela de
   // Relatórios, salvos no navegador, têm prioridade). A anon key é pública
   // por design — a segurança vem das políticas RLS no banco.
-  const DEFAULT_URL = '';
-  const DEFAULT_ANON_KEY = '';
+  const DEFAULT_URL = 'https://ddzqpkrjqsmwjlsqhbsm.supabase.co';
+  const DEFAULT_ANON_KEY =
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkenFwa3JqcXNtd2psc3FoYnNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY1NTI5MjQsImV4cCI6MjEwMjEyODkyNH0.OayKpjn1hJsW7vWnYzxMLhwiDn_u9U4j5Rmkq1WLdEM';
   const TABELA = 'backups';
 
   const cfg = () => ({
