@@ -1,6 +1,5 @@
-/* Conta e sincronização via Supabase (plano gratuito): login por e-mail/senha
-   ou com o Google (OAuth do próprio Supabase — as duas formas caem na mesma
-   conta quando o e-mail é o mesmo) e backup em uma tabela com RLS, onde cada
+/* Conta e sincronização via Supabase (plano gratuito): login com o Google
+   (OAuth do próprio Supabase) e backup em uma tabela com RLS, onde cada
    usuário só enxerga a própria linha. Sem SDK: REST direto (GoTrue/PostgREST).
 
    Isolamento por usuário: o banco local do navegador é de um usuário por vez.
@@ -71,10 +70,9 @@ const SupabaseSync = (() => {
 
   const traduzErro = (msg) => {
     const m = String(msg || '');
-    if (/invalid login credentials/i.test(m)) return 'e-mail ou senha incorretos';
-    if (/already registered/i.test(m)) return 'este e-mail já tem conta — use Entrar';
-    if (/password should be/i.test(m)) return 'senha muito curta (mínimo 6 caracteres)';
     if (/rate limit/i.test(m)) return 'muitas tentativas — aguarde um instante';
+    if (/redirect|not allowed/i.test(m))
+      return 'este endereço não está autorizado no projeto (Authentication → URL Configuration)';
     if (/provider is not enabled/i.test(m)) return 'login com Google ainda não ativado no projeto';
     if (/failed to fetch|networkerror|load failed/i.test(m))
       return 'sem conexão com o servidor (rede indisponível ou bloqueada neste ambiente)';
@@ -211,40 +209,7 @@ const SupabaseSync = (() => {
     avisar();
   }
 
-  /* ---- Entrar / criar conta / Google / sair ---- */
-
-  async function entrar(email, senha) {
-    estado.erro = '';
-    estado.aviso = '';
-    avisar();
-    try {
-      adotarSessao(await chamarAuth('token?grant_type=password', { email, password: senha }));
-      await aposAutenticar();
-    } catch (e) {
-      estado.erro = e.message;
-      avisar();
-    }
-  }
-
-  async function criarConta(email, senha) {
-    estado.erro = '';
-    estado.aviso = '';
-    avisar();
-    try {
-      const dados = await chamarAuth('signup', { email, password: senha });
-      if (dados.access_token) {
-        adotarSessao(dados);
-        await aposAutenticar();
-      } else {
-        // projeto com confirmação de e-mail ligada
-        estado.aviso = 'conta criada — confirme no link enviado ao seu e-mail e depois toque em Entrar';
-        avisar();
-      }
-    } catch (e) {
-      estado.erro = e.message;
-      avisar();
-    }
-  }
+  /* ---- Entrar com Google / sair ---- */
 
   // OAuth do Google pelo próprio Supabase: sai da página e volta com os tokens
   // no fragmento da URL (por isso não funciona em file:// nem dentro de iframe).
@@ -268,7 +233,7 @@ const SupabaseSync = (() => {
         const d = await r.json().catch(() => ({}));
         const msg = d.msg || d.error_description || d.message || '';
         estado.erro = /not enabled|unsupported provider/i.test(msg)
-          ? 'o login com Google ainda não está ativado no projeto Supabase (Authentication → Sign In / Up → Google). Enquanto isso, use e-mail e senha.'
+          ? 'o login com Google ainda não está ativado no projeto Supabase (Authentication → Sign In / Up → Google)'
           : traduzErro(msg || `o servidor respondeu ${r.status}`);
         avisar();
         return;
@@ -383,8 +348,6 @@ const SupabaseSync = (() => {
   init();
 
   return {
-    entrar,
-    criarConta,
     entrarComGoogle,
     sair,
     sincronizar,

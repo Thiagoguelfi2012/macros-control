@@ -43,16 +43,17 @@ python3 -m http.server 8000
 - **Backup e transferência**: exportar/importar os dados em arquivo `.json` (ou
   copiar/colar em texto), com importação somando sem duplicar — é também o caminho
   de migração para quem usava o app só no modo local.
-- **Conta e sincronização** (opcional, via Supabase): login com **Google** ou
-  e-mail/senha, backup na nuvem e sincronização entre aparelhos, com os dados de
-  cada usuário separados. Veja abaixo.
+- **Conta e sincronização** (opcional, via Supabase): **login com Google**, backup
+  na nuvem e sincronização entre aparelhos, com os dados de cada usuário separados.
+  Veja abaixo.
 - Tema claro/escuro automático (segue o sistema).
 
 ## Conta e sincronização (Supabase, plano gratuito)
 
-O app não tem servidor próprio: o login usa o **Supabase Auth** (e-mail/senha) e os
-dados ficam em uma tabela com **RLS** — cada usuário só enxerga a própria linha. As
-chamadas são REST puras no navegador (sem SDK). Configuração (uma vez):
+O app não tem servidor próprio: o login usa o **Supabase Auth** com o provedor
+**Google** e os dados ficam em uma tabela com **RLS** — cada usuário só enxerga a
+própria linha. As chamadas são REST puras no navegador (sem SDK). Configuração
+(uma vez):
 
 1. Crie um projeto gratuito em [supabase.com](https://supabase.com).
 2. No **SQL Editor**, rode:
@@ -72,9 +73,7 @@ chamadas são REST puras no navegador (sem SDK). Configuração (uma vez):
      for update using (auth.uid() = user_id);
    ```
 
-3. (Recomendado) Em **Authentication → Sign In / Up → Email**, desligue
-   "Confirm email" para o login funcionar sem etapa de confirmação.
-3b. **Login com Google**: em **Authentication → Sign In / Up → Google**, ative o
+3. **Login com Google**: em **Authentication → Sign In / Up → Google**, ative o
    provedor e cole o Client ID/Secret de um "ID do cliente OAuth" criado no
    [Google Cloud Console](https://console.cloud.google.com) (tipo Aplicativo da
    Web). No Google, o **Authorized redirect URI** é o callback do Supabase:
@@ -82,7 +81,8 @@ chamadas são REST puras no navegador (sem SDK). Configuração (uma vez):
    **Authentication → URL Configuration**, adicione o endereço do app (ex.:
    `https://SEU-USUARIO.github.io/macros-control/`) em Site URL / Redirect URLs.
    O botão "Entrar com Google" só aparece em https fora de iframe (o OAuth
-   precisa sair da página).
+   precisa sair da página); em arquivo local ou página incorporada o app segue
+   funcionando local, com Exportar/Importar para levar os dados a outro aparelho.
 4. Em **Settings → API**, copie a **Project URL** e a **anon key**. Elas já estão
    gravadas em `DEFAULT_URL`/`DEFAULT_ANON_KEY` no `js/sync.js` (valem para todos os
    aparelhos); para apontar para outro projeto, use o card "Conta e sincronização"

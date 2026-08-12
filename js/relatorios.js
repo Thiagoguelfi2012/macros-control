@@ -775,6 +775,9 @@
         let txt;
         if (!e.configurado) {
           txt = 'Para ativar, informe abaixo a URL e a chave pública do projeto Supabase (instruções no README).';
+        } else if (!SupabaseSync.podeOAuth() && !e.conectado) {
+          txt =
+            'O login com Google precisa do app aberto no endereço próprio (https), fora de arquivo local e de páginas incorporadas. Aqui os dados seguem neste aparelho — use Exportar/Importar acima para levá-los a outro.';
         } else if (e.conectado) {
           txt = `Conectado como ${e.email || 'sua conta'}.`;
           if (e.ocupado) txt += ' Sincronizando…';
@@ -785,12 +788,6 @@
         if (e.aviso) txt += ` ${e.aviso}.`;
         if (e.erro) txt += ` (${e.erro})`;
         sStatus.textContent = txt;
-      });
-      const credenciais = () => [$('#s-email').value.trim(), $('#s-senha').value];
-      $('#s-entrar').addEventListener('click', () => SupabaseSync.entrar(...credenciais()));
-      $('#s-criar').addEventListener('click', () => SupabaseSync.criarConta(...credenciais()));
-      $('#s-senha').addEventListener('keydown', (ev) => {
-        if (ev.key === 'Enter') SupabaseSync.entrar(...credenciais());
       });
       $('#s-google').addEventListener('click', () => SupabaseSync.entrarComGoogle());
       // sair limpa os dados deste aparelho: confirma em dois toques (diálogos
