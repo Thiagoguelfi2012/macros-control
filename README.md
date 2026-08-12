@@ -43,8 +43,9 @@ python3 -m http.server 8000
 - **Backup e transferência**: exportar/importar os dados em arquivo `.json` (ou
   copiar/colar em texto), com importação somando sem duplicar — é também o caminho
   de migração para quem usava o app só no modo local.
-- **Conta e sincronização** (opcional, via Supabase): login por e-mail/senha e
-  backup na nuvem, sincronizando entre aparelhos. Veja abaixo.
+- **Conta e sincronização** (opcional, via Supabase): login com **Google** ou
+  e-mail/senha, backup na nuvem e sincronização entre aparelhos, com os dados de
+  cada usuário separados. Veja abaixo.
 - Tema claro/escuro automático (segue o sistema).
 
 ## Conta e sincronização (Supabase, plano gratuito)
@@ -73,6 +74,15 @@ chamadas são REST puras no navegador (sem SDK). Configuração (uma vez):
 
 3. (Recomendado) Em **Authentication → Sign In / Up → Email**, desligue
    "Confirm email" para o login funcionar sem etapa de confirmação.
+3b. **Login com Google**: em **Authentication → Sign In / Up → Google**, ative o
+   provedor e cole o Client ID/Secret de um "ID do cliente OAuth" criado no
+   [Google Cloud Console](https://console.cloud.google.com) (tipo Aplicativo da
+   Web). No Google, o **Authorized redirect URI** é o callback do Supabase:
+   `https://SEU-PROJETO.supabase.co/auth/v1/callback`. No Supabase, em
+   **Authentication → URL Configuration**, adicione o endereço do app (ex.:
+   `https://SEU-USUARIO.github.io/macros-control/`) em Site URL / Redirect URLs.
+   O botão "Entrar com Google" só aparece em https fora de iframe (o OAuth
+   precisa sair da página).
 4. Em **Settings → API**, copie a **Project URL** e a **anon key**. Elas já estão
    gravadas em `DEFAULT_URL`/`DEFAULT_ANON_KEY` no `js/sync.js` (valem para todos os
    aparelhos); para apontar para outro projeto, use o card "Conta e sincronização"
@@ -82,6 +92,18 @@ Como sincroniza: baixa o backup remoto, soma com o local (mesma regra do importa
 nada é apagado, registros idênticos não duplicam) e sobe a união. Mudanças locais
 sobem sozinhas ~4 s depois; ao abrir o app conectado, sincroniza de novo. Quem
 usava só o modo local importa o backup antigo e ele sobe na sequência.
+
+**Separação entre usuários.** No servidor, cada conta tem uma linha própria em
+`backups` e as políticas RLS (`auth.uid() = user_id`) impedem qualquer acesso à
+linha alheia. No aparelho, o navegador tem um banco só — por isso o app marca de
+quem são os dados locais (`sbDonoLocal`):
+
+- dados locais **sem dono** (uso antes de qualquer login) são adotados pela primeira
+  conta que entrar — é a migração de quem já usava o app;
+- ao entrar com **outra conta**, os dados do usuário anterior são apagados deste
+  aparelho antes de baixar os da conta nova (os do anterior seguem na nuvem dele);
+- ao **sair**, o app sobe o que estiver pendente e limpa o aparelho, para o próximo
+  usuário não ver o diário de quem saiu (o botão pede confirmação em dois toques).
 
 Obs.: dentro da página hospedada no claude.ai o navegador bloqueia chamadas
 externas — use o app no endereço próprio (GitHub Pages) ou no arquivo standalone.

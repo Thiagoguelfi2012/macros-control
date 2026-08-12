@@ -71,6 +71,15 @@ body {
   overscroll-behavior-y: contain; /* o pull-to-refresh é nosso (js/refresh.js) */
 }
 
+/* ---- Botão do Google ---- */
+.btn-google {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+}
+.btn-google svg { flex: none; }
+
 /* ---- Backup (copiar/colar em texto) ---- */
 .backup-texto {
   width: 100%;

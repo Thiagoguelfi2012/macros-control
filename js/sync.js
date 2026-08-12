@@ -1,18 +1,19 @@
 /* Conta e sincronização via Supabase (plano gratuito): login por e-mail/senha
-   (Supabase Auth) e backup em uma tabela com RLS — cada usuário só enxerga a
-   própria linha. Sem SDK: chamadas REST diretas (Auth/GoTrue + PostgREST).
-   A sincronização reaproveita a regra do importar (MacroDB.mergeBackup):
-   baixa o remoto, soma com o local sem duplicar e sobe a união — por isso o
-   histórico antigo de quem usava só local entra pelo importar/exportar e, na
-   sequência, sobe para a nuvem sozinho. */
+   ou com o Google (OAuth do próprio Supabase — as duas formas caem na mesma
+   conta quando o e-mail é o mesmo) e backup em uma tabela com RLS, onde cada
+   usuário só enxerga a própria linha. Sem SDK: REST direto (GoTrue/PostgREST).
+
+   Isolamento por usuário: o banco local do navegador é de um usuário por vez.
+   O aparelho guarda de quem são os dados locais; ao entrar com outra conta, o
+   local é limpo antes de baixar o da conta nova (os dados de quem saiu ficam
+   preservados na nuvem). Ao sair, o local é limpo depois de subir a última
+   versão — nada de diários misturados no mesmo aparelho. */
 const SupabaseSync = (() => {
-  // Projeto padrão (pode ficar vazio: os valores configurados na tela de
-  // Relatórios, salvos no navegador, têm prioridade). A anon key é pública
-  // por design — a segurança vem das políticas RLS no banco.
   const DEFAULT_URL = 'https://ddzqpkrjqsmwjlsqhbsm.supabase.co';
   const DEFAULT_ANON_KEY =
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkenFwa3JqcXNtd2psc3FoYnNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY1NTI5MjQsImV4cCI6MjEwMjEyODkyNH0.OayKpjn1hJsW7vWnYzxMLhwiDn_u9U4j5Rmkq1WLdEM';
   const TABELA = 'backups';
+  const DONO = 'sbDonoLocal'; // de qual usuário são os dados neste aparelho
 
   const cfg = () => ({
     url: (localStorage.getItem('sbUrl') || DEFAULT_URL).replace(/\/+$/, ''),
@@ -30,6 +31,7 @@ const SupabaseSync = (() => {
   };
   let sessao = null; // { access_token, refresh_token, expires_at, user_id, email }
   let timerUpload = null;
+  let alteracoesPendentes = false;
   const ouvintes = [];
 
   const avisar = () => {
@@ -40,6 +42,14 @@ const SupabaseSync = (() => {
         /* ouvinte não pode derrubar a sincronização */
       }
     }
+  };
+
+  const recarregarTelas = async () => {
+    if (typeof FoodSearch !== 'undefined' && typeof MacroDB.ensureFoods === 'function') {
+      FoodSearch.buildIndex(await MacroDB.ensureFoods());
+    }
+    document.dispatchEvent(new Event('diario:refresh'));
+    document.dispatchEvent(new Event('relatorios:refresh'));
   };
 
   function salvarSessao() {
@@ -65,6 +75,7 @@ const SupabaseSync = (() => {
     if (/already registered/i.test(m)) return 'este e-mail já tem conta — use Entrar';
     if (/password should be/i.test(m)) return 'senha muito curta (mínimo 6 caracteres)';
     if (/rate limit/i.test(m)) return 'muitas tentativas — aguarde um instante';
+    if (/provider is not enabled/i.test(m)) return 'login com Google ainda não ativado no projeto';
     if (/failed to fetch|networkerror|load failed/i.test(m))
       return 'sem conexão com o servidor (rede indisponível ou bloqueada neste ambiente)';
     return m;
@@ -75,9 +86,9 @@ const SupabaseSync = (() => {
     let r;
     try {
       r = await fetch(`${url}/auth/v1/${caminho}`, {
-        method: 'POST',
+        method: body ? 'POST' : 'GET',
         headers: { apikey: key, 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        body: body ? JSON.stringify(body) : undefined,
       });
     } catch (e) {
       throw new Error(traduzErro(e.message));
@@ -93,9 +104,9 @@ const SupabaseSync = (() => {
     sessao = {
       access_token: dados.access_token,
       refresh_token: dados.refresh_token,
-      expires_at: Date.now() + (dados.expires_in || 3600) * 1000,
-      user_id: dados.user && dados.user.id,
-      email: (dados.user && dados.user.email) || '',
+      expires_at: Date.now() + (Number(dados.expires_in) || 3600) * 1000,
+      user_id: (dados.user && dados.user.id) || (sessao && sessao.user_id),
+      email: (dados.user && dados.user.email) || (sessao && sessao.email) || '',
     };
     estado.conectado = true;
     estado.email = sessao.email;
@@ -104,10 +115,7 @@ const SupabaseSync = (() => {
   }
 
   async function renovarSessao() {
-    const dados = await chamarAuth('token?grant_type=refresh_token', {
-      refresh_token: sessao.refresh_token,
-    });
-    adotarSessao(dados);
+    adotarSessao(await chamarAuth('token?grant_type=refresh_token', { refresh_token: sessao.refresh_token }));
   }
 
   async function garantirToken() {
@@ -134,8 +142,7 @@ const SupabaseSync = (() => {
       throw new Error(traduzErro(e.message));
     }
     if (r.status === 401) {
-      // token recusado: renova uma vez e repete
-      await renovarSessao();
+      await renovarSessao(); // token recusado: renova uma vez e repete
       return api(caminho, opts);
     }
     if (!r.ok) throw new Error(`o servidor respondeu ${r.status}`);
@@ -143,7 +150,8 @@ const SupabaseSync = (() => {
   }
 
   async function baixarRemoto() {
-    const r = await api(`${TABELA}?select=dados`);
+    // o RLS já limita à própria linha; o filtro explícito é defesa em profundidade
+    const r = await api(`${TABELA}?select=dados&user_id=eq.${sessao.user_id}`);
     const linhas = await r.json();
     return (linhas[0] && linhas[0].dados) || null;
   }
@@ -157,8 +165,30 @@ const SupabaseSync = (() => {
         { user_id: sessao.user_id, dados: backup, atualizado_em: new Date().toISOString() },
       ]),
     });
+    alteracoesPendentes = false;
     estado.ultimaSync = new Date().toISOString();
     localStorage.setItem('sbUltimaSync', estado.ultimaSync);
+  }
+
+  /* ---- Isolamento entre usuários no mesmo aparelho ---- */
+
+  // Dados locais sem dono (uso local antes de qualquer login) são adotados pela
+  // conta que entrar — é o caminho de migração de quem já usava o app. Dados de
+  // OUTRA conta são apagados daqui (continuam na nuvem do dono).
+  async function prepararLocalPara(userId) {
+    const dono = localStorage.getItem(DONO);
+    if (dono && dono !== userId) {
+      await MacroDB.clearLocal();
+      await recarregarTelas();
+      estado.aviso = 'dados do usuário anterior removidos deste aparelho (seguem salvos na conta dele)';
+    }
+    localStorage.setItem(DONO, userId);
+  }
+
+  async function aposAutenticar() {
+    await prepararLocalPara(sessao.user_id);
+    avisar();
+    await sincronizar();
   }
 
   async function sincronizar() {
@@ -170,21 +200,18 @@ const SupabaseSync = (() => {
       const remoto = await baixarRemoto();
       if (remoto) {
         const r = await MacroDB.mergeBackup(remoto);
-        if (r.novos || r.customs) {
-          // alimentos próprios vindos da nuvem entram na busca
-          if (typeof FoodSearch !== 'undefined') FoodSearch.buildIndex(await MacroDB.ensureFoods());
-          document.dispatchEvent(new Event('diario:refresh'));
-          document.dispatchEvent(new Event('relatorios:refresh'));
-        }
+        if (r.novos || r.customs) await recarregarTelas();
       }
       await subirBackup();
     } catch (e) {
-      if (e.message === 'não conectado') sair();
+      if (e.message === 'não conectado') await sair(false);
       else estado.erro = e.message;
     }
     estado.ocupado = false;
     avisar();
   }
+
+  /* ---- Entrar / criar conta / Google / sair ---- */
 
   async function entrar(email, senha) {
     estado.erro = '';
@@ -192,8 +219,7 @@ const SupabaseSync = (() => {
     avisar();
     try {
       adotarSessao(await chamarAuth('token?grant_type=password', { email, password: senha }));
-      avisar();
-      await sincronizar();
+      await aposAutenticar();
     } catch (e) {
       estado.erro = e.message;
       avisar();
@@ -208,8 +234,7 @@ const SupabaseSync = (() => {
       const dados = await chamarAuth('signup', { email, password: senha });
       if (dados.access_token) {
         adotarSessao(dados);
-        avisar();
-        await sincronizar();
+        await aposAutenticar();
       } else {
         // projeto com confirmação de e-mail ligada
         estado.aviso = 'conta criada — confirme no link enviado ao seu e-mail e depois toque em Entrar';
@@ -221,12 +246,83 @@ const SupabaseSync = (() => {
     }
   }
 
-  function sair() {
+  // OAuth do Google pelo próprio Supabase: sai da página e volta com os tokens
+  // no fragmento da URL (por isso não funciona em file:// nem dentro de iframe).
+  function entrarComGoogle() {
+    if (!podeOAuth()) {
+      estado.erro = 'o login com Google precisa do app aberto no endereço https (não funciona em arquivo local)';
+      avisar();
+      return;
+    }
+    const destino = location.href.split('#')[0];
+    location.href =
+      `${cfg().url}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(destino)}`;
+  }
+
+  const podeOAuth = () =>
+    (location.protocol === 'https:' || location.hostname === 'localhost') && window.self === window.top;
+
+  // volta do Google: tokens vêm no hash da URL
+  async function capturarRetornoOAuth() {
+    const hash = location.hash.startsWith('#') ? location.hash.slice(1) : '';
+    if (!hash) return false;
+    const p = new URLSearchParams(hash);
+    if (p.get('error_description')) {
+      estado.erro = traduzErro(p.get('error_description'));
+      history.replaceState(null, '', location.pathname + location.search);
+      avisar();
+      return false;
+    }
+    const access_token = p.get('access_token');
+    if (!access_token) return false;
+    history.replaceState(null, '', location.pathname + location.search);
+    try {
+      adotarSessao({
+        access_token,
+        refresh_token: p.get('refresh_token'),
+        expires_in: p.get('expires_in'),
+      });
+      // o hash não traz o usuário: busca id e e-mail
+      const { url, key } = cfg();
+      const r = await fetch(`${url}/auth/v1/user`, {
+        headers: { apikey: key, Authorization: `Bearer ${access_token}` },
+      });
+      const u = await r.json();
+      sessao.user_id = u.id;
+      sessao.email = u.email || '';
+      estado.email = sessao.email;
+      salvarSessao();
+      await aposAutenticar();
+      return true;
+    } catch (e) {
+      estado.erro = traduzErro(e.message);
+      avisar();
+      return false;
+    }
+  }
+
+  // limpar = true apaga os dados deste aparelho (já enviados à nuvem), para que
+  // o próximo usuário do aparelho não veja o diário de quem saiu
+  async function sair(limpar = true) {
+    clearTimeout(timerUpload);
+    if (estado.conectado && alteracoesPendentes) {
+      try {
+        await subirBackup(); // não perde o que ainda não subiu
+      } catch {
+        /* sem rede: o que estiver só local se perde ao limpar — avisado na UI */
+      }
+    }
     sessao = null;
     salvarSessao();
     estado.conectado = false;
     estado.email = '';
     estado.erro = '';
+    estado.aviso = '';
+    if (limpar) {
+      localStorage.removeItem(DONO);
+      await MacroDB.clearLocal();
+      await recarregarTelas();
+    }
     avisar();
   }
 
@@ -236,10 +332,11 @@ const SupabaseSync = (() => {
     location.reload();
   }
 
-  // mudanças locais (registros, alimentos próprios, configurações — inclusive
-  // um importar de backup antigo) sobem em rajada única após 4 s de calmaria
-  MacroDB.onChange(() => {
-    if (!estado.conectado) return;
+  // mudanças locais (registros, alimentos próprios, configurações — inclusive um
+  // importar de backup antigo) sobem em rajada única após 4 s de calmaria
+  MacroDB.onChange((tipo) => {
+    if (!estado.conectado || tipo === 'limpeza') return;
+    alteracoesPendentes = true;
     clearTimeout(timerUpload);
     timerUpload = setTimeout(async () => {
       try {
@@ -252,17 +349,28 @@ const SupabaseSync = (() => {
     }, 4000);
   });
 
-  carregarSessao();
-  // sessão salva de uma visita anterior: sincroniza ao abrir
-  if (estado.conectado && estado.configurado) setTimeout(() => sincronizar(), 800);
+  async function init() {
+    carregarSessao();
+    if (!estado.configurado) return;
+    if (await capturarRetornoOAuth()) return; // voltou do Google: já sincronizou
+    if (estado.conectado) {
+      // sessão salva de uma visita anterior
+      if (sessao.user_id) localStorage.setItem(DONO, sessao.user_id);
+      setTimeout(() => sincronizar(), 800);
+    }
+  }
+
+  init();
 
   return {
     entrar,
     criarConta,
+    entrarComGoogle,
     sair,
     sincronizar,
     setConfig,
     configurado: () => estado.configurado,
+    podeOAuth,
     onEstado: (fn) => {
       ouvintes.push(fn);
       fn(estado);

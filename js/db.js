@@ -241,6 +241,38 @@ const MacroDB = (() => {
     notifyChange('settings');
   }
 
+  /* ---- Limpeza local (troca de usuário no mesmo aparelho) ---- */
+
+  const CHAVES_CONFIG = ['gastoBasal', 'gastoDiario', 'metaKcal', 'metaP', 'metaC', 'metaG'];
+
+  // Apaga registros, alimentos próprios e configurações DESTE aparelho. Usado ao
+  // entrar com outra conta ou sair: os dados de quem saiu permanecem na nuvem.
+  async function clearLocal() {
+    try {
+      const db = await open();
+      await new Promise((resolve, reject) => {
+        const t = db.transaction(['entries', 'custom'], 'readwrite');
+        t.objectStore('entries').clear();
+        t.objectStore('custom').clear();
+        t.oncomplete = resolve;
+        t.onerror = () => reject(t.error);
+      });
+    } catch {
+      /* sem IndexedDB: só o fallback abaixo importa */
+    }
+    localStorage.removeItem(LS_KEY);
+    localStorage.removeItem(LS_CUSTOM);
+    localStorage.removeItem('cestaRefeicao');
+    for (const k of CHAVES_CONFIG) localStorage.removeItem(k);
+    foodsCache = null; // recarrega a base sem os alimentos próprios do anterior
+    notifyChange('limpeza');
+  }
+
+  async function hasLocalData() {
+    const [entries, custom] = await Promise.all([getAllEntries(), getCustomFoods()]);
+    return entries.length > 0 || custom.length > 0;
+  }
+
   /* ---- Backup (exportar/importar/sincronizar) ---- */
 
   async function exportBackup() {
@@ -283,6 +315,8 @@ const MacroDB = (() => {
     onChange,
     exportBackup,
     mergeBackup,
+    clearLocal,
+    hasLocalData,
     ensureFoods,
     getFood,
     getCustomFoods,

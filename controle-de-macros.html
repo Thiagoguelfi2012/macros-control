@@ -82,6 +82,15 @@ body {
   overscroll-behavior-y: contain; /* o pull-to-refresh é nosso (js/refresh.js) */
 }
 
+/* ---- Botão do Google ---- */
+.btn-google {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+}
+.btn-google svg { flex: none; }
+
 /* ---- Backup (copiar/colar em texto) ---- */
 .backup-texto {
   width: 100%;
@@ -718,8 +727,15 @@ main { max-width: 860px; margin: 0 auto; padding: 20px 16px 110px; }
 
     <div class="settings-card">
       <h3>Conta e sincronização entre aparelhos</h3>
-      <p class="sub">Crie uma conta (e-mail e senha) para guardar seus registros na nuvem e manter celular e computador sincronizados. A sincronização soma com o que já existe em cada aparelho — quem usava só o modo local pode importar o backup antigo acima, que ele sobe junto. Sem conta, o app continua funcionando 100% local.</p>
+      <p class="sub">Entre com o Google ou crie uma conta com e-mail e senha para guardar seus registros na nuvem e manter celular e computador sincronizados. Cada conta tem seu próprio diário: ao entrar com outra conta neste aparelho, os dados do usuário anterior são removidos daqui (continuam salvos na conta dele). Sem conta, o app funciona 100% local.</p>
       <div id="s-login">
+        <div class="settings-row">
+          <button class="btn btn-google" id="s-google">
+            <svg viewBox="0 0 18 18" aria-hidden="true" width="18" height="18"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.81.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.96v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.97 10.72a5.4 5.4 0 0 1 0-3.44V4.95H.96a9 9 0 0 0 0 8.1l3.01-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.9 11.43 0 9 0A9 9 0 0 0 .96 4.95l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z"/></svg>
+            Entrar com Google
+          </button>
+        </div>
+        <p class="cad-hint" style="margin:10px 0 6px">ou com e-mail e senha:</p>
         <div class="settings-row">
           <div class="field">
             <label for="s-email">E-mail</label>
@@ -1466,6 +1482,38 @@ const MacroDB = (() => {
     notifyChange('settings');
   }
 
+  /* ---- Limpeza local (troca de usuário no mesmo aparelho) ---- */
+
+  const CHAVES_CONFIG = ['gastoBasal', 'gastoDiario', 'metaKcal', 'metaP', 'metaC', 'metaG'];
+
+  // Apaga registros, alimentos próprios e configurações DESTE aparelho. Usado ao
+  // entrar com outra conta ou sair: os dados de quem saiu permanecem na nuvem.
+  async function clearLocal() {
+    try {
+      const db = await open();
+      await new Promise((resolve, reject) => {
+        const t = db.transaction(['entries', 'custom'], 'readwrite');
+        t.objectStore('entries').clear();
+        t.objectStore('custom').clear();
+        t.oncomplete = resolve;
+        t.onerror = () => reject(t.error);
+      });
+    } catch {
+      /* sem IndexedDB: só o fallback abaixo importa */
+    }
+    localStorage.removeItem(LS_KEY);
+    localStorage.removeItem(LS_CUSTOM);
+    localStorage.removeItem('cestaRefeicao');
+    for (const k of CHAVES_CONFIG) localStorage.removeItem(k);
+    foodsCache = null; // recarrega a base sem os alimentos próprios do anterior
+    notifyChange('limpeza');
+  }
+
+  async function hasLocalData() {
+    const [entries, custom] = await Promise.all([getAllEntries(), getCustomFoods()]);
+    return entries.length > 0 || custom.length > 0;
+  }
+
   /* ---- Backup (exportar/importar/sincronizar) ---- */
 
   async function exportBackup() {
@@ -1508,6 +1556,8 @@ const MacroDB = (() => {
     onChange,
     exportBackup,
     mergeBackup,
+    clearLocal,
+    hasLocalData,
     ensureFoods,
     getFood,
     getCustomFoods,
@@ -1620,20 +1670,21 @@ const FoodSearch = (() => {
 </script>
 <script>
 /* Conta e sincronização via Supabase (plano gratuito): login por e-mail/senha
-   (Supabase Auth) e backup em uma tabela com RLS — cada usuário só enxerga a
-   própria linha. Sem SDK: chamadas REST diretas (Auth/GoTrue + PostgREST).
-   A sincronização reaproveita a regra do importar (MacroDB.mergeBackup):
-   baixa o remoto, soma com o local sem duplicar e sobe a união — por isso o
-   histórico antigo de quem usava só local entra pelo importar/exportar e, na
-   sequência, sobe para a nuvem sozinho. */
+   ou com o Google (OAuth do próprio Supabase — as duas formas caem na mesma
+   conta quando o e-mail é o mesmo) e backup em uma tabela com RLS, onde cada
+   usuário só enxerga a própria linha. Sem SDK: REST direto (GoTrue/PostgREST).
+
+   Isolamento por usuário: o banco local do navegador é de um usuário por vez.
+   O aparelho guarda de quem são os dados locais; ao entrar com outra conta, o
+   local é limpo antes de baixar o da conta nova (os dados de quem saiu ficam
+   preservados na nuvem). Ao sair, o local é limpo depois de subir a última
+   versão — nada de diários misturados no mesmo aparelho. */
 const SupabaseSync = (() => {
-  // Projeto padrão (pode ficar vazio: os valores configurados na tela de
-  // Relatórios, salvos no navegador, têm prioridade). A anon key é pública
-  // por design — a segurança vem das políticas RLS no banco.
   const DEFAULT_URL = 'https://ddzqpkrjqsmwjlsqhbsm.supabase.co';
   const DEFAULT_ANON_KEY =
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkenFwa3JqcXNtd2psc3FoYnNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY1NTI5MjQsImV4cCI6MjEwMjEyODkyNH0.OayKpjn1hJsW7vWnYzxMLhwiDn_u9U4j5Rmkq1WLdEM';
   const TABELA = 'backups';
+  const DONO = 'sbDonoLocal'; // de qual usuário são os dados neste aparelho
 
   const cfg = () => ({
     url: (localStorage.getItem('sbUrl') || DEFAULT_URL).replace(/\/+$/, ''),
@@ -1651,6 +1702,7 @@ const SupabaseSync = (() => {
   };
   let sessao = null; // { access_token, refresh_token, expires_at, user_id, email }
   let timerUpload = null;
+  let alteracoesPendentes = false;
   const ouvintes = [];
 
   const avisar = () => {
@@ -1661,6 +1713,14 @@ const SupabaseSync = (() => {
         /* ouvinte não pode derrubar a sincronização */
       }
     }
+  };
+
+  const recarregarTelas = async () => {
+    if (typeof FoodSearch !== 'undefined' && typeof MacroDB.ensureFoods === 'function') {
+      FoodSearch.buildIndex(await MacroDB.ensureFoods());
+    }
+    document.dispatchEvent(new Event('diario:refresh'));
+    document.dispatchEvent(new Event('relatorios:refresh'));
   };
 
   function salvarSessao() {
@@ -1686,6 +1746,7 @@ const SupabaseSync = (() => {
     if (/already registered/i.test(m)) return 'este e-mail já tem conta — use Entrar';
     if (/password should be/i.test(m)) return 'senha muito curta (mínimo 6 caracteres)';
     if (/rate limit/i.test(m)) return 'muitas tentativas — aguarde um instante';
+    if (/provider is not enabled/i.test(m)) return 'login com Google ainda não ativado no projeto';
     if (/failed to fetch|networkerror|load failed/i.test(m))
       return 'sem conexão com o servidor (rede indisponível ou bloqueada neste ambiente)';
     return m;
@@ -1696,9 +1757,9 @@ const SupabaseSync = (() => {
     let r;
     try {
       r = await fetch(`${url}/auth/v1/${caminho}`, {
-        method: 'POST',
+        method: body ? 'POST' : 'GET',
         headers: { apikey: key, 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        body: body ? JSON.stringify(body) : undefined,
       });
     } catch (e) {
       throw new Error(traduzErro(e.message));
@@ -1714,9 +1775,9 @@ const SupabaseSync = (() => {
     sessao = {
       access_token: dados.access_token,
       refresh_token: dados.refresh_token,
-      expires_at: Date.now() + (dados.expires_in || 3600) * 1000,
-      user_id: dados.user && dados.user.id,
-      email: (dados.user && dados.user.email) || '',
+      expires_at: Date.now() + (Number(dados.expires_in) || 3600) * 1000,
+      user_id: (dados.user && dados.user.id) || (sessao && sessao.user_id),
+      email: (dados.user && dados.user.email) || (sessao && sessao.email) || '',
     };
     estado.conectado = true;
     estado.email = sessao.email;
@@ -1725,10 +1786,7 @@ const SupabaseSync = (() => {
   }
 
   async function renovarSessao() {
-    const dados = await chamarAuth('token?grant_type=refresh_token', {
-      refresh_token: sessao.refresh_token,
-    });
-    adotarSessao(dados);
+    adotarSessao(await chamarAuth('token?grant_type=refresh_token', { refresh_token: sessao.refresh_token }));
   }
 
   async function garantirToken() {
@@ -1755,8 +1813,7 @@ const SupabaseSync = (() => {
       throw new Error(traduzErro(e.message));
     }
     if (r.status === 401) {
-      // token recusado: renova uma vez e repete
-      await renovarSessao();
+      await renovarSessao(); // token recusado: renova uma vez e repete
       return api(caminho, opts);
     }
     if (!r.ok) throw new Error(`o servidor respondeu ${r.status}`);
@@ -1764,7 +1821,8 @@ const SupabaseSync = (() => {
   }
 
   async function baixarRemoto() {
-    const r = await api(`${TABELA}?select=dados`);
+    // o RLS já limita à própria linha; o filtro explícito é defesa em profundidade
+    const r = await api(`${TABELA}?select=dados&user_id=eq.${sessao.user_id}`);
     const linhas = await r.json();
     return (linhas[0] && linhas[0].dados) || null;
   }
@@ -1778,8 +1836,30 @@ const SupabaseSync = (() => {
         { user_id: sessao.user_id, dados: backup, atualizado_em: new Date().toISOString() },
       ]),
     });
+    alteracoesPendentes = false;
     estado.ultimaSync = new Date().toISOString();
     localStorage.setItem('sbUltimaSync', estado.ultimaSync);
+  }
+
+  /* ---- Isolamento entre usuários no mesmo aparelho ---- */
+
+  // Dados locais sem dono (uso local antes de qualquer login) são adotados pela
+  // conta que entrar — é o caminho de migração de quem já usava o app. Dados de
+  // OUTRA conta são apagados daqui (continuam na nuvem do dono).
+  async function prepararLocalPara(userId) {
+    const dono = localStorage.getItem(DONO);
+    if (dono && dono !== userId) {
+      await MacroDB.clearLocal();
+      await recarregarTelas();
+      estado.aviso = 'dados do usuário anterior removidos deste aparelho (seguem salvos na conta dele)';
+    }
+    localStorage.setItem(DONO, userId);
+  }
+
+  async function aposAutenticar() {
+    await prepararLocalPara(sessao.user_id);
+    avisar();
+    await sincronizar();
   }
 
   async function sincronizar() {
@@ -1791,21 +1871,18 @@ const SupabaseSync = (() => {
       const remoto = await baixarRemoto();
       if (remoto) {
         const r = await MacroDB.mergeBackup(remoto);
-        if (r.novos || r.customs) {
-          // alimentos próprios vindos da nuvem entram na busca
-          if (typeof FoodSearch !== 'undefined') FoodSearch.buildIndex(await MacroDB.ensureFoods());
-          document.dispatchEvent(new Event('diario:refresh'));
-          document.dispatchEvent(new Event('relatorios:refresh'));
-        }
+        if (r.novos || r.customs) await recarregarTelas();
       }
       await subirBackup();
     } catch (e) {
-      if (e.message === 'não conectado') sair();
+      if (e.message === 'não conectado') await sair(false);
       else estado.erro = e.message;
     }
     estado.ocupado = false;
     avisar();
   }
+
+  /* ---- Entrar / criar conta / Google / sair ---- */
 
   async function entrar(email, senha) {
     estado.erro = '';
@@ -1813,8 +1890,7 @@ const SupabaseSync = (() => {
     avisar();
     try {
       adotarSessao(await chamarAuth('token?grant_type=password', { email, password: senha }));
-      avisar();
-      await sincronizar();
+      await aposAutenticar();
     } catch (e) {
       estado.erro = e.message;
       avisar();
@@ -1829,8 +1905,7 @@ const SupabaseSync = (() => {
       const dados = await chamarAuth('signup', { email, password: senha });
       if (dados.access_token) {
         adotarSessao(dados);
-        avisar();
-        await sincronizar();
+        await aposAutenticar();
       } else {
         // projeto com confirmação de e-mail ligada
         estado.aviso = 'conta criada — confirme no link enviado ao seu e-mail e depois toque em Entrar';
@@ -1842,12 +1917,83 @@ const SupabaseSync = (() => {
     }
   }
 
-  function sair() {
+  // OAuth do Google pelo próprio Supabase: sai da página e volta com os tokens
+  // no fragmento da URL (por isso não funciona em file:// nem dentro de iframe).
+  function entrarComGoogle() {
+    if (!podeOAuth()) {
+      estado.erro = 'o login com Google precisa do app aberto no endereço https (não funciona em arquivo local)';
+      avisar();
+      return;
+    }
+    const destino = location.href.split('#')[0];
+    location.href =
+      `${cfg().url}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(destino)}`;
+  }
+
+  const podeOAuth = () =>
+    (location.protocol === 'https:' || location.hostname === 'localhost') && window.self === window.top;
+
+  // volta do Google: tokens vêm no hash da URL
+  async function capturarRetornoOAuth() {
+    const hash = location.hash.startsWith('#') ? location.hash.slice(1) : '';
+    if (!hash) return false;
+    const p = new URLSearchParams(hash);
+    if (p.get('error_description')) {
+      estado.erro = traduzErro(p.get('error_description'));
+      history.replaceState(null, '', location.pathname + location.search);
+      avisar();
+      return false;
+    }
+    const access_token = p.get('access_token');
+    if (!access_token) return false;
+    history.replaceState(null, '', location.pathname + location.search);
+    try {
+      adotarSessao({
+        access_token,
+        refresh_token: p.get('refresh_token'),
+        expires_in: p.get('expires_in'),
+      });
+      // o hash não traz o usuário: busca id e e-mail
+      const { url, key } = cfg();
+      const r = await fetch(`${url}/auth/v1/user`, {
+        headers: { apikey: key, Authorization: `Bearer ${access_token}` },
+      });
+      const u = await r.json();
+      sessao.user_id = u.id;
+      sessao.email = u.email || '';
+      estado.email = sessao.email;
+      salvarSessao();
+      await aposAutenticar();
+      return true;
+    } catch (e) {
+      estado.erro = traduzErro(e.message);
+      avisar();
+      return false;
+    }
+  }
+
+  // limpar = true apaga os dados deste aparelho (já enviados à nuvem), para que
+  // o próximo usuário do aparelho não veja o diário de quem saiu
+  async function sair(limpar = true) {
+    clearTimeout(timerUpload);
+    if (estado.conectado && alteracoesPendentes) {
+      try {
+        await subirBackup(); // não perde o que ainda não subiu
+      } catch {
+        /* sem rede: o que estiver só local se perde ao limpar — avisado na UI */
+      }
+    }
     sessao = null;
     salvarSessao();
     estado.conectado = false;
     estado.email = '';
     estado.erro = '';
+    estado.aviso = '';
+    if (limpar) {
+      localStorage.removeItem(DONO);
+      await MacroDB.clearLocal();
+      await recarregarTelas();
+    }
     avisar();
   }
 
@@ -1857,10 +2003,11 @@ const SupabaseSync = (() => {
     location.reload();
   }
 
-  // mudanças locais (registros, alimentos próprios, configurações — inclusive
-  // um importar de backup antigo) sobem em rajada única após 4 s de calmaria
-  MacroDB.onChange(() => {
-    if (!estado.conectado) return;
+  // mudanças locais (registros, alimentos próprios, configurações — inclusive um
+  // importar de backup antigo) sobem em rajada única após 4 s de calmaria
+  MacroDB.onChange((tipo) => {
+    if (!estado.conectado || tipo === 'limpeza') return;
+    alteracoesPendentes = true;
     clearTimeout(timerUpload);
     timerUpload = setTimeout(async () => {
       try {
@@ -1873,17 +2020,28 @@ const SupabaseSync = (() => {
     }, 4000);
   });
 
-  carregarSessao();
-  // sessão salva de uma visita anterior: sincroniza ao abrir
-  if (estado.conectado && estado.configurado) setTimeout(() => sincronizar(), 800);
+  async function init() {
+    carregarSessao();
+    if (!estado.configurado) return;
+    if (await capturarRetornoOAuth()) return; // voltou do Google: já sincronizou
+    if (estado.conectado) {
+      // sessão salva de uma visita anterior
+      if (sessao.user_id) localStorage.setItem(DONO, sessao.user_id);
+      setTimeout(() => sincronizar(), 800);
+    }
+  }
+
+  init();
 
   return {
     entrar,
     criarConta,
+    entrarComGoogle,
     sair,
     sincronizar,
     setConfig,
     configurado: () => estado.configurado,
+    podeOAuth,
     onEstado: (fn) => {
       ouvintes.push(fn);
       fn(estado);
@@ -3491,6 +3649,8 @@ const SupabaseSync = (() => {
         $('#s-login').hidden = e.conectado || !e.configurado;
         $('#s-conectado').hidden = !e.conectado;
         $('#s-config').hidden = e.configurado;
+        // OAuth exige sair da página: não funciona em arquivo local nem em iframe
+        $('#s-google').hidden = !SupabaseSync.podeOAuth();
         let txt;
         if (!e.configurado) {
           txt = 'Para ativar, informe abaixo a URL e a chave pública do projeto Supabase (instruções no README).';
@@ -3511,7 +3671,27 @@ const SupabaseSync = (() => {
       $('#s-senha').addEventListener('keydown', (ev) => {
         if (ev.key === 'Enter') SupabaseSync.entrar(...credenciais());
       });
-      $('#s-sair').addEventListener('click', () => SupabaseSync.sair());
+      $('#s-google').addEventListener('click', () => SupabaseSync.entrarComGoogle());
+      // sair limpa os dados deste aparelho: confirma em dois toques (diálogos
+      // nativos são bloqueados quando o app roda dentro de um iframe)
+      const btnSair = $('#s-sair');
+      btnSair.addEventListener('click', () => {
+        if (btnSair.dataset.armado) {
+          clearTimeout(btnSair._timer);
+          delete btnSair.dataset.armado;
+          btnSair.textContent = 'Sair';
+          SupabaseSync.sair();
+          return;
+        }
+        btnSair.dataset.armado = '1';
+        btnSair.textContent = 'Confirmar saída?';
+        sStatus.textContent =
+          'Ao sair, os dados deste aparelho são limpos — eles continuam na sua conta e voltam quando você entrar de novo.';
+        btnSair._timer = setTimeout(() => {
+          delete btnSair.dataset.armado;
+          btnSair.textContent = 'Sair';
+        }, 4000);
+      });
       $('#s-sync').addEventListener('click', () => SupabaseSync.sincronizar());
       $('#s-salvar-config').addEventListener('click', () => {
         const url = $('#s-url').value.trim();

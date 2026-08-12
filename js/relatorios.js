@@ -770,6 +770,8 @@
         $('#s-login').hidden = e.conectado || !e.configurado;
         $('#s-conectado').hidden = !e.conectado;
         $('#s-config').hidden = e.configurado;
+        // OAuth exige sair da página: não funciona em arquivo local nem em iframe
+        $('#s-google').hidden = !SupabaseSync.podeOAuth();
         let txt;
         if (!e.configurado) {
           txt = 'Para ativar, informe abaixo a URL e a chave pública do projeto Supabase (instruções no README).';
@@ -790,7 +792,27 @@
       $('#s-senha').addEventListener('keydown', (ev) => {
         if (ev.key === 'Enter') SupabaseSync.entrar(...credenciais());
       });
-      $('#s-sair').addEventListener('click', () => SupabaseSync.sair());
+      $('#s-google').addEventListener('click', () => SupabaseSync.entrarComGoogle());
+      // sair limpa os dados deste aparelho: confirma em dois toques (diálogos
+      // nativos são bloqueados quando o app roda dentro de um iframe)
+      const btnSair = $('#s-sair');
+      btnSair.addEventListener('click', () => {
+        if (btnSair.dataset.armado) {
+          clearTimeout(btnSair._timer);
+          delete btnSair.dataset.armado;
+          btnSair.textContent = 'Sair';
+          SupabaseSync.sair();
+          return;
+        }
+        btnSair.dataset.armado = '1';
+        btnSair.textContent = 'Confirmar saída?';
+        sStatus.textContent =
+          'Ao sair, os dados deste aparelho são limpos — eles continuam na sua conta e voltam quando você entrar de novo.';
+        btnSair._timer = setTimeout(() => {
+          delete btnSair.dataset.armado;
+          btnSair.textContent = 'Sair';
+        }, 4000);
+      });
       $('#s-sync').addEventListener('click', () => SupabaseSync.sincronizar());
       $('#s-salvar-config').addEventListener('click', () => {
         const url = $('#s-url').value.trim();
