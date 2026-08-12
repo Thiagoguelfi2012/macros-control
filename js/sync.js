@@ -248,15 +248,35 @@ const SupabaseSync = (() => {
 
   // OAuth do Google pelo próprio Supabase: sai da página e volta com os tokens
   // no fragmento da URL (por isso não funciona em file:// nem dentro de iframe).
-  function entrarComGoogle() {
+  async function entrarComGoogle() {
     if (!podeOAuth()) {
       estado.erro = 'o login com Google precisa do app aberto no endereço https (não funciona em arquivo local)';
       avisar();
       return;
     }
     const destino = location.href.split('#')[0];
-    location.href =
-      `${cfg().url}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(destino)}`;
+    const alvo = `${cfg().url}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(destino)}`;
+    estado.erro = '';
+    estado.aviso = '';
+    avisar();
+    // confere antes de sair da página: sem essa checagem, um provedor desativado
+    // (ou redirect não autorizado) joga o usuário numa página de JSON cru
+    try {
+      const r = await fetch(alvo, { redirect: 'manual' });
+      // 'opaqueredirect'/0 = redirecionando para o Google, tudo certo
+      if (r.type !== 'opaqueredirect' && r.status >= 400) {
+        const d = await r.json().catch(() => ({}));
+        const msg = d.msg || d.error_description || d.message || '';
+        estado.erro = /not enabled|unsupported provider/i.test(msg)
+          ? 'o login com Google ainda não está ativado no projeto Supabase (Authentication → Sign In / Up → Google). Enquanto isso, use e-mail e senha.'
+          : traduzErro(msg || `o servidor respondeu ${r.status}`);
+        avisar();
+        return;
+      }
+    } catch {
+      /* CORS/rede impediram a checagem: segue e deixa o Google decidir */
+    }
+    location.href = alvo;
   }
 
   const podeOAuth = () =>
