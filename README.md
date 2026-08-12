@@ -29,12 +29,13 @@ python3 -m http.server 8000
   gorduras com filtros por **janelas móveis** (1, 7, 15, 30, 90 dias e 1 ano, com
   navegação entre janelas); gráfico de calorias por dia/mês com linha do gasto
   estimado e da dieta alvo; déficit calórico acumulado; distribuição dos macros;
-  configuração de **gasto basal (TMB)** e **gasto médio diário (TDEE)** para exibir
-  o **déficit/superávit calórico** do período.
-- **Dieta alvo**: alvos diários de proteínas/carboidratos/gorduras (com kcal
-  implícitas calculadas). Gera o card "Dieta alvo × consumo" (média diária do
-  período vs alvo, por macro), o anel do alvo no gráfico de distribuição e as
-  barras de progresso de macros no card "Meta de hoje" do Diário.
+  **déficit/superávit calórico** do período, calculado a partir do gasto médio
+  diário definido em Configurações.
+- **Configurações** (`config.html`): tela própria com gasto energético (TMB/TDEE),
+  **dieta alvo** (alvos diários de calorias e macros, com as kcal implícitas
+  calculadas), **backup e transferência** e **conta e sincronização**. A dieta alvo
+  alimenta o card "Dieta alvo × consumo" e o anel do gráfico de distribuição nos
+  Relatórios, além das barras de progresso do card "Meta de hoje" no Diário.
 - **Alimentos próprios**: no modal de adição, "Não encontrou? Cadastre um alimento
   próprio" — informe os valores do rótulo em qualquer porção de referência (ex.: dose
   de 30 g), com nome de porção opcional para registro rápido. Ficam salvos no
@@ -149,12 +150,15 @@ em `js/db.js` para forçar os navegadores a recarregarem a base.
 ## Estrutura
 
 ```
-index.html / relatorios.html   telas
+index.html                     tela Diário
+relatorios.html                tela Relatórios
+config.html                    tela Configurações
 css/app.css                    estilos (tokens de tema claro/escuro)
 js/db.js                       camada IndexedDB + localStorage (+ backup/merge)
 js/busca.js                    busca tokenizada sem acentos, TACO/IBGE priorizados
 js/diario.js                   tela Diário
 js/relatorios.js               tela Relatórios (Chart.js)
+js/config.js                   tela Configurações (gasto, dieta alvo, backup, conta)
 js/sync.js                     conta (Supabase Auth) + sincronização do backup
 js/refresh.js                  pull-to-refresh
 data/foods.json                banco de ~17.500 alimentos gerado

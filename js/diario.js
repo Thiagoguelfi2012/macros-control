@@ -579,7 +579,7 @@
     if (!alvoKcal) {
       card.innerHTML = `
         <div class="hoje-top"><span class="hoje-label">Meta de hoje</span><span class="hoje-kcal"><b>${fmt(kcalHoje, 0)}</b> kcal</span></div>
-        <div class="hoje-config">Defina sua dieta alvo ou gasto diário em <a href="relatorios.html">Relatórios</a> para acompanhar sua meta aqui.</div>`;
+        <div class="hoje-config">Defina sua dieta alvo ou gasto diário em <a href="config.html">Configurações</a> para acompanhar sua meta aqui.</div>`;
     } else {
       const pct = Math.min(100, (kcalHoje / alvoKcal) * 100);
       const over = kcalHoje > alvoKcal;
@@ -619,7 +619,7 @@
       .join('');
     const conteudo = temMetaMacro
       ? rows
-      : `<div class="hoje-config">Defina os alvos de macros na seção "Dieta alvo" dos <a href="relatorios.html" class="link-rel">Relatórios</a>.</div>`;
+      : `<div class="hoje-config">Defina os alvos de macros na seção "Dieta alvo" das <a href="config.html" class="link-rel">Configurações</a>.</div>`;
     const aberto = localStorage.getItem('hojeMacrosAberto') !== '0';
     card.insertAdjacentHTML(
       'beforeend',
@@ -641,7 +641,7 @@
     // na versão de página única, links para Relatórios trocam de aba
     for (const link of card.querySelectorAll('.hoje-config a')) {
       link.addEventListener('click', (ev) => {
-        const tab = document.querySelector('a[data-view="view-relatorios"]');
+        const tab = document.querySelector('a[data-view="view-config"]');
         if (tab) {
           ev.preventDefault();
           tab.click();

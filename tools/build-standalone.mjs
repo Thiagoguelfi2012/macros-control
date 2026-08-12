@@ -16,6 +16,7 @@ const read = (p) => readFileSync(join(ROOT, p), 'utf8');
 const extractMain = (html) => html.match(/<main>([\s\S]*?)<\/main>/)[1];
 const mainDiario = extractMain(read('index.html')); // inclui FAB e modais
 const mainRelatorios = extractMain(read('relatorios.html'));
+const mainConfig = extractMain(read('config.html'));
 
 // evita fechar a tag <script> por acidente dentro do JSON
 const foodsJs = `window.FOODS_DATA = ${read('data/foods.json').replace(/</g, '\\u003c')};`;
@@ -39,6 +40,7 @@ ${read('css/app.css')}
   <nav>
     <a href="#" data-view="view-diario" class="active">Diário</a>
     <a href="#" data-view="view-relatorios">Relatórios</a>
+    <a href="#" data-view="view-config">Configurações</a>
   </nav>
 </header>
 
@@ -48,6 +50,10 @@ ${read('css/app.css')}
 
 <section id="view-relatorios" hidden>
   <main>${mainRelatorios}</main>
+</section>
+
+<section id="view-config" hidden>
+  <main>${mainConfig}</main>
 </section>
 
 <script>${foodsJs}</script>
@@ -73,6 +79,9 @@ ${read('js/diario.js')}
 ${read('js/relatorios.js')}
 </script>
 <script>
+${read('js/config.js')}
+</script>
+<script>
 ${read('js/refresh.js')}
 </script>
 <script>
@@ -84,6 +93,7 @@ document.querySelectorAll('.topbar nav a[data-view]').forEach((a) => {
     document.querySelectorAll('section[id^="view-"]').forEach((s) => (s.hidden = s.id !== a.dataset.view));
     if (a.dataset.view === 'view-relatorios') document.dispatchEvent(new Event('relatorios:refresh'));
     if (a.dataset.view === 'view-diario') document.dispatchEvent(new Event('diario:refresh'));
+    if (a.dataset.view === 'view-config') document.dispatchEvent(new Event('config:refresh'));
   });
 });
 </script>
