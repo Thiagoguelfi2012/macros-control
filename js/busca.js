@@ -20,7 +20,11 @@ const FoodSearch = (() => {
       .replace(/\bkibe(s)?\b/g, 'quibe$1')
       .replace(/\b(mussarela|mozarela|mozzarela|mozzarella)\b/g, 'mucarela')
       .replace(/\byogur(te?|t)\b/g, 'iogurte')
-      .replace(/\bcatupiri\b/g, 'catupiry');
+      .replace(/\bcatupiri\b/g, 'catupiry')
+      .replace(/\bmaizena\b/g, 'maisena')
+      // "bolacha" e "biscoito" são a mesma coisa (varia por região): as tabelas
+      // e os rótulos usam "biscoito", então normaliza tudo para ele
+      .replace(/\bbolach(a|as|inha|inhas)\b/g, 'biscoito');
 
   // palavras de ligação: não contam para o match nem para a posição —
   // "file catupiry" encontra "Filé mignon ao catupiry"
