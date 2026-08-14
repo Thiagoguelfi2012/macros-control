@@ -52,10 +52,14 @@ const FoodSearch = (() => {
     let tokens = q.split(' ').filter((t) => !STOP.has(t));
     if (!tokens.length) tokens = q.split(' ');
     const qContent = tokens.join(' ');
+    // mínimo de termos que precisam bater quando nada casa com a consulta
+    // inteira: "esfiha aberta de queijo branco" ainda acha a esfiha de queijo
+    const minParcial = tokens.length >= 3 ? tokens.length - 1 : tokens.length;
     const results = [];
+    const parciais = [];
     for (const item of indexed) {
       let score = 0;
-      let ok = true;
+      let casados = 0;
       for (const t of tokens) {
         // cada token da consulta precisa ser prefixo de alguma palavra do nome
         let best = -1;
@@ -68,13 +72,11 @@ const FoodSearch = (() => {
           }
           if (best === -1 && item.words[w].startsWith(t)) best = w;
         }
-        if (best === -1) {
-          ok = false;
-          break;
-        }
+        if (best === -1) continue;
+        casados++;
         score += best - (exato ? 3 : 0); // início do nome e match exato pontuam melhor
       }
-      if (!ok) continue;
+      if (casados < minParcial) continue;
       // começo exato do nome vale mais — mas só em fronteira de palavra,
       // senão "bis" ganharia o bônus em "biscoito"
       if (
@@ -84,10 +86,12 @@ const FoodSearch = (() => {
         score -= 5;
       }
       score = score * 10 + SOURCE_RANK[item.f.f] * 6 + item.norm.length / 50;
-      results.push({ food: item.f, score });
+      (casados === tokens.length ? results : parciais).push({ food: item.f, score });
     }
-    results.sort((a, b) => a.score - b.score);
-    return results.slice(0, limit).map((r) => r.food);
+    // resultados parciais só entram quando não há nada que case por completo
+    const lista = results.length ? results : parciais;
+    lista.sort((a, b) => a.score - b.score);
+    return lista.slice(0, limit).map((r) => r.food);
   }
 
   return { buildIndex, search, normalize };
