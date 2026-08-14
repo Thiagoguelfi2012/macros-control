@@ -10,8 +10,9 @@ const FoodSearch = (() => {
       .toLowerCase()
       .normalize('NFD')
       .replace(/[̀-ͯ]/g, '')
-      // apóstrofos somem em vez de virar espaço: "hellmann's" ↔ "hellmanns"
-      .replace(/[''´`]/g, '')
+      // apóstrofos (retos e tipográficos) somem em vez de virar espaço:
+      // "hellmann's" vira "hellmanns" e "McDonald’s" vira "mcdonalds"
+      .replace(/['‘’ʼ´`]/g, '')
       .replace(/[^a-z0-9 ]+/g, ' ')
       .replace(/\s+/g, ' ')
       .trim()
@@ -22,6 +23,11 @@ const FoodSearch = (() => {
       .replace(/\byogur(te?|t)\b/g, 'iogurte')
       .replace(/\bcatupiri\b/g, 'catupiry')
       .replace(/\bmaizena\b/g, 'maisena')
+      .replace(/\bwooper\b/g, 'whopper')
+      .replace(/\bbk\b/g, 'burger king')
+      .replace(/\bmc ?donalds?\b/g, 'mcdonalds')
+      .replace(/\bhamburger(s)?\b/g, 'hamburguer$1')
+      .replace(/\bx (burguer|burger|salada|tudo|bacon|egg)\b/g, 'x$1')
       // "bolacha" e "biscoito" são a mesma coisa (varia por região): as tabelas
       // e os rótulos usam "biscoito", então normaliza tudo para ele
       .replace(/\bbolach(a|as|inha|inhas)\b/g, 'biscoito');

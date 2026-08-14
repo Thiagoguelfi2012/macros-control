@@ -126,8 +126,7 @@ export const CURADOS = [
 
   // ---- Fast food (redes) ----
   { n: 'McDonald’s Big Mac', kcal: 233, p: 12, c: 20, g: 12, m: [['unidade (216 g)', 216]] },
-  { n: 'McDonald’s Quarterão com queijo', kcal: 244, p: 14, c: 18, g: 13, m: [['unidade (215 g)', 215]] },
-  { n: 'McDonald’s Cheeseburger', kcal: 263, p: 13, c: 27, g: 11, m: [['unidade (115 g)', 115]] },
+    { n: 'McDonald’s Cheeseburger', kcal: 263, p: 13, c: 27, g: 11, m: [['unidade (115 g)', 115]] },
   { n: 'McDonald’s McChicken', kcal: 249, p: 9, c: 25, g: 12, m: [['unidade (170 g)', 170]] },
   { n: 'McDonald’s batata frita', kcal: 310, p: 4, c: 41, g: 15, m: [['pequena (70 g)', 70], ['média (110 g)', 110], ['grande (150 g)', 150]] },
   { n: 'McDonald’s McNuggets', kcal: 300, p: 15, c: 18, g: 18, m: [['unidade (17 g)', 17], ['caixa 10 un (170 g)', 170]] },
@@ -449,4 +448,61 @@ export const CURADOS = [
   { n: "Folhado de frango", kcal: 330, p: 8, c: 32, g: 19, m: [["unidade (100 g)", 100]] },
   { n: "Torta salgada de frango de padaria (fatia)", kcal: 250, p: 10, c: 24, g: 13, m: [["fatia (120 g)", 120]] },
   { n: "Empadão de frango (fatia)", kcal: 300, p: 9, c: 28, g: 17, m: [["fatia (150 g)", 150]] },
+  // ---- Fast food: cardápios das principais redes (valores do sanduíche montado) ----
+
+  // McDonald's
+  { n: "McDonald's Big Tasty", kcal: 233, p: 12, c: 14, g: 14, m: [['unidade (348 g)', 348]] },
+  { n: "McDonald's Big Tasty Bacon", kcal: 245, p: 13, c: 14, g: 15, m: [['unidade (365 g)', 365]] },
+  { n: "McDonald's McNífico Bacon", kcal: 250, p: 13, c: 20, g: 13, m: [['unidade (232 g)', 232]] },
+  { n: "McDonald's Cheddar McMelt", kcal: 245, p: 12, c: 21, g: 12.5, m: [['unidade (232 g)', 232]] },
+  { n: "McDonald's Duplo Burger", kcal: 260, p: 14, c: 22, g: 13, m: [['unidade (155 g)', 155]] },
+  { n: "McDonald's Quarteirão com Queijo", kcal: 244, p: 14, c: 18, g: 13, m: [['unidade (215 g)', 215]] },
+  { n: "McDonald's Quarteirão Duplo", kcal: 262, p: 17, c: 14, g: 16, m: [['unidade (280 g)', 280]] },
+  { n: "McDonald's McFish (filé de peixe)", kcal: 240, p: 10, c: 26, g: 11, m: [['unidade (140 g)', 140]] },
+  { n: "McDonald's McChicken Bacon", kcal: 255, p: 10, c: 24, g: 13, m: [['unidade (190 g)', 190]] },
+  { n: "McDonald's hambúrguer simples", kcal: 255, p: 13, c: 30, g: 9, m: [['unidade (100 g)', 100]] },
+  { n: "McDonald's McMuffin ovo com bacon", kcal: 245, p: 14, c: 23, g: 11, m: [['unidade (135 g)', 135]] },
+  { n: "McDonald's McFritas (batata frita)", kcal: 310, p: 4, c: 41, g: 15, m: [['pequena (70 g)', 70], ['média (110 g)', 110], ['grande (150 g)', 150]] },
+
+  // Burger King
+  { n: 'Burger King Whopper com queijo', kcal: 245, p: 12, c: 17, g: 14.5, m: [['unidade (300 g)', 300]] },
+  { n: 'Burger King Whopper duplo', kcal: 260, p: 15, c: 13, g: 17, m: [['unidade (375 g)', 375]] },
+  { n: 'Burger King Big King', kcal: 245, p: 13, c: 18, g: 13.5, m: [['unidade (220 g)', 220]] },
+  { n: 'Burger King Rodeio', kcal: 255, p: 11, c: 26, g: 12, m: [['unidade (150 g)', 150]] },
+  { n: 'Burger King Chicken Junior', kcal: 270, p: 10, c: 26, g: 14, m: [['unidade (125 g)', 125]] },
+  { n: 'Burger King Steakhouse Angus', kcal: 250, p: 14, c: 17, g: 14, m: [['unidade (290 g)', 290]] },
+  { n: 'Burger King cheeseburger', kcal: 265, p: 14, c: 26, g: 12, m: [['unidade (125 g)', 125]] },
+  { n: 'Burger King batata frita', kcal: 300, p: 3.5, c: 40, g: 14, m: [['pequena (75 g)', 75], ['média (115 g)', 115], ['grande (155 g)', 155]] },
+  { n: 'Burger King nuggets', kcal: 290, p: 14, c: 17, g: 18, m: [['unidade (17 g)', 17], ['porção 10 un (170 g)', 170]] },
+  { n: 'Burger King milk shake', kcal: 135, p: 3, c: 22, g: 4, l: 1, m: [['copo (300 ml)', 300], ['copo grande (500 ml)', 500]] },
+
+  // Bob's
+  { n: "Bob's cheddar australiano", kcal: 255, p: 12, c: 22, g: 13, m: [['unidade (240 g)', 240]] },
+  { n: "Bob's Big Bob duplo", kcal: 265, p: 14, c: 18, g: 15, m: [['unidade (300 g)', 300]] },
+  { n: "Bob's cheeseburger", kcal: 260, p: 13, c: 27, g: 11, m: [['unidade (120 g)', 120]] },
+  { n: "Bob's batata frita", kcal: 305, p: 4, c: 40, g: 15, m: [['pequena (75 g)', 75], ['média (110 g)', 110]] },
+  { n: "Bob's milk shake Ovomaltine", kcal: 150, p: 3.5, c: 24, g: 4.5, l: 1, m: [['copo (300 ml)', 300], ['copo grande (500 ml)', 500]] },
+
+  // Batata recheada (tipo Baked Potato)
+  { n: 'Batata recheada (baked potato) com cheddar e bacon', kcal: 175, p: 6, c: 18, g: 9, m: [['porção (400 g)', 400], ['porção pequena (250 g)', 250]] },
+  { n: 'Batata recheada (baked potato) com frango e catupiry', kcal: 165, p: 8, c: 18, g: 7, m: [['porção (400 g)', 400], ['porção pequena (250 g)', 250]] },
+  { n: 'Batata recheada (baked potato) com carne seca', kcal: 170, p: 9, c: 18, g: 7.5, m: [['porção (400 g)', 400], ['porção pequena (250 g)', 250]] },
+  { n: 'Batata recheada (baked potato) com calabresa', kcal: 180, p: 7, c: 18, g: 9.5, m: [['porção (400 g)', 400], ['porção pequena (250 g)', 250]] },
+  { n: 'Batata recheada (baked potato) com brócolis e queijo', kcal: 150, p: 6, c: 18, g: 6.5, m: [['porção (400 g)', 400], ['porção pequena (250 g)', 250]] },
+
+  // Outras redes
+  { n: 'KFC balde de frango frito (peça)', kcal: 280, p: 22, c: 9, g: 17, m: [['peça (100 g)', 100], ['2 peças (200 g)', 200]] },
+  { n: 'KFC frango crispy (tiras)', kcal: 265, p: 20, c: 15, g: 14, m: [['porção (150 g)', 150]] },
+  { n: 'Subway 15 cm atum', kcal: 195, p: 9, c: 22, g: 8, m: [['sanduíche (220 g)', 220]] },
+  { n: 'Subway 15 cm peito de peru', kcal: 145, p: 9, c: 23, g: 2, m: [['sanduíche (210 g)', 210]] },
+  { n: 'Subway 15 cm steak com queijo', kcal: 185, p: 11, c: 22, g: 6, m: [['sanduíche (230 g)', 230]] },
+  { n: "Habib's esfiha de queijo", kcal: 280, p: 11, c: 32, g: 12, m: [['unidade (60 g)', 60]] },
+  { n: "Habib's Bib's esfiha de frango", kcal: 255, p: 12, c: 32, g: 9, m: [['unidade (60 g)', 60]] },
+  { n: "Habib's kibe", kcal: 275, p: 12, c: 25, g: 14, m: [['unidade (70 g)', 70]] },
+  { n: 'Giraffas prato de frango grelhado com arroz e feijão', kcal: 145, p: 10, c: 17, g: 4, m: [['prato (500 g)', 500]] },
+  { n: 'Outback batata frita com cheddar e bacon (Aussie Cheese Fries)', kcal: 330, p: 9, c: 26, g: 21, m: [['porção (300 g)', 300], ['meia porção (150 g)', 150]] },
+  { n: 'Pizza Hut fatia de pizza pepperoni', kcal: 270, p: 12, c: 30, g: 11, m: [['fatia (100 g)', 100]] },
+  { n: 'Domino’s fatia de pizza mussarela', kcal: 265, p: 11, c: 32, g: 10, m: [['fatia (100 g)', 100]] },
+  { n: 'Spoleto massa com molho de tomate e frango', kcal: 150, p: 9, c: 20, g: 4, m: [['prato (450 g)', 450]] },
+  { n: 'Sanduíche natural de frango com cenoura', kcal: 195, p: 11, c: 24, g: 6, m: [['unidade (150 g)', 150]] },
 ];

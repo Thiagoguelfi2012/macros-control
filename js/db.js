@@ -3,7 +3,7 @@ const MacroDB = (() => {
   const DB_NAME = 'macros-db';
   const DB_VERSION = 2;
   const FOODS_URL = 'data/foods.json';
-  const FOODS_VERSION = 19; // deve acompanhar o campo v de data/foods.json
+  const FOODS_VERSION = 20; // deve acompanhar o campo v de data/foods.json
   let dbPromise = null;
   let foodsCache = null; // array em memória para busca instantânea
 
