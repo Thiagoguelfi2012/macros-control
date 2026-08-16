@@ -71,6 +71,20 @@ body {
   overscroll-behavior-y: contain; /* o pull-to-refresh é nosso (js/refresh.js) */
 }
 
+/* ---- Projeção de peso no déficit acumulado ---- */
+.acum-peso {
+  margin: 2px 0 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--wash);
+}
+.acum-peso .ap-principal { font-size: 15px; }
+.acum-peso .ap-principal b { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+.acum-peso .ap-principal b.good { color: var(--good-text); }
+.acum-peso .ap-principal b.bad { color: var(--bad-text); }
+.acum-peso .ap-sub { color: var(--muted); font-size: 12.5px; margin-top: 3px; }
+
 /* ---- Botão do Google ---- */
 .btn-google {
   display: inline-flex;

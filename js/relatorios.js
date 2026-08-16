@@ -13,6 +13,9 @@
   const cssVar = (name) =>
     getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 
+  // equivalência clássica para projeção de peso: 1 kg de gordura ≈ 7.700 kcal
+  const KCAL_POR_KG = 7700;
+
   const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
   const DIAS_SEMANA = ['seg', 'ter', 'qua', 'qui', 'sex', 'sáb', 'dom'];
 
@@ -200,6 +203,7 @@
     }
     if (!gastoDiario || data.length < 2) {
       card.hidden = true;
+      $('#acum-peso').hidden = true;
       if (chartAcum) {
         chartAcum.destroy();
         chartAcum = null;
@@ -207,12 +211,36 @@
       return;
     }
     card.hidden = false;
-    card.dataset.final = String(data[data.length - 1]);
+    const final = data[data.length - 1];
+    card.dataset.final = String(final);
+
+    // projeção de peso: ~7.700 kcal equivalem a 1 kg de gordura corporal
+    const kg = Math.abs(final) / KCAL_POR_KG;
+    const perdeu = final <= 0;
+    const kgEl = $('#ap-kg');
+    kgEl.textContent = `${perdeu ? '−' : '+'}${fmt(kg, 2)} kg`;
+    kgEl.className = perdeu ? 'good' : 'bad';
+    $('#ap-texto').textContent = perdeu
+      ? 'de gordura no período, se o ritmo se confirmar'
+      : 'de ganho no período, se o ritmo se confirmar';
+    const porSemana = (kg / data.length) * 7;
+    $('#ap-ritmo').textContent =
+      `Ritmo de ${perdeu ? '−' : '+'}${fmt(porSemana, 2)} kg/semana em ${data.length} dia${data.length > 1 ? 's' : ''} · ` +
+      `estimativa por 7.700 kcal ≈ 1 kg (o peso da balança também varia com água, intestino e glicogênio)`;
+    $('#acum-peso').hidden = false;
     const good = cssVar('--good-text');
     const bad = cssVar('--bad-text');
     const muted = cssVar('--muted');
     const grid = cssVar('--grid');
     const baseline = cssVar('--baseline');
+    // escala fixada nos dois eixos (kcal e kg) para que leiam o mesmo intervalo,
+    // arredondada para valores redondos em vez de sobrar 880 / −11.880 nas pontas
+    const menor = Math.min(...data, 0);
+    const maior = Math.max(...data, 0);
+    const amplitude = maior - menor;
+    const passo = amplitude > 8000 ? 2000 : amplitude > 4000 ? 1000 : amplitude > 1500 ? 500 : 100;
+    const escalaMin = Math.floor((menor - amplitude * 0.05) / passo) * passo;
+    const escalaMax = Math.ceil((maior + amplitude * 0.05) / passo) * passo;
     if (chartAcum) chartAcum.destroy();
     chartAcum = new Chart($('#chart-acum'), {
       type: 'line',
@@ -241,7 +269,8 @@
             callbacks: {
               label: (ctx) => {
                 const v = ctx.parsed.y;
-                return ` ${v <= 0 ? 'Déficit' : 'Superávit'} acumulado: ${fmt(Math.abs(v), 0)} kcal`;
+                const emKg = fmt(Math.abs(v) / KCAL_POR_KG, 2);
+                return ` ${v <= 0 ? 'Déficit' : 'Superávit'} acumulado: ${fmt(Math.abs(v), 0)} kcal ≈ ${emKg} kg`;
               },
             },
           },
@@ -253,9 +282,25 @@
             ticks: { color: muted, font: { size: 11 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 8 },
           },
           y: {
+            min: escalaMin,
+            max: escalaMax,
             grid: { color: (c) => (c.tick.value === 0 ? baseline : grid), drawTicks: false },
             border: { display: false },
             ticks: { color: muted, font: { size: 11 }, maxTicksLimit: 6 },
+          },
+          // mesma escala, lida em quilos: o eixo da direita traduz as kcal
+          kg: {
+            position: 'right',
+            min: escalaMin,
+            max: escalaMax,
+            grid: { display: false },
+            border: { display: false },
+            ticks: {
+              color: muted,
+              font: { size: 11 },
+              maxTicksLimit: 6,
+              callback: (v) => `${fmt(v / KCAL_POR_KG, 1)} kg`,
+            },
           },
         },
       },
