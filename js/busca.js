@@ -25,6 +25,7 @@ const FoodSearch = (() => {
       .replace(/\bmaizena\b/g, 'maisena')
       .replace(/\bwooper\b/g, 'whopper')
       .replace(/\bbk\b/g, 'burger king')
+      .replace(/\bbach?io\b/g, 'bacio') // "bachio di latte" → Bacio di Latte
       .replace(/\bmc ?donalds?\b/g, 'mcdonalds')
       .replace(/\bhamburger(s)?\b/g, 'hamburguer$1')
       .replace(/\bx (burguer|burger|salada|tudo|bacon|egg)\b/g, 'x$1')
