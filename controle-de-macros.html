@@ -2937,23 +2937,21 @@ const SupabaseSync = (() => {
     return { inicio, fim, granularidade, label };
   }
 
-  // Dias que contam no período: dias completos já passados + o dia de hoje
-  // APENAS se ele já tiver algum registro (de madrugada, antes do café, o dia
-  // novo não entra no déficit/alvo). Retorna 0 se nenhum dia conta ainda.
+  // Dias que contam no período: SOMENTE os dias com algum alimento registrado.
+  // Dias futuros nunca entram, e dias sem registro também não — seja hoje de
+  // madrugada (antes do café) ou datas anteriores ao início do uso do app, que
+  // inflariam o gasto e criariam um déficit irreal em janelas longas.
   function diasContabilizados(inicio, fim, entries) {
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
-    const fimCompletos = Math.min(fim.getTime(), hoje.getTime());
-    let dias = Math.max(0, Math.round((fimCompletos - inicio.getTime()) / 86400000));
-    if (hoje >= inicio && hoje < fim) {
-      const temRegistroHoje = entries.some((e) => {
-        const d = new Date(e.ts);
-        d.setHours(0, 0, 0, 0);
-        return d.getTime() === hoje.getTime();
-      });
-      if (temRegistroHoje) dias += 1;
+    const limite = Math.min(fim.getTime(), hoje.getTime() + 86400000);
+    const dias = new Set();
+    for (const e of entries) {
+      const d = new Date(e.ts);
+      d.setHours(0, 0, 0, 0);
+      if (d.getTime() >= inicio.getTime() && d.getTime() < limite) dias.add(d.getTime());
     }
-    return dias;
+    return dias.size;
   }
 
   /* ---- Agregação ---- */
@@ -3026,7 +3024,7 @@ const SupabaseSync = (() => {
         <div class="tile balance">
           <div class="t-label">${ehDeficit ? '▼ Déficit calórico' : '▲ Superávit calórico'}</div>
           <div class="t-value ${ehDeficit ? 'good' : 'bad'}">${fmt(Math.abs(saldo), 0)} kcal</div>
-          <div class="t-sub">gasto estimado: ${fmt(gasto, 0)} kcal em ${dias} dia${dias > 1 ? 's' : ''}</div>
+          <div class="t-sub">gasto estimado: ${fmt(gasto, 0)} kcal em ${dias} dia${dias > 1 ? 's' : ''} com registro</div>
         </div>`;
     } else {
       balancoHtml = `
@@ -3083,9 +3081,10 @@ const SupabaseSync = (() => {
     for (const d = new Date(inicio); d < fim; d.setDate(d.getDate() + 1)) {
       if (d > hoje) break;
       const k = chave(d);
-      // hoje só conta se já tiver registro (mesma regra do card de déficit)
-      if (d.getTime() === hoje.getTime() && !porDia.has(k)) break;
-      acc += (porDia.get(k) || 0) - gastoDiario;
+      // só dias com registro entram no acumulado (mesma regra dos tiles): dias
+      // em branco não geram déficit, senão a curva despencaria sozinha
+      if (!porDia.has(k)) continue;
+      acc += porDia.get(k) - gastoDiario;
       labels.push(d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }));
       data.push(Math.round(acc));
     }
@@ -3113,7 +3112,7 @@ const SupabaseSync = (() => {
       : 'de ganho no período, se o ritmo se confirmar';
     const porSemana = (kg / data.length) * 7;
     $('#ap-ritmo').textContent =
-      `Ritmo de ${perdeu ? '−' : '+'}${fmt(porSemana, 2)} kg/semana em ${data.length} dia${data.length > 1 ? 's' : ''} · ` +
+      `Ritmo de ${perdeu ? '−' : '+'}${fmt(porSemana, 2)} kg/semana em ${data.length} dia${data.length > 1 ? 's' : ''} com registro · ` +
       `estimativa por 7.700 kcal ≈ 1 kg (o peso da balança também varia com água, intestino e glicogênio)`;
     $('#acum-peso').hidden = false;
     const good = cssVar('--good-text');
@@ -3209,7 +3208,7 @@ const SupabaseSync = (() => {
     // (semana em andamento com 3 dias → alvo de 3 dias)
     $('#alvo-sub').textContent =
       dias > 1
-        ? `Consumo do período comparado com o alvo do período (alvo diário × ${dias} dias)`
+        ? `Consumo do período comparado com o alvo (alvo diário × ${dias} dias com registro)`
         : 'Consumo do dia comparado com o alvo diário';
     const macros = [
       { nome: 'Calorias', unidade: 'kcal', cor: 'var(--accent)', sw: '', total: tot.kcal, alvo: metaKcal },
