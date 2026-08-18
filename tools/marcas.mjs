@@ -825,4 +825,10 @@ export const MARCAS = [
   { n: "Papapá maçã (squeeze de fruta)", kcal: 60, p: 0.3, c: 15, g: 0, m: [["sachê (100 g)", 100]] },
   { n: "Squeeze de fruta 100% (sachê, média)", kcal: 70, p: 0.5, c: 17, g: 0.2, m: [["sachê (90 g)", 90], ["sachê (100 g)", 100]] },
   { n: "Fruta&Co purê de frutas (sachê)", kcal: 65, p: 0.4, c: 16, g: 0.1, m: [["sachê (90 g)", 90]] },
+  // ---- Papapá: biscoitos integrais (linha de cookies com fruta/cacau) ----
+  { n: "Biscoito Papapá cacau com banana", kcal: 445, p: 6.5, c: 66, g: 16.5, m: [["pacote (30 g)", 30], ["unidade (8 g)", 8]] },
+  { n: "Biscoito Papapá banana com aveia", kcal: 440, p: 6.5, c: 67, g: 15.5, m: [["pacote (30 g)", 30], ["unidade (8 g)", 8]] },
+  { n: "Biscoito Papapá maçã com canela", kcal: 435, p: 6, c: 68, g: 15, m: [["pacote (30 g)", 30], ["unidade (8 g)", 8]] },
+  { n: "Biscoito Papapá coco", kcal: 450, p: 6, c: 65, g: 18, m: [["pacote (30 g)", 30], ["unidade (8 g)", 8]] },
+  { n: "Biscoito integral de cacau com banana (média)", kcal: 440, p: 6.5, c: 67, g: 15.5, m: [["pacote (30 g)", 30], ["unidade (8 g)", 8]] },
 ];
