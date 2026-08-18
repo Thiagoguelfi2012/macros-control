@@ -810,4 +810,19 @@ export const MARCAS = [
   { n: "Gelato italiano de gelateria (média dos sabores)", kcal: 240, p: 4, c: 28, g: 12.5, m: [["pequeno (100 g)", 100], ["médio (150 g)", 150], ["grande (200 g)", 200], ["bola (60 g)", 60]] },
   { n: "Gelato Häagen-Dazs (pote)", kcal: 260, p: 4.5, c: 26, g: 15, m: [["pote (100 ml)", 55], ["bola (60 g)", 60], ["pote (473 ml)", 260]] },
   { n: "Sorvete Ben & Jerry's (pote)", kcal: 265, p: 4.5, c: 30, g: 14, m: [["bola (60 g)", 60], ["pote (458 ml)", 250]] },
+  // ---- Garoto: linha de tabletes e bombons ----
+  { n: "Chocolate Garoto Chocobiscuit ao leite", kcal: 515, p: 6.5, c: 63, g: 26, m: [["barra (80 g)", 80], ["porção (20 g)", 20]] },
+  { n: "Chocolate Garoto Chocobiscuit branco", kcal: 525, p: 6, c: 63, g: 27, m: [["barra (80 g)", 80], ["porção (20 g)", 20]] },
+  { n: "Chocolate Garoto crocante (barra)", kcal: 530, p: 7, c: 60, g: 28, m: [["barra (80 g)", 80], ["quadrado (10 g)", 10]] },
+  { n: "Chocolate Garoto branco (barra)", kcal: 550, p: 6, c: 58, g: 32, m: [["barra (80 g)", 80], ["quadrado (10 g)", 10]] },
+  { n: "Chocolate Garoto meio amargo (barra)", kcal: 500, p: 5.5, c: 57, g: 28, m: [["barra (80 g)", 80], ["quadrado (10 g)", 10]] },
+  { n: "Bombom Garoto sortido (caixa, unidade)", kcal: 500, p: 5.5, c: 58, g: 27, m: [["unidade (14 g)", 14], ["caixa (250 g)", 250]] },
+
+  // ---- Squeezes de fruta (sachês) ----
+  // Papapá e similares: purê de fruta em sachê, sem açúcar adicionado
+  { n: "Papapá cacau com banana (squeeze de fruta)", kcal: 85, p: 1.5, c: 18, g: 1, m: [["sachê (100 g)", 100]] },
+  { n: "Papapá banana com aveia (squeeze de fruta)", kcal: 80, p: 1.2, c: 17.5, g: 0.7, m: [["sachê (100 g)", 100]] },
+  { n: "Papapá maçã (squeeze de fruta)", kcal: 60, p: 0.3, c: 15, g: 0, m: [["sachê (100 g)", 100]] },
+  { n: "Squeeze de fruta 100% (sachê, média)", kcal: 70, p: 0.5, c: 17, g: 0.2, m: [["sachê (90 g)", 90], ["sachê (100 g)", 100]] },
+  { n: "Fruta&Co purê de frutas (sachê)", kcal: 65, p: 0.4, c: 16, g: 0.1, m: [["sachê (90 g)", 90]] },
 ];
