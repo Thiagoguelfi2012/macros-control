@@ -116,7 +116,7 @@ const MacroDB = (() => {
       }
       if (!base) {
         // primeira visita (ou base atualizada): busca o JSON e persiste
-        const res = await fetch(FOODS_URL);
+        const res = await fetch(`${FOODS_URL}?v=${FOODS_VERSION}`, { cache: 'no-cache' });
         if (!res.ok) throw new Error('Não foi possível carregar data/foods.json');
         const data = await res.json();
         base = data.foods;
@@ -241,6 +241,27 @@ const MacroDB = (() => {
     notifyChange('settings');
   }
 
+  /* ---- Versão da base e atualização forçada ---- */
+
+  const foodsInfo = () => ({
+    versao: FOODS_VERSION,
+    itens: foodsCache ? foodsCache.length : 0,
+  });
+
+  // Descarta a base guardada no aparelho e recarrega a página: resolve o caso
+  // de o navegador continuar servindo uma lista de alimentos antiga do cache.
+  async function refreshFoods() {
+    localStorage.removeItem('foodsVersion');
+    try {
+      const db = await open();
+      await wrap(tx(db, 'foods', 'readwrite').clear());
+    } catch {
+      /* sem IndexedDB: a base já vem do fetch a cada visita */
+    }
+    foodsCache = null;
+    location.reload();
+  }
+
   /* ---- Limpeza local (troca de usuário no mesmo aparelho) ---- */
 
   const CHAVES_CONFIG = ['gastoBasal', 'gastoDiario', 'metaKcal', 'metaP', 'metaC', 'metaG'];
@@ -312,6 +333,8 @@ const MacroDB = (() => {
   }
 
   return {
+    foodsInfo,
+    refreshFoods,
     onChange,
     exportBackup,
     mergeBackup,

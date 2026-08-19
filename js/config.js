@@ -68,6 +68,19 @@
     avisarTelas();
   });
 
+  /* ---- Lista de alimentos: versão e atualização forçada ---- */
+
+  (async () => {
+    await MacroDB.ensureFoods();
+    const { versao, itens } = MacroDB.foodsInfo();
+    $('#base-info').textContent = `Versão ${versao} · ${fmt(itens, 0)} alimentos disponíveis na busca.`;
+  })();
+
+  $('#btn-atualizar-base').addEventListener('click', () => {
+    $('#base-info').textContent = 'Baixando a lista mais recente…';
+    MacroDB.refreshFoods();
+  });
+
   /* ---- Backup: exportar/importar registros, alimentos próprios e config ---- */
 
   const backupStatus = $('#backup-status');

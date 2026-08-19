@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Configurações — Controle de Macros</title>
   <link rel="icon" href="data:," />
-  <link rel="stylesheet" href="css/app.css" />
+  <link rel="stylesheet" href="css/app.css?v=25" />
 </head>
 <body>
   <header class="topbar">
@@ -110,11 +110,20 @@
         </div>
       </div>
     </div>
+    <div class="settings-card">
+      <h3>Lista de alimentos</h3>
+      <p class="sub">A lista é baixada uma vez e fica guardada no aparelho. Se um alimento novo não aparecer na busca, atualize aqui — isso força a baixar a versão mais recente.</p>
+      <div class="settings-row">
+        <button class="btn" id="btn-atualizar-base">Atualizar lista de alimentos</button>
+      </div>
+      <p class="cad-hint" id="base-info" style="margin-top:10px"></p>
+    </div>
+
   </main>
 
-  <script src="js/db.js"></script>
-  <script src="js/sync.js"></script>
-  <script src="js/config.js"></script>
-  <script src="js/refresh.js"></script>
+  <script src="js/db.js?v=25"></script>
+  <script src="js/sync.js?v=25"></script>
+  <script src="js/config.js?v=25"></script>
+  <script src="js/refresh.js?v=25"></script>
 </body>
 </html>
