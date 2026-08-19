@@ -189,8 +189,12 @@
     }
   }
 
+  // itens desativados (it.off) continuam na lista, mas ficam fora da soma, do
+  // impacto na meta e do que é salvo — servem para simular a refeição sem eles
+  const ativos = () => cesta.filter((it) => !it.off);
+
   const somaCesta = () =>
-    cesta.reduce(
+    ativos().reduce(
       (acc, it) => ({ kcal: acc.kcal + it.kcal, p: acc.p + it.p, c: acc.c + it.c, g: acc.g + it.g }),
       { kcal: 0, p: 0, c: 0, g: 0 }
     );
@@ -223,7 +227,7 @@
   }
 
   function atualizarBotaoSalvar() {
-    const n = cesta.length + (foodSelecionado && editandoId == null ? 1 : 0);
+    const n = ativos().length + (foodSelecionado && editandoId == null ? 1 : 0);
     $('#btn-salvar').textContent = editandoId != null ? 'Salvar' : n > 1 ? `Salvar (${n} itens)` : 'Salvar';
   }
 
@@ -239,13 +243,21 @@
     cesta.forEach((it, idx) => {
       const row = document.createElement('div');
       row.className = 'cesta-item';
+      if (it.off) row.classList.add('off');
       row.innerHTML = `
+        <button class="icon-btn act-toggle" title="${it.off ? 'Voltar para a refeição' : 'Tirar da conta sem remover'}" aria-label="${it.off ? 'Ativar item' : 'Desativar item'}" aria-pressed="${it.off ? 'false' : 'true'}">${it.off ? SVG_OFF : SVG_ON}</button>
         <span class="ci-nome"></span>
         <span class="ci-qtd">${qtdStr(it)}</span>
         <span class="ci-kcal">${fmt(it.kcal, 0)} kcal</span>
         <button class="icon-btn act-del" title="Remover da refeição" aria-label="Remover">${SVG_DEL}</button>`;
       row.querySelector('.ci-nome').textContent = it.nome;
-      row.querySelector('button').addEventListener('click', () => {
+      row.querySelector('.act-toggle').addEventListener('click', () => {
+        it.off = !it.off;
+        salvarCesta();
+        renderCesta();
+        atualizarPreview();
+      });
+      row.querySelector('.act-del').addEventListener('click', () => {
         cesta.splice(idx, 1);
         salvarCesta();
         renderCesta();
@@ -254,8 +266,10 @@
       lista.appendChild(row);
     });
     const t = somaCesta();
+    const fora = cesta.length - ativos().length;
     $('#cesta-total').innerHTML =
-      `Total: <b>${fmt(t.kcal, 0)}</b> kcal · P <b>${fmt(t.p)}</b> · C <b>${fmt(t.c)}</b> · G <b>${fmt(t.g)}</b> g`;
+      `Total: <b>${fmt(t.kcal, 0)}</b> kcal · P <b>${fmt(t.p)}</b> · C <b>${fmt(t.c)}</b> · G <b>${fmt(t.g)}</b> g` +
+      (fora ? ` <span class="cesta-fora">(${fora} item${fora > 1 ? 'ns' : ''} desativado${fora > 1 ? 's' : ''})</span>` : '');
   }
 
   function incluirNaRefeicao() {
@@ -376,8 +390,8 @@
       render();
       return;
     }
-    // adição: refeição (itens incluídos) + item em configuração, tudo junto
-    const itens = [...cesta];
+    // adição: refeição (itens ativos) + item em configuração, tudo junto
+    const itens = ativos().map(({ off, ...item }) => item);
     const atual = itemAtual();
     if (atual) itens.push(atual);
     if (!itens.length) {
@@ -544,6 +558,11 @@
 
   const SVG_DEL =
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M10 11v6M14 11v6"/></svg>';
+  // olho aberto/fechado: item entra ou não na conta da refeição
+  const SVG_ON =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 12S5 5.5 12 5.5 22.5 12 22.5 12 19 18.5 12 18.5 1.5 12 1.5 12z"/><circle cx="12" cy="12" r="3.2"/></svg>';
+  const SVG_OFF =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.9 5.8A9.7 9.7 0 0 1 12 5.5c7 0 10.5 6.5 10.5 6.5a17.6 17.6 0 0 1-3.4 4.2M6.3 7.3A17.4 17.4 0 0 0 1.5 12S5 18.5 12 18.5c1.8 0 3.4-.4 4.7-1.1"/><path d="M3 3l18 18"/></svg>';
   const SVG_REPEAT =
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v5h5"/></svg>';
 

@@ -341,15 +341,36 @@ main { max-width: 860px; margin: 0 auto; padding: 20px 16px 110px; }
 }
 .cesta .imp-title { font-size: 12.5px; font-weight: 600; color: var(--ink-2); margin-bottom: 6px; }
 .cesta-item {
-  display: flex; align-items: center; gap: 8px; font-size: 13px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    'tog nome del'
+    'tog meta del';
+  align-items: center; column-gap: 8px; row-gap: 1px; font-size: 13px;
   padding: 5px 0; border-bottom: 1px solid var(--grid);
 }
 .cesta-item:last-of-type { border-bottom: none; }
-.cesta-item .ci-nome { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.cesta-item .ci-qtd { color: var(--muted); font-size: 12px; white-space: nowrap; }
-.cesta-item .ci-kcal { font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.cesta-item .act-toggle { grid-area: tog; }
+.cesta-item .act-del { grid-area: del; }
+.cesta-item .ci-nome { grid-area: nome; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* quantidade e calorias dividem a segunda linha, abaixo do nome */
+.cesta-item .ci-qtd {
+  grid-area: meta; color: var(--muted); font-size: 12px;
+  min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cesta-item .ci-kcal {
+  grid-area: meta; justify-self: end; font-weight: 600;
+  white-space: nowrap; font-variant-numeric: tabular-nums;
+}
 .cesta-item .icon-btn { padding: 4px; }
 .cesta-item .icon-btn svg { width: 14px; height: 14px; }
+.cesta-item .act-toggle { color: var(--accent); }
+/* item desativado: continua na lista, mas fora da conta */
+.cesta-item.off .ci-nome,
+.cesta-item.off .ci-qtd,
+.cesta-item.off .ci-kcal { color: var(--muted); text-decoration: line-through; }
+.cesta-item.off .act-toggle { color: var(--muted); }
+.cesta-fora { color: var(--muted); font-weight: 400; }
 .cesta-total {
   font-size: 12.5px; color: var(--ink-2); padding-top: 8px; margin-top: 4px;
   border-top: 1px solid var(--grid); font-variant-numeric: tabular-nums;
