@@ -831,4 +831,16 @@ export const MARCAS = [
   { n: "Biscoito Papapá maçã com canela", kcal: 435, p: 6, c: 68, g: 15, m: [["pacote (30 g)", 30], ["unidade (8 g)", 8]] },
   { n: "Biscoito Papapá coco", kcal: 450, p: 6, c: 65, g: 18, m: [["pacote (30 g)", 30], ["unidade (8 g)", 8]] },
   { n: "Biscoito integral de cacau com banana (média)", kcal: 440, p: 6.5, c: 67, g: 15.5, m: [["pacote (30 g)", 30], ["unidade (8 g)", 8]] },
+  // ---- Cacau Show ----
+  { n: "Mousse Lanut Cacau Show", kcal: 340, p: 5, c: 34, g: 20, m: [["pote (120 g)", 120], ["pote (200 g)", 200]] },
+  { n: "Mousse Lanut Cacau Show avelã", kcal: 350, p: 5.5, c: 33, g: 21.5, m: [["pote (120 g)", 120], ["pote (200 g)", 200]] },
+  { n: "Creme Lanut Cacau Show (pote de creme de avelã)", kcal: 555, p: 6, c: 52, g: 35, m: [["colher de sopa (15 g)", 15], ["pote (160 g)", 160]] },
+  { n: "Chocolate Cacau Show ao leite (tablete)", kcal: 545, p: 7, c: 57, g: 31, m: [["tablete (80 g)", 80], ["quadrado (10 g)", 10]] },
+  { n: "Chocolate Cacau Show 50% cacau (tablete)", kcal: 520, p: 6.5, c: 48, g: 33, m: [["tablete (80 g)", 80], ["quadrado (10 g)", 10]] },
+  { n: "Chocolate Cacau Show branco (tablete)", kcal: 560, p: 6, c: 58, g: 33, m: [["tablete (80 g)", 80], ["quadrado (10 g)", 10]] },
+  { n: "Trufa Cacau Show (unidade)", kcal: 470, p: 4.5, c: 50, g: 27, m: [["unidade (28 g)", 28]] },
+  { n: "Bombom Cacau Show Lacreme (unidade)", kcal: 520, p: 6, c: 52, g: 31, m: [["unidade (20 g)", 20]] },
+  { n: "Ovo de Páscoa Cacau Show (porção)", kcal: 540, p: 6.5, c: 56, g: 31, m: [["porção (25 g)", 25], ["ovo 150 g (150 g)", 150]] },
+  { n: "Pão de mel Cacau Show", kcal: 400, p: 4, c: 60, g: 15, m: [["unidade (50 g)", 50]] },
+  { n: "Cacau Show tablete Intense 70% cacau", kcal: 545, p: 8, c: 36, g: 38, m: [["tablete (80 g)", 80], ["quadrado (10 g)", 10]] },
 ];
