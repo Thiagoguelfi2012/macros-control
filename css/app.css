@@ -71,6 +71,29 @@ body {
   overscroll-behavior-y: contain; /* o pull-to-refresh é nosso (js/refresh.js) */
 }
 
+/* ---- Refeição no histórico (itens do mesmo horário) ---- */
+.meal-group { border-bottom: 1px solid var(--grid); }
+.meal-group:last-child { border-bottom: none; }
+.meal-head {
+  display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+  padding: 8px 14px 4px; background: var(--wash);
+  font-size: 12.5px; color: var(--ink-2);
+}
+.meal-head .meal-hora { font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+.meal-head .meal-itens { color: var(--muted); }
+.meal-head .meal-tot { margin-left: auto; font-variant-numeric: tabular-nums; }
+/* macros caem para a linha de baixo em telas estreitas, o botão fica na de cima */
+.meal-head .meal-tot b { color: var(--ink); font-weight: 650; }
+.meal-head .meal-macros { color: var(--muted); font-variant-numeric: tabular-nums; }
+.meal-head .icon-btn { padding: 2px 4px; }
+.meal-head .icon-btn svg { width: 15px; height: 15px; }
+/* linhas dentro da refeição: recuo e sem borda no último item */
+.meal-group .entry { padding-left: 22px; background: transparent; }
+.meal-group .entry:last-child { border-bottom: none; }
+@media (max-width: 560px) {
+  .meal-head .meal-macros { flex-basis: 100%; }
+}
+
 /* ---- Projeção de peso no déficit acumulado ---- */
 .acum-peso {
   margin: 2px 0 12px;

@@ -712,7 +712,16 @@
             <span class="macro-chip"><span class="sw sw-g"></span>G <b>${fmt(tot.g)}</b> g</span>
           </div>
         </div>`;
+      // itens registrados no mesmo minuto vieram da mesma refeição: ficam
+      // agrupados num bloco com horário e totais próprios
+      const refeicoes = new Map();
       for (const e of itens) {
+        const chaveHora = e.ts.slice(0, 16); // até os minutos
+        if (!refeicoes.has(chaveHora)) refeicoes.set(chaveHora, []);
+        refeicoes.get(chaveHora).push(e);
+      }
+
+      function criarLinha(e, dentroDeRefeicao) {
         const hora = new Date(e.ts).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
         const div = document.createElement('div');
         div.className = 'entry';
@@ -726,7 +735,7 @@
             <button class="icon-btn act-repeat" title="Registrar de novo agora" aria-label="Registrar de novo agora">${SVG_REPEAT}</button>
             <button class="icon-btn act-del" title="Excluir" aria-label="Excluir">${SVG_DEL}</button>
           </div>
-          <div class="meta">${hora} · ${qtdStr(e)}</div>
+          <div class="meta">${dentroDeRefeicao ? '' : hora + ' · '}${qtdStr(e)}</div>
           <div class="macros">P ${fmt(e.p)} · C ${fmt(e.c)} · G ${fmt(e.g)}</div>`;
         div.querySelector('.name').textContent = e.nome;
         div.addEventListener('click', (ev) => {
@@ -748,7 +757,40 @@
             render();
           });
         });
-        grupo.appendChild(div);
+        return div;
+      }
+
+      for (const itensRef of refeicoes.values()) {
+        // item solto: linha simples, sem o peso visual de um bloco de refeição
+        if (itensRef.length === 1) {
+          grupo.appendChild(criarLinha(itensRef[0], false));
+          continue;
+        }
+        const totRef = itensRef.reduce(
+          (acc, e) => ({ kcal: acc.kcal + e.kcal, p: acc.p + e.p, c: acc.c + e.c, g: acc.g + e.g }),
+          { kcal: 0, p: 0, c: 0, g: 0 }
+        );
+        const hora = new Date(itensRef[0].ts).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        const bloco = document.createElement('div');
+        bloco.className = 'meal-group';
+        bloco.innerHTML = `
+          <div class="meal-head">
+            <span class="meal-hora">${hora}</span>
+            <span class="meal-itens">${itensRef.length} itens</span>
+            <span class="meal-tot"><b>${fmt(totRef.kcal, 0)}</b> kcal</span>
+            <button class="icon-btn act-repeat-ref" title="Registrar a refeição de novo agora" aria-label="Repetir refeição">${SVG_REPEAT}</button>
+            <span class="meal-macros">P ${fmt(totRef.p)} · C ${fmt(totRef.c)} · G ${fmt(totRef.g)} g</span>
+          </div>`;
+        bloco.querySelector('.act-repeat-ref').addEventListener('click', async () => {
+          const agora = new Date().toISOString();
+          for (const e of itensRef) {
+            const { id, ...resto } = e;
+            await MacroDB.addEntry({ ...resto, ts: agora });
+          }
+          render();
+        });
+        for (const e of itensRef) bloco.appendChild(criarLinha(e, true));
+        grupo.appendChild(bloco);
       }
       historico.appendChild(grupo);
     }
