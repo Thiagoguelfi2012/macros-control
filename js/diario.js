@@ -566,6 +566,18 @@
   const SVG_REPEAT =
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v5h5"/></svg>';
 
+  // nome da refeição pelo horário, com um ícone para dar identidade ao card
+  function nomeRefeicao(data) {
+    const h = data.getHours() + data.getMinutes() / 60;
+    if (h < 5) return { nome: 'Madrugada', icone: '🌙' };
+    if (h < 10.5) return { nome: 'Café da manhã', icone: '☕' };
+    if (h < 12) return { nome: 'Lanche da manhã', icone: '🥪' };
+    if (h < 15) return { nome: 'Almoço', icone: '🍽️' };
+    if (h < 18.5) return { nome: 'Lanche da tarde', icone: '🍎' };
+    if (h < 22) return { nome: 'Jantar', icone: '🌆' };
+    return { nome: 'Ceia', icone: '🌙' };
+  }
+
   // volumes: até 999 ml em ml, a partir de 1 litro em L ("1,2 L")
   const fmtVol = (ml) => (ml >= 1000 ? `${fmt(ml / 1000, 2)} L` : `${fmt(ml)} ml`);
 
@@ -770,16 +782,21 @@
           (acc, e) => ({ kcal: acc.kcal + e.kcal, p: acc.p + e.p, c: acc.c + e.c, g: acc.g + e.g }),
           { kcal: 0, p: 0, c: 0, g: 0 }
         );
-        const hora = new Date(itensRef[0].ts).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        const data = new Date(itensRef[0].ts);
+        const hora = data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        const { nome: nomeRef, icone } = nomeRefeicao(data);
         const bloco = document.createElement('div');
-        bloco.className = 'meal-group';
+        bloco.className = 'meal-card';
         bloco.innerHTML = `
           <div class="meal-head">
-            <span class="meal-hora">${hora}</span>
-            <span class="meal-itens">${itensRef.length} itens</span>
-            <span class="meal-tot"><b>${fmt(totRef.kcal, 0)}</b> kcal</span>
+            <span class="meal-icone" aria-hidden="true">${icone}</span>
+            <span class="meal-nome-wrap">
+              <span class="meal-nome">${nomeRef}</span>
+              <span class="meal-hora">${hora}</span>
+            </span>
+            <span class="meal-kcal"><b>${fmt(totRef.kcal, 0)}</b> kcal</span>
             <button class="icon-btn act-repeat-ref" title="Registrar a refeição de novo agora" aria-label="Repetir refeição">${SVG_REPEAT}</button>
-            <span class="meal-macros">P ${fmt(totRef.p)} · C ${fmt(totRef.c)} · G ${fmt(totRef.g)} g</span>
+            <span class="meal-sub">${itensRef.length} itens · P ${fmt(totRef.p)} · C ${fmt(totRef.c)} · G ${fmt(totRef.g)} g</span>
           </div>`;
         bloco.querySelector('.act-repeat-ref').addEventListener('click', async () => {
           const agora = new Date().toISOString();

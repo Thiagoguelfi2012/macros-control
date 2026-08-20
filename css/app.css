@@ -71,28 +71,45 @@ body {
   overscroll-behavior-y: contain; /* o pull-to-refresh é nosso (js/refresh.js) */
 }
 
-/* ---- Refeição no histórico (itens do mesmo horário) ---- */
-.meal-group { border-bottom: 1px solid var(--grid); }
-.meal-group:last-child { border-bottom: none; }
+/* ---- Refeição no histórico: subcard dentro do card do dia ---- */
+.meal-card {
+  margin: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--page);
+  overflow: hidden;
+}
 .meal-head {
-  display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
-  padding: 8px 14px 4px; background: var(--wash);
-  font-size: 12.5px; color: var(--ink-2);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  grid-template-areas:
+    'icone nome kcal rep'
+    'icone sub  sub  rep';
+  align-items: center; column-gap: 8px; row-gap: 1px;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--grid);
 }
-.meal-head .meal-hora { font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
-.meal-head .meal-itens { color: var(--muted); }
-.meal-head .meal-tot { margin-left: auto; font-variant-numeric: tabular-nums; }
-/* macros caem para a linha de baixo em telas estreitas, o botão fica na de cima */
-.meal-head .meal-tot b { color: var(--ink); font-weight: 650; }
-.meal-head .meal-macros { color: var(--muted); font-variant-numeric: tabular-nums; }
-.meal-head .icon-btn { padding: 2px 4px; }
-.meal-head .icon-btn svg { width: 15px; height: 15px; }
-/* linhas dentro da refeição: recuo e sem borda no último item */
-.meal-group .entry { padding-left: 22px; background: transparent; }
-.meal-group .entry:last-child { border-bottom: none; }
-@media (max-width: 560px) {
-  .meal-head .meal-macros { flex-basis: 100%; }
+.meal-head .meal-icone { grid-area: icone; font-size: 17px; line-height: 1; }
+.meal-head .meal-nome { font-weight: 650; font-size: 14px; white-space: nowrap; }
+.meal-head .meal-hora { color: var(--muted); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.meal-head .meal-kcal { grid-area: kcal; font-size: 13.5px; font-variant-numeric: tabular-nums; color: var(--ink-2); }
+.meal-head .meal-kcal b { color: var(--ink); font-weight: 700; }
+.meal-head .meal-sub { grid-area: sub; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.meal-head .act-repeat-ref { grid-area: rep; padding: 4px; color: var(--muted); }
+.meal-head .act-repeat-ref svg { width: 16px; height: 16px; }
+.meal-head .act-repeat-ref:hover { color: var(--accent); }
+/* nome + horário na mesma linha */
+.meal-nome-wrap { grid-area: nome; display: flex; align-items: baseline; gap: 7px; min-width: 0; }
+
+.meal-card .entry {
+  padding: 8px 12px;
+  background: transparent;
+  border-bottom: 1px solid var(--grid);
 }
+.meal-card .entry:last-child { border-bottom: none; }
+.meal-card .entry .name { font-weight: 500; }
+/* item avulso alinhado com o texto dos subcards (12 px de margem + 12 de padding) */
+.day-group > .entry { padding: 10px 24px; }
 
 /* ---- Projeção de peso no déficit acumulado ---- */
 .acum-peso {
