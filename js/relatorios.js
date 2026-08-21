@@ -615,7 +615,7 @@
 
   // reúne tudo o que o relatório precisa, uma vez só
   async function dadosRelatorio() {
-    const { inicio, fim, label } = intervalo();
+    const { inicio, fim, label, granularidade } = intervalo();
     const entries = await MacroDB.getEntriesBetween(inicio.toISOString(), fim.toISOString());
     const cfg = MacroDB.getSettings();
     const tot = entries.reduce(
@@ -658,7 +658,10 @@
         })),
       };
     });
-    return { inicio, fim, fimVis: new Date(fim.getTime() - 86400000), label, cfg, tot, dias, diasDetalhe };
+    return {
+      inicio, fim, fimVis: new Date(fim.getTime() - 86400000), label, granularidade,
+      entries, cfg, tot, dias, diasDetalhe,
+    };
   }
 
   const NOTA_RELATORIO =
@@ -667,7 +670,176 @@
     'estimativas para preparações caseiras e de restaurante — portanto são aproximações. O gasto ' +
     'energético é o valor informado pelo usuário nas configurações, não uma medição.';
 
-  function montarRelatorioHtml(d) {
+
+  /* ---- Gráficos do relatório: desenhados à parte, sempre em tema claro ---- */
+
+  // o app pode estar no modo escuro; no papel o gráfico tem de sair legível
+  const COR_PDF = {
+    p: '#2a78d6', c: '#eb6834', g: '#1baf7a',
+    linha: '#8a8a84', alvo: '#4a3aa7',
+    texto: '#3a3a38', grade: '#dededa', bom: '#006300', ruim: '#b02a2a',
+  };
+
+  function criarCanvasOculto(largura, altura) {
+    const cv = document.createElement('canvas');
+    cv.width = largura;
+    cv.height = altura;
+    cv.style.cssText = `position:fixed;left:-10000px;top:0;width:${largura}px;height:${altura}px`;
+    document.body.appendChild(cv);
+    return cv;
+  }
+
+  // devolve { kcal, acumulado, macros } como PNG (data URL), ou null se falhar
+  function gerarGraficos(d) {
+    if (typeof Chart === 'undefined') return {};
+    const imagens = {};
+    const canvases = [];
+    const comum = {
+      responsive: false,
+      animation: false,
+      plugins: {
+        legend: { labels: { color: COR_PDF.texto, boxWidth: 12, font: { size: 12 } } },
+      },
+      scales: {
+        x: { ticks: { color: COR_PDF.texto, font: { size: 11 } }, grid: { display: false } },
+        y: { ticks: { color: COR_PDF.texto, font: { size: 11 } }, grid: { color: COR_PDF.grade } },
+      },
+    };
+    // fundo branco: o canvas é transparente e o PDF ficaria com buracos
+    const fundoBranco = {
+      id: 'fundoBranco',
+      beforeDraw: (chart) => {
+        const { ctx } = chart;
+        ctx.save();
+        ctx.globalCompositeOperation = 'destination-over';
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, chart.width, chart.height);
+        ctx.restore();
+      },
+    };
+
+    try {
+      /* 1) calorias por dia, empilhadas por macronutriente */
+      const buckets = agregar(d.entries, d.inicio, d.fim, d.granularidade);
+      const cv1 = criarCanvasOculto(900, 320);
+      canvases.push(cv1);
+      const mk = (rot, chave, cor, kcalPorGrama) => ({
+        label: rot,
+        data: buckets.map((b) => Math.round(b[chave] * kcalPorGrama)),
+        backgroundColor: cor,
+        stack: 'kcal',
+        borderWidth: 0,
+      });
+      const datasets = [
+        mk('Proteínas', 'p', COR_PDF.p, 4),
+        mk('Carboidratos', 'c', COR_PDF.c, 4),
+        mk('Gorduras', 'g', COR_PDF.g, 9),
+      ];
+      const porBalde = (v) => buckets.map((b) => (d.granularidade === 'mes' ? v * b.dias : v));
+      if (d.cfg.gastoDiario) {
+        datasets.push({
+          label: 'Gasto estimado', type: 'line', data: porBalde(d.cfg.gastoDiario),
+          borderColor: COR_PDF.linha, borderDash: [6, 4], borderWidth: 2,
+          pointRadius: 0, fill: false, stack: 'linha-gasto',
+        });
+      }
+      if (d.cfg.metaKcal) {
+        datasets.push({
+          label: 'Meta de calorias', type: 'line', data: porBalde(d.cfg.metaKcal),
+          borderColor: COR_PDF.alvo, borderDash: [3, 3], borderWidth: 2,
+          pointRadius: 0, fill: false, stack: 'linha-alvo',
+        });
+      }
+      const c1 = new Chart(cv1, {
+        type: 'bar',
+        data: { labels: buckets.map((b) => b.label), datasets },
+        options: {
+          ...comum,
+          scales: {
+            x: { ...comum.scales.x, stacked: true },
+            y: { ...comum.scales.y, stacked: true, title: { display: true, text: 'kcal', color: COR_PDF.texto } },
+          },
+        },
+        plugins: [fundoBranco],
+      });
+      imagens.kcal = cv1.toDataURL('image/jpeg', 0.92);
+      c1.destroy();
+
+      /* 2) déficit acumulado (só dias com registro) */
+      if (d.cfg.gastoDiario) {
+        const pad2 = (n) => String(n).padStart(2, '0');
+        const porDia = new Map();
+        for (const e of d.entries) {
+          const dt = new Date(e.ts);
+          const k = `${dt.getFullYear()}-${pad2(dt.getMonth() + 1)}-${pad2(dt.getDate())}`;
+          porDia.set(k, (porDia.get(k) || 0) + e.kcal);
+        }
+        const rotulos = [];
+        const valores = [];
+        let acc = 0;
+        for (const k of [...porDia.keys()].sort()) {
+          acc += porDia.get(k) - d.cfg.gastoDiario;
+          const [y, m, dd] = k.split('-').map(Number);
+          rotulos.push(`${pad2(dd)}/${pad2(m)}`);
+          valores.push(Math.round(acc));
+        }
+        if (valores.length >= 2) {
+          const cv2 = criarCanvasOculto(900, 300);
+          canvases.push(cv2);
+          const c2 = new Chart(cv2, {
+            type: 'line',
+            data: {
+              labels: rotulos,
+              datasets: [{
+                label: 'Saldo acumulado (kcal)',
+                data: valores,
+                borderColor: valores[valores.length - 1] <= 0 ? COR_PDF.bom : COR_PDF.ruim,
+                borderWidth: 2, pointRadius: 0, tension: 0.15, fill: false,
+              }],
+            },
+            options: comum,
+            plugins: [fundoBranco],
+          });
+          imagens.acumulado = cv2.toDataURL('image/jpeg', 0.92);
+          c2.destroy();
+        }
+      }
+
+      /* 3) distribuição dos macros */
+      const kcalM = d.tot.p * 4 + d.tot.c * 4 + d.tot.g * 9;
+      if (kcalM > 0) {
+        const cv3 = criarCanvasOculto(520, 320);
+        canvases.push(cv3);
+        const c3 = new Chart(cv3, {
+          type: 'doughnut',
+          data: {
+            labels: ['Proteínas', 'Carboidratos', 'Gorduras'],
+            datasets: [{
+              data: [d.tot.p * 4, d.tot.c * 4, d.tot.g * 9],
+              backgroundColor: [COR_PDF.p, COR_PDF.c, COR_PDF.g],
+              borderColor: '#ffffff', borderWidth: 2,
+            }],
+          },
+          options: {
+            responsive: false,
+            animation: false,
+            plugins: {
+              legend: { position: 'bottom', labels: { color: COR_PDF.texto, boxWidth: 12, font: { size: 12 } } },
+            },
+          },
+          plugins: [fundoBranco],
+        });
+        imagens.macros = cv3.toDataURL('image/jpeg', 0.92);
+        c3.destroy();
+      }
+    } catch (e) {
+      console.error('gráficos do relatório:', e);
+    }
+    for (const cv of canvases) cv.remove();
+    return imagens;
+  }
+
+  function montarRelatorioHtml(d, graficos = {}) {
     const { cfg, tot, dias, diasDetalhe } = d;
     const div = Math.max(1, dias);
     const kcalMacro = tot.p * 4 + tot.c * 4 + tot.g * 9;
@@ -715,6 +887,22 @@
         <p class="rp-nota" style="margin-top:8px;border:none;padding:0">
           Equivalência estimada por 7.700 kcal ≈ 1 kg de gordura corporal.
         </p>`;
+    }
+
+    if (graficos.kcal || graficos.acumulado || graficos.macros) {
+      html += `<h2>Gráficos do período</h2>`;
+      if (graficos.kcal) {
+        html += `<h3>Calorias por dia, por macronutriente</h3>
+          <img class="rp-grafico" src="${graficos.kcal}" alt="Calorias por dia" />`;
+      }
+      if (graficos.acumulado) {
+        html += `<h3>Déficit calórico acumulado</h3>
+          <img class="rp-grafico" src="${graficos.acumulado}" alt="Déficit acumulado" />`;
+      }
+      if (graficos.macros) {
+        html += `<h3>Distribuição dos macronutrientes</h3>
+          <img class="rp-grafico rp-grafico-menor" src="${graficos.macros}" alt="Distribuição dos macros" />`;
+      }
     }
 
     if (diasDetalhe.length) {
@@ -777,7 +965,7 @@
       .replace(/×/g, 'x')
       .replace(/[^\u0000-\u00FF]/g, '');
 
-  function montarPdf(d) {
+  function montarPdf(d, graficos = {}) {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ unit: 'pt', format: 'a4' });
     const { cfg, tot, dias, diasDetalhe } = d;
@@ -875,6 +1063,29 @@
         ],
         { columnStyles: { 1: { halign: 'right' } } }
       );
+    }
+
+    // gráficos (mesmas imagens da prévia)
+    const imagem = (dataUrl, larguraImg, alturaImg, legenda) => {
+      if (!dataUrl) return;
+      if (y + alturaImg > doc.internal.pageSize.getHeight() - 60) {
+        doc.addPage();
+        y = 46;
+      }
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9.5);
+      doc.setTextColor(40);
+      doc.text(txtPdf(legenda), M, y);
+      y += 10;
+      doc.addImage(dataUrl, 'JPEG', M, y, larguraImg, alturaImg);
+      y += alturaImg + 18;
+    };
+    if (graficos.kcal || graficos.acumulado || graficos.macros) {
+      titulo('Gráficos do período');
+      const larg = largura - M * 2;
+      imagem(graficos.kcal, larg, (larg * 320) / 900, 'Calorias por dia, por macronutriente');
+      imagem(graficos.acumulado, larg, (larg * 300) / 900, 'Déficit calórico acumulado');
+      imagem(graficos.macros, larg * 0.55, ((larg * 0.55) * 320) / 520, 'Distribuição dos macronutrientes');
     }
 
     if (diasDetalhe.length) {
@@ -977,7 +1188,7 @@
     }
     status.textContent = 'Gerando PDF…';
     const d = await dadosRelatorio();
-    const doc = montarPdf(d);
+    const doc = montarPdf(d, gerarGraficos(d));
     const nome = `relatorio-alimentar-${d.fimVis.toISOString().slice(0, 10)}.pdf`;
     const blob = doc.output('blob');
     const file = new File([blob], nome, { type: 'application/pdf' });
@@ -1008,7 +1219,8 @@
   }
 
   async function abrirRelatorio() {
-    $('#rp-conteudo').innerHTML = montarRelatorioHtml(await dadosRelatorio());
+    const dados = await dadosRelatorio();
+    $('#rp-conteudo').innerHTML = montarRelatorioHtml(dados, gerarGraficos(dados));
     $('#relatorio-print').hidden = false;
     $('#rp-status').textContent = 'Confira a prévia abaixo e toque em “Baixar PDF”.';
     document.body.style.overflow = 'hidden';
