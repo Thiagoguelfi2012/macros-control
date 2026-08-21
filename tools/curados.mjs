@@ -505,4 +505,15 @@ export const CURADOS = [
   { n: 'Domino’s fatia de pizza mussarela', kcal: 265, p: 11, c: 32, g: 10, m: [['fatia (100 g)', 100]] },
   { n: 'Spoleto massa com molho de tomate e frango', kcal: 150, p: 9, c: 20, g: 4, m: [['prato (450 g)', 450]] },
   { n: 'Sanduíche natural de frango com cenoura', kcal: 195, p: 11, c: 24, g: 6, m: [['unidade (150 g)', 150]] },
+  // ---- Pães funcionais / sem glúten de padaria e mercado ----
+  { n: 'Pão de cará (inhame)', kcal: 240, p: 6, c: 45, g: 3.5, m: [['unidade (60 g)', 60], ['fatia (30 g)', 30], ['mini (35 g)', 35]] },
+  { n: 'Pão de cará com queijo', kcal: 265, p: 8.5, c: 42, g: 6.5, m: [['unidade (60 g)', 60], ['mini (35 g)', 35]] },
+  { n: 'Pão de inhame integral', kcal: 235, p: 6.5, c: 43, g: 3.5, m: [['fatia (30 g)', 30], ['unidade (60 g)', 60]] },
+  { n: 'Pão de batata doce', kcal: 250, p: 6, c: 46, g: 4, m: [['unidade (60 g)', 60], ['fatia (30 g)', 30]] },
+  { n: 'Pão de mandioca (polvilho)', kcal: 280, p: 5, c: 47, g: 8, m: [['unidade (50 g)', 50]] },
+  { n: 'Pão sem glúten (mercado, fatia)', kcal: 250, p: 4, c: 44, g: 6, m: [['fatia (30 g)', 30], ['2 fatias (60 g)', 60]] },
+  { n: 'Pão de linhaça caseiro', kcal: 265, p: 9, c: 40, g: 8, m: [['fatia (30 g)', 30]] },
+  { n: 'Pão de aveia caseiro', kcal: 255, p: 10, c: 40, g: 6, m: [['fatia (30 g)', 30]] },
+  { n: 'Broa de milho', kcal: 290, p: 6, c: 50, g: 7, m: [['fatia (50 g)', 50], ['unidade (80 g)', 80]] },
+  { n: 'Pão de fermentação natural (sourdough)', kcal: 260, p: 9, c: 51, g: 1.5, m: [['fatia (40 g)', 40], ['fatia grande (60 g)', 60]] },
 ];
