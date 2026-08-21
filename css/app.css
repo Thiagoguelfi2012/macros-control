@@ -72,7 +72,8 @@ body {
 }
 
 /* ---- Relatório para impressão / PDF ---- */
-.btn-exportar-pdf { margin-left: auto; }
+/* botão de PDF junto da navegação de período, compacto */
+.range-nav .btn-pdf { margin-left: 8px; font-size: 13px; padding: 8px 12px; font-weight: 600; }
 #relatorio-print {
   position: fixed; inset: 0; z-index: 80; overflow: auto;
   background: #fff; color: #111;

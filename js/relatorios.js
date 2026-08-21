@@ -613,7 +613,8 @@
     return `${fmt(e.qtd)} × ${e.medida} (${fmt(e.gramas)} ${un})`;
   };
 
-  async function montarRelatorio() {
+  // reúne tudo o que o relatório precisa, uma vez só
+  async function dadosRelatorio() {
     const { inicio, fim, label } = intervalo();
     const entries = await MacroDB.getEntriesBetween(inicio.toISOString(), fim.toISOString());
     const cfg = MacroDB.getSettings();
@@ -622,16 +623,59 @@
       { kcal: 0, p: 0, c: 0, g: 0 }
     );
     const dias = diasContabilizados(inicio, fim, entries);
-    const d = Math.max(1, dias);
-    const fimVis = new Date(fim.getTime() - 86400000);
-    const kcalMacro = tot.p * 4 + tot.c * 4 + tot.g * 9;
-    const pctM = (v) => (kcalMacro > 0 ? `${fmt(v / kcalMacro * 100, 0)}%` : '—');
+    const pad2 = (n) => String(n).padStart(2, '0');
+    const porDia = new Map();
+    for (const e of entries) {
+      const dt = new Date(e.ts);
+      const k = `${dt.getFullYear()}-${pad2(dt.getMonth() + 1)}-${pad2(dt.getDate())}`;
+      if (!porDia.has(k)) porDia.set(k, []);
+      porDia.get(k).push(e);
+    }
+    // cada dia com seus totais e refeições (itens do mesmo minuto)
+    const diasDetalhe = [...porDia.keys()].sort().map((k) => {
+      const itens = porDia.get(k).slice().sort((a, b) => (a.ts < b.ts ? -1 : 1));
+      const soma = itens.reduce(
+        (acc, e) => ({ kcal: acc.kcal + e.kcal, p: acc.p + e.p, c: acc.c + e.c, g: acc.g + e.g }),
+        { kcal: 0, p: 0, c: 0, g: 0 }
+      );
+      const refs = new Map();
+      for (const e of itens) {
+        const chave = e.ts.slice(0, 16);
+        if (!refs.has(chave)) refs.set(chave, []);
+        refs.get(chave).push(e);
+      }
+      const [y, m, dd] = k.split('-').map(Number);
+      return {
+        data: new Date(y, m - 1, dd),
+        tot: soma,
+        refeicoes: [...refs.values()].map((itensRef) => ({
+          data: new Date(itensRef[0].ts),
+          itens: itensRef,
+          tot: itensRef.reduce(
+            (acc, e) => ({ kcal: acc.kcal + e.kcal, p: acc.p + e.p, c: acc.c + e.c, g: acc.g + e.g }),
+            { kcal: 0, p: 0, c: 0, g: 0 }
+          ),
+        })),
+      };
+    });
+    return { inicio, fim, fimVis: new Date(fim.getTime() - 86400000), label, cfg, tot, dias, diasDetalhe };
+  }
 
-    /* --- cabeçalho e configurações --- */
+  const NOTA_RELATORIO =
+    'Relatório gerado pelo app Controle de Macros a partir dos registros do próprio usuário. ' +
+    'Os valores nutricionais vêm das tabelas TACO, TBCA, IBGE e USDA, de rótulos de produtos e de ' +
+    'estimativas para preparações caseiras e de restaurante — portanto são aproximações. O gasto ' +
+    'energético é o valor informado pelo usuário nas configurações, não uma medição.';
+
+  function montarRelatorioHtml(d) {
+    const { cfg, tot, dias, diasDetalhe } = d;
+    const div = Math.max(1, dias);
+    const kcalMacro = tot.p * 4 + tot.c * 4 + tot.g * 9;
+    const pctM = (v) => (kcalMacro > 0 ? `${fmt((v / kcalMacro) * 100, 0)}%` : '—');
     let html = `
       <h1>Relatório alimentar</h1>
       <p class="rp-periodo">
-        Período: ${esc(dataExtenso(inicio))} a ${esc(dataExtenso(fimVis))} (${esc(label)})<br />
+        Período: ${esc(dataExtenso(d.inicio))} a ${esc(dataExtenso(d.fimVis))} (${esc(d.label)})<br />
         Dias com registro: ${dias} · Emitido em ${esc(new Date().toLocaleString('pt-BR'))}
       </p>
 
@@ -649,14 +693,13 @@
       <table>
         <thead><tr><th>Nutriente</th><th>Total</th><th>Média/dia</th><th>% das kcal</th><th>Meta/dia</th></tr></thead>
         <tbody>
-          <tr><td>Calorias</td><td>${fmt(tot.kcal, 0)} kcal</td><td>${fmt(tot.kcal / d, 0)} kcal</td><td>—</td><td>${cfg.metaKcal ? fmt(cfg.metaKcal, 0) : '—'}</td></tr>
-          <tr><td>Proteínas</td><td>${fmt(tot.p, 0)} g</td><td>${fmt(tot.p / d, 0)} g</td><td>${pctM(tot.p * 4)}</td><td>${cfg.metaP ? fmt(cfg.metaP, 0) : '—'}</td></tr>
-          <tr><td>Carboidratos</td><td>${fmt(tot.c, 0)} g</td><td>${fmt(tot.c / d, 0)} g</td><td>${pctM(tot.c * 4)}</td><td>${cfg.metaC ? fmt(cfg.metaC, 0) : '—'}</td></tr>
-          <tr><td>Gorduras</td><td>${fmt(tot.g, 0)} g</td><td>${fmt(tot.g / d, 0)} g</td><td>${pctM(tot.g * 9)}</td><td>${cfg.metaG ? fmt(cfg.metaG, 0) : '—'}</td></tr>
+          <tr><td>Calorias</td><td>${fmt(tot.kcal, 0)} kcal</td><td>${fmt(tot.kcal / div, 0)} kcal</td><td>—</td><td>${cfg.metaKcal ? fmt(cfg.metaKcal, 0) : '—'}</td></tr>
+          <tr><td>Proteínas</td><td>${fmt(tot.p, 0)} g</td><td>${fmt(tot.p / div, 0)} g</td><td>${pctM(tot.p * 4)}</td><td>${cfg.metaP ? fmt(cfg.metaP, 0) : '—'}</td></tr>
+          <tr><td>Carboidratos</td><td>${fmt(tot.c, 0)} g</td><td>${fmt(tot.c / div, 0)} g</td><td>${pctM(tot.c * 4)}</td><td>${cfg.metaC ? fmt(cfg.metaC, 0) : '—'}</td></tr>
+          <tr><td>Gorduras</td><td>${fmt(tot.g, 0)} g</td><td>${fmt(tot.g / div, 0)} g</td><td>${pctM(tot.g * 9)}</td><td>${cfg.metaG ? fmt(cfg.metaG, 0) : '—'}</td></tr>
         </tbody>
       </table>`;
 
-    /* --- balanço energético --- */
     if (cfg.gastoDiario && dias > 0) {
       const gasto = cfg.gastoDiario * dias;
       const saldo = tot.kcal - gasto;
@@ -674,78 +717,40 @@
         </p>`;
     }
 
-    /* --- agrupa por dia --- */
-    const pad2 = (n) => String(n).padStart(2, '0');
-    const porDia = new Map();
-    for (const e of entries) {
-      const dt = new Date(e.ts);
-      const k = `${dt.getFullYear()}-${pad2(dt.getMonth() + 1)}-${pad2(dt.getDate())}`;
-      if (!porDia.has(k)) porDia.set(k, []);
-      porDia.get(k).push(e);
-    }
-    const chaves = [...porDia.keys()].sort();
-
-    /* --- resumo diário --- */
-    if (chaves.length) {
+    if (diasDetalhe.length) {
       html += `
         <h2>Resumo por dia</h2>
         <table>
           <thead><tr><th>Dia</th><th>Calorias</th><th>Proteínas</th><th>Carboidratos</th><th>Gorduras</th>${cfg.gastoDiario ? '<th>Saldo</th>' : ''}</tr></thead>
           <tbody>`;
-      for (const k of chaves) {
-        const t = porDia.get(k).reduce(
-          (acc, e) => ({ kcal: acc.kcal + e.kcal, p: acc.p + e.p, c: acc.c + e.c, g: acc.g + e.g }),
-          { kcal: 0, p: 0, c: 0, g: 0 }
-        );
-        const [y, m, dd] = k.split('-').map(Number);
-        const data = new Date(y, m - 1, dd);
-        const saldoDia = t.kcal - cfg.gastoDiario;
+      for (const dia of diasDetalhe) {
+        const saldoDia = dia.tot.kcal - cfg.gastoDiario;
         html += `<tr>
-          <td>${esc(data.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' }))}</td>
-          <td>${fmt(t.kcal, 0)}</td><td>${fmt(t.p, 0)} g</td><td>${fmt(t.c, 0)} g</td><td>${fmt(t.g, 0)} g</td>
+          <td>${esc(dia.data.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' }))}</td>
+          <td>${fmt(dia.tot.kcal, 0)}</td><td>${fmt(dia.tot.p, 0)} g</td><td>${fmt(dia.tot.c, 0)} g</td><td>${fmt(dia.tot.g, 0)} g</td>
           ${cfg.gastoDiario ? `<td>${saldoDia <= 0 ? '−' : '+'}${fmt(Math.abs(saldoDia), 0)}</td>` : ''}
         </tr>`;
       }
+      const saldoTotal = tot.kcal - cfg.gastoDiario * dias;
       html += `</tbody>
           <tfoot><tr>
             <td>Total</td><td>${fmt(tot.kcal, 0)}</td><td>${fmt(tot.p, 0)} g</td><td>${fmt(tot.c, 0)} g</td><td>${fmt(tot.g, 0)} g</td>
-            ${cfg.gastoDiario ? `<td>${tot.kcal - cfg.gastoDiario * dias <= 0 ? '−' : '+'}${fmt(Math.abs(tot.kcal - cfg.gastoDiario * dias), 0)}</td>` : ''}
+            ${cfg.gastoDiario ? `<td>${saldoTotal <= 0 ? '−' : '+'}${fmt(Math.abs(saldoTotal), 0)}</td>` : ''}
           </tr></tfoot>
         </table>`;
     }
 
-    /* --- refeições detalhadas --- */
     html += `<h2>Refeições do período</h2>`;
-    if (!chaves.length) {
-      html += `<p>Nenhum alimento registrado neste período.</p>`;
-    }
-    for (const k of chaves) {
-      const itensDia = porDia.get(k).slice().sort((a, b) => (a.ts < b.ts ? -1 : 1));
-      const t = itensDia.reduce(
-        (acc, e) => ({ kcal: acc.kcal + e.kcal, p: acc.p + e.p, c: acc.c + e.c, g: acc.g + e.g }),
-        { kcal: 0, p: 0, c: 0, g: 0 }
-      );
-      const [y, m, dd] = k.split('-').map(Number);
+    if (!diasDetalhe.length) html += `<p>Nenhum alimento registrado neste período.</p>`;
+    for (const dia of diasDetalhe) {
       html += `<div class="rp-dia">
-        <div class="rp-dia-head">${esc(dataExtenso(new Date(y, m - 1, dd)))} — ${fmt(t.kcal, 0)} kcal · P ${fmt(t.p, 0)} g · C ${fmt(t.c, 0)} g · G ${fmt(t.g, 0)} g</div>`;
-      // agrupa por horário (mesma refeição)
-      const refs = new Map();
-      for (const e of itensDia) {
-        const chave = e.ts.slice(0, 16);
-        if (!refs.has(chave)) refs.set(chave, []);
-        refs.get(chave).push(e);
-      }
-      for (const itensRef of refs.values()) {
-        const dt = new Date(itensRef[0].ts);
-        const tr = itensRef.reduce(
-          (acc, e) => ({ kcal: acc.kcal + e.kcal, p: acc.p + e.p, c: acc.c + e.c, g: acc.g + e.g }),
-          { kcal: 0, p: 0, c: 0, g: 0 }
-        );
-        html += `<div class="rp-ref">${esc(nomeRefeicaoPdf(dt))} · ${esc(dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }))} — ${fmt(tr.kcal, 0)} kcal</div>
+        <div class="rp-dia-head">${esc(dataExtenso(dia.data))} — ${fmt(dia.tot.kcal, 0)} kcal · P ${fmt(dia.tot.p, 0)} g · C ${fmt(dia.tot.c, 0)} g · G ${fmt(dia.tot.g, 0)} g</div>`;
+      for (const ref of dia.refeicoes) {
+        html += `<div class="rp-ref">${esc(nomeRefeicaoPdf(ref.data))} · ${esc(ref.data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }))} — ${fmt(ref.tot.kcal, 0)} kcal</div>
           <table>
             <thead><tr><th>Alimento</th><th>Quantidade</th><th>kcal</th><th>P</th><th>C</th><th>G</th></tr></thead>
             <tbody>`;
-        for (const e of itensRef) {
+        for (const e of ref.itens) {
           html += `<tr>
             <td>${esc(e.nome)}</td><td>${esc(qtdStrPdf(e))}</td>
             <td>${fmt(e.kcal, 0)}</td><td>${fmt(e.p)}</td><td>${fmt(e.c)}</td><td>${fmt(e.g)}</td>
@@ -755,19 +760,257 @@
       }
       html += `</div>`;
     }
-
-    html += `<p class="rp-nota">
-      Relatório gerado pelo app Controle de Macros a partir dos registros do próprio usuário.
-      Os valores nutricionais vêm das tabelas TACO, TBCA, IBGE e USDA, de rótulos de produtos
-      e de estimativas para preparações caseiras e de restaurante — portanto são aproximações.
-      O gasto energético é o valor informado pelo usuário nas configurações, não uma medição.
-    </p>`;
+    html += `<p class="rp-nota">${esc(NOTA_RELATORIO)}</p>`;
     return html;
   }
 
+  /* ---- PDF de verdade (jsPDF): baixa o arquivo, sem depender de impressão ---- */
+
+  // a fonte padrão do jsPDF é Latin-1: troca ou remove o que ela não desenha
+  const txtPdf = (t) =>
+    String(t)
+      .replace(/≈/g, '~')
+      .replace(/[—–]/g, '-')
+      .replace(/[−]/g, '-')
+      .replace(/[“”]/g, '"')
+      .replace(/[‘’]/g, "'")
+      .replace(/×/g, 'x')
+      .replace(/[^\u0000-\u00FF]/g, '');
+
+  function montarPdf(d) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+    const { cfg, tot, dias, diasDetalhe } = d;
+    const div = Math.max(1, dias);
+    const kcalMacro = tot.p * 4 + tot.c * 4 + tot.g * 9;
+    const pctM = (v) => (kcalMacro > 0 ? `${fmt((v / kcalMacro) * 100, 0)}%` : '—');
+    const M = 40;
+    const largura = doc.internal.pageSize.getWidth();
+    let y = 46;
+
+    const titulo = (txt, tamanho = 12) => {
+      if (y > doc.internal.pageSize.getHeight() - 90) {
+        doc.addPage();
+        y = 46;
+      }
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(tamanho);
+      doc.setTextColor(20);
+      doc.text(txtPdf(txt), M, y);
+      y += 6;
+      doc.setDrawColor(30);
+      doc.setLineWidth(1);
+      doc.line(M, y, largura - M, y);
+      y += 12;
+    };
+    const tabela = (head, body, opcoes = {}) => {
+      const limpar = (celula) =>
+        celula && typeof celula === 'object' && 'content' in celula
+          ? { ...celula, content: txtPdf(celula.content) }
+          : txtPdf(celula);
+      doc.autoTable({
+        head: [head.map(limpar)],
+        body: body.map((linha) => linha.map(limpar)),
+        startY: y,
+        margin: { left: M, right: M },
+        styles: { font: 'helvetica', fontSize: 8.5, cellPadding: 3, textColor: 30 },
+        headStyles: { fillColor: [240, 240, 238], textColor: 20, fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: [250, 250, 249] },
+        ...opcoes,
+        ...(opcoes.foot ? { foot: opcoes.foot.map((linha) => linha.map(limpar)) } : {}),
+      });
+      y = doc.lastAutoTable.finalY + 16;
+    };
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(17);
+    doc.text('Relatório alimentar', M, y);
+    y += 18;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9.5);
+    doc.setTextColor(90);
+    doc.text(txtPdf(`Período: ${dataExtenso(d.inicio)} a ${dataExtenso(d.fimVis)} (${d.label})`), M, y);
+    y += 12;
+    doc.text(txtPdf(`Dias com registro: ${dias} · Emitido em ${new Date().toLocaleString('pt-BR')}`), M, y);
+    y += 22;
+
+    titulo('Gasto energético e metas configuradas');
+    tabela(
+      ['Parâmetro', 'Valor'],
+      [
+        ['Gasto basal (TMB)', cfg.gastoBasal ? `${fmt(cfg.gastoBasal, 0)} kcal/dia` : 'não informado'],
+        ['Gasto médio diário (TDEE)', cfg.gastoDiario ? `${fmt(cfg.gastoDiario, 0)} kcal/dia` : 'não informado'],
+        ['Meta de calorias', cfg.metaKcal ? `${fmt(cfg.metaKcal, 0)} kcal/dia` : 'não definida'],
+        ['Meta de proteínas', cfg.metaP ? `${fmt(cfg.metaP, 0)} g/dia` : 'não definida'],
+        ['Meta de carboidratos', cfg.metaC ? `${fmt(cfg.metaC, 0)} g/dia` : 'não definida'],
+        ['Meta de gorduras', cfg.metaG ? `${fmt(cfg.metaG, 0)} g/dia` : 'não definida'],
+      ],
+      { columnStyles: { 1: { halign: 'right' } } }
+    );
+
+    titulo('Consumo no período');
+    tabela(
+      ['Nutriente', 'Total', 'Média/dia', '% das kcal', 'Meta/dia'],
+      [
+        ['Calorias', `${fmt(tot.kcal, 0)} kcal`, `${fmt(tot.kcal / div, 0)} kcal`, '—', cfg.metaKcal ? fmt(cfg.metaKcal, 0) : '—'],
+        ['Proteínas', `${fmt(tot.p, 0)} g`, `${fmt(tot.p / div, 0)} g`, pctM(tot.p * 4), cfg.metaP ? fmt(cfg.metaP, 0) : '—'],
+        ['Carboidratos', `${fmt(tot.c, 0)} g`, `${fmt(tot.c / div, 0)} g`, pctM(tot.c * 4), cfg.metaC ? fmt(cfg.metaC, 0) : '—'],
+        ['Gorduras', `${fmt(tot.g, 0)} g`, `${fmt(tot.g / div, 0)} g`, pctM(tot.g * 9), cfg.metaG ? fmt(cfg.metaG, 0) : '—'],
+      ],
+      { columnStyles: { 1: { halign: 'right' }, 2: { halign: 'right' }, 3: { halign: 'right' }, 4: { halign: 'right' } } }
+    );
+
+    if (cfg.gastoDiario && dias > 0) {
+      const gasto = cfg.gastoDiario * dias;
+      const saldo = tot.kcal - gasto;
+      const deficit = saldo <= 0;
+      titulo('Balanço energético');
+      tabela(
+        ['Item', 'Valor'],
+        [
+          ['Consumo total', `${fmt(tot.kcal, 0)} kcal`],
+          [`Gasto estimado (${dias} dia${dias > 1 ? 's' : ''})`, `${fmt(gasto, 0)} kcal`],
+          [`${deficit ? 'Déficit' : 'Superávit'} no período`, `${fmt(Math.abs(saldo), 0)} kcal`],
+          ['Equivalente em peso (7.700 kcal ~ 1 kg)', `${deficit ? '-' : '+'}${fmt(Math.abs(saldo) / KCAL_POR_KG, 2)} kg`],
+        ],
+        { columnStyles: { 1: { halign: 'right' } } }
+      );
+    }
+
+    if (diasDetalhe.length) {
+      titulo('Resumo por dia');
+      const cabecalho = ['Dia', 'Calorias', 'Proteínas', 'Carboidratos', 'Gorduras'];
+      if (cfg.gastoDiario) cabecalho.push('Saldo');
+      const corpo = diasDetalhe.map((dia) => {
+        const linha = [
+          dia.data.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' }),
+          fmt(dia.tot.kcal, 0),
+          `${fmt(dia.tot.p, 0)} g`,
+          `${fmt(dia.tot.c, 0)} g`,
+          `${fmt(dia.tot.g, 0)} g`,
+        ];
+        if (cfg.gastoDiario) {
+          const saldoDia = dia.tot.kcal - cfg.gastoDiario;
+          linha.push(`${saldoDia <= 0 ? '-' : '+'}${fmt(Math.abs(saldoDia), 0)}`);
+        }
+        return linha;
+      });
+      const totalLinha = ['Total', fmt(tot.kcal, 0), `${fmt(tot.p, 0)} g`, `${fmt(tot.c, 0)} g`, `${fmt(tot.g, 0)} g`];
+      if (cfg.gastoDiario) {
+        const saldoTotal = tot.kcal - cfg.gastoDiario * dias;
+        totalLinha.push(`${saldoTotal <= 0 ? '-' : '+'}${fmt(Math.abs(saldoTotal), 0)}`);
+      }
+      tabela(cabecalho, corpo, {
+        foot: [totalLinha],
+        footStyles: { fillColor: [235, 235, 233], textColor: 20, fontStyle: 'bold' },
+        columnStyles: { 1: { halign: 'right' }, 2: { halign: 'right' }, 3: { halign: 'right' }, 4: { halign: 'right' }, 5: { halign: 'right' } },
+      });
+    }
+
+    titulo('Refeições do período');
+    if (!diasDetalhe.length) {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9.5);
+      doc.text('Nenhum alimento registrado neste período.', M, y);
+      y += 16;
+    }
+    for (const dia of diasDetalhe) {
+      const corpo = [];
+      for (const ref of dia.refeicoes) {
+        corpo.push([
+          {
+            content: `${nomeRefeicaoPdf(ref.data)} · ${ref.data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} — ${fmt(ref.tot.kcal, 0)} kcal`,
+            colSpan: 6,
+            styles: { fontStyle: 'bold', fillColor: [246, 246, 244], textColor: 40 },
+          },
+        ]);
+        for (const e of ref.itens) {
+          corpo.push([e.nome, qtdStrPdf(e), fmt(e.kcal, 0), fmt(e.p), fmt(e.c), fmt(e.g)]);
+        }
+      }
+      if (y > doc.internal.pageSize.getHeight() - 120) {
+        doc.addPage();
+        y = 46;
+      }
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.setTextColor(20);
+      doc.text(
+        txtPdf(`${dataExtenso(dia.data)} — ${fmt(dia.tot.kcal, 0)} kcal · P ${fmt(dia.tot.p, 0)} g · C ${fmt(dia.tot.c, 0)} g · G ${fmt(dia.tot.g, 0)} g`),
+        M,
+        y
+      );
+      y += 8;
+      tabela(['Alimento', 'Quantidade', 'kcal', 'P', 'C', 'G'], corpo, {
+        columnStyles: {
+          0: { cellWidth: 170 },
+          2: { halign: 'right' }, 3: { halign: 'right' }, 4: { halign: 'right' }, 5: { halign: 'right' },
+        },
+      });
+    }
+
+    // nota de origem + numeração das páginas
+    if (y > doc.internal.pageSize.getHeight() - 90) {
+      doc.addPage();
+      y = 46;
+    }
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(7.8);
+    doc.setTextColor(110);
+    doc.text(doc.splitTextToSize(txtPdf(NOTA_RELATORIO), largura - M * 2), M, y);
+    const paginas = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= paginas; i++) {
+      doc.setPage(i);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(130);
+      doc.text(`${i} / ${paginas}`, largura - M, doc.internal.pageSize.getHeight() - 20, { align: 'right' });
+    }
+    return doc;
+  }
+
+  async function baixarPdf() {
+    const status = $('#rp-status');
+    if (!window.jspdf) {
+      status.textContent = 'Gerador de PDF indisponível — use o botão Imprimir.';
+      return;
+    }
+    status.textContent = 'Gerando PDF…';
+    const d = await dadosRelatorio();
+    const doc = montarPdf(d);
+    const nome = `relatorio-alimentar-${d.fimVis.toISOString().slice(0, 10)}.pdf`;
+    const blob = doc.output('blob');
+    const file = new File([blob], nome, { type: 'application/pdf' });
+
+    // celular: folha de compartilhar (salvar em Arquivos, enviar ao médico)
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: nome });
+        status.textContent = `PDF exportado: ${nome}`;
+        return;
+      } catch (e) {
+        if (e.name === 'AbortError') {
+          status.textContent = 'Exportação cancelada.';
+          return;
+        }
+      }
+    }
+    // computador (ou onde o compartilhar não existe): download direto
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = nome;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+    status.textContent = `PDF gerado: ${nome}. Se o download não aparecer, use Imprimir.`;
+  }
+
   async function abrirRelatorio() {
-    $('#rp-conteudo').innerHTML = await montarRelatorio();
+    $('#rp-conteudo').innerHTML = montarRelatorioHtml(await dadosRelatorio());
     $('#relatorio-print').hidden = false;
+    $('#rp-status').textContent = 'Confira a prévia abaixo e toque em “Baixar PDF”.';
     document.body.style.overflow = 'hidden';
     $('#relatorio-print').scrollTop = 0;
   }
@@ -791,6 +1034,7 @@
     $('#btn-pdf').addEventListener('click', () => abrirRelatorio());
     $('#rp-fechar').addEventListener('click', fecharRelatorio);
     $('#rp-imprimir').addEventListener('click', () => window.print());
+    $('#rp-baixar').addEventListener('click', () => baixarPdf());
     document.addEventListener('keydown', (ev) => {
       if (ev.key === 'Escape' && !$('#relatorio-print').hidden) fecharRelatorio();
     });

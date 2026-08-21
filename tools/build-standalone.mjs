@@ -68,6 +68,12 @@ ${read('vendor/tom-select.complete.min.js')}
 ${read('vendor/chart.umd.min.js')}
 </script>
 <script>
+${read('vendor/jspdf.umd.min.js')}
+</script>
+<script>
+${read('vendor/jspdf.plugin.autotable.min.js')}
+</script>
+<script>
 ${read('js/db.js')}
 </script>
 <script>
