@@ -17,6 +17,8 @@ const extractMain = (html) => html.match(/<main>([\s\S]*?)<\/main>/)[1];
 const mainDiario = extractMain(read('index.html')); // inclui FAB e modais
 const mainRelatorios = extractMain(read('relatorios.html'));
 const mainConfig = extractMain(read('config.html'));
+// o relatório para impressão vive fora do <main>, mas precisa ir junto
+const overlayRelatorio = read('relatorios.html').match(/<div id="relatorio-print"[\s\S]*?<\/div>\s*<\/div>/)[0];
 
 // evita fechar a tag <script> por acidente dentro do JSON
 const foodsJs = `window.FOODS_DATA = ${read('data/foods.json').replace(/</g, '\\u003c')};`;
@@ -55,6 +57,8 @@ ${read('css/app.css')}
 <section id="view-config" hidden>
   <main>${mainConfig}</main>
 </section>
+
+${overlayRelatorio}
 
 <script>${foodsJs}</script>
 <script>
