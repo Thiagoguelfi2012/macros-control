@@ -39,8 +39,8 @@
           ? 'Hoje'
           : fimVis.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
     } else {
-      // até 90 dias: uma barra por dia; 1 ano: uma barra por mês
-      granularidade = n >= 180 ? 'mes' : 'dia';
+      // até 30 dias: uma barra por dia; 90 dias: por semana; 1 ano: por mês
+      granularidade = n >= 180 ? 'mes' : n > 31 ? 'semana' : 'dia';
       label =
         offset === 0
           ? `Últimos ${n} dias`
@@ -95,6 +95,39 @@
         const idx = Math.round((d - inicio) / 86400000);
         if (idx >= 0 && idx < buckets.length) soma(buckets[idx], e);
       }
+    } else if (granularidade === 'semana') {
+      // blocos de 7 dias contados de trás para frente, para a última barra
+      // terminar hoje; o bloco mais antigo pode ficar parcial
+      const nDias = Math.round((fim - inicio) / 86400000);
+      const nBlocos = Math.ceil(nDias / 7);
+      const semanas = [];
+      for (let i = nBlocos - 1; i >= 0; i--) {
+        const iniB = new Date(fim);
+        iniB.setDate(iniB.getDate() - (i + 1) * 7);
+        if (iniB < inicio) iniB.setTime(inicio.getTime());
+        const fimB = new Date(fim);
+        fimB.setDate(fimB.getDate() - i * 7);
+        const ultimo = new Date(fimB.getTime() - 86400000); // último dia do bloco
+        const mesIni = iniB.getMonth() + 1;
+        const mesFim = ultimo.getMonth() + 1;
+        const label =
+          mesIni === mesFim
+            ? `${iniB.getDate()}-${ultimo.getDate()}/${mesFim}`
+            : `${iniB.getDate()}/${mesIni}-${ultimo.getDate()}/${mesFim}`;
+        semanas.push({
+          label,
+          ini: iniB.getTime(),
+          fim: fimB.getTime(),
+          dias: Math.round((fimB - iniB) / 86400000),
+          ...vazio,
+        });
+      }
+      for (const e of entries) {
+        const t = new Date(e.ts).getTime();
+        const b = semanas.find((x) => t >= x.ini && t < x.fim);
+        if (b) soma(b, e);
+      }
+      buckets = semanas;
     } else {
       // por mês (janela de 1 ano); meses parciais nas pontas recebem só os
       // registros dentro da janela
@@ -395,11 +428,16 @@
     const { metaKcal } = MacroDB.getSettings();
     const linhas = [];
     if (granularidade !== 'hora') {
-      const porBalde = (v) => buckets.map((b) => (granularidade === 'mes' ? v * b.dias : v));
+      const porBalde = (v) => buckets.map((b) => v * (b.dias || 1));
       if (gastoDiario) {
         datasets.push({
           type: 'line',
-          label: granularidade === 'mes' ? 'Gasto estimado no mês' : 'Gasto médio diário',
+          label:
+            granularidade === 'mes'
+              ? 'Gasto estimado no mês'
+              : granularidade === 'semana'
+                ? 'Gasto estimado na semana'
+                : 'Gasto médio diário',
           data: porBalde(gastoDiario),
           stack: 'linha-gasto',
           borderColor: muted,
@@ -460,12 +498,7 @@
                 const [gramas, metaDia] = info;
                 // alvo do balde: diário nas visões por dia; × dias na visão mensal
                 // (no filtro Dia, cada barra é 1 hora — % do alvo não se aplica)
-                const alvo =
-                  metaDia && granularidade !== 'hora'
-                    ? granularidade === 'mes'
-                      ? metaDia * b.dias
-                      : metaDia
-                    : null;
+                const alvo = metaDia && granularidade !== 'hora' ? metaDia * (b.dias || 1) : null;
                 const pctAlvo = alvo ? ` · ${fmt((gramas / alvo) * 100, 0)}% do alvo` : '';
                 return ` ${ctx.dataset.label}: ${fmt(gramas, 0)} g (${fmt(ctx.parsed.y, 0)} kcal)${pctAlvo}`;
               },
@@ -476,8 +509,7 @@
                 const total = 4 * b.p + 4 * b.c + 9 * b.g;
                 if (total <= 0) return '';
                 const { metaKcal: mk } = MacroDB.getSettings();
-                const alvoKcal =
-                  mk && granularidade !== 'hora' ? (granularidade === 'mes' ? mk * b.dias : mk) : null;
+                const alvoKcal = mk && granularidade !== 'hora' ? mk * (b.dias || 1) : null;
                 return `Total: ${fmt(total, 0)} kcal${alvoKcal ? ` · ${fmt((total / alvoKcal) * 100, 0)}% da meta` : ''}`;
               },
             },
@@ -766,7 +798,7 @@
         mk('Carboidratos', 'c', COR_PDF.c, 4),
         mk('Gorduras', 'g', COR_PDF.g, 9),
       ];
-      const porBalde = (v) => buckets.map((b) => (d.granularidade === 'mes' ? v * b.dias : v));
+      const porBalde = (v) => buckets.map((b) => v * (b.dias || 1));
       // no filtro de 1 dia cada barra é uma hora: metas diárias não se aplicam
       const linhasDeMeta = d.granularidade !== 'hora';
       if (linhasDeMeta && d.cfg.gastoDiario) {
@@ -776,37 +808,39 @@
           pointRadius: 0, fill: false, stack: 'linha-gasto',
         });
       }
-      if (linhasDeMeta && d.cfg.metaKcal) {
+      const somaMetas = (d.cfg.metaP || 0) * 4 + (d.cfg.metaC || 0) * 4 + (d.cfg.metaG || 0) * 9;
+      const metasCompletas = !!(d.cfg.metaP && d.cfg.metaC && d.cfg.metaG);
+      // com as três metas desenhadas, o topo das gorduras já é a meta de calorias
+      const repeteMetaKcal =
+        metasCompletas && d.cfg.metaKcal && Math.abs(somaMetas - d.cfg.metaKcal) <= d.cfg.metaKcal * 0.05;
+      if (linhasDeMeta && d.cfg.metaKcal && !repeteMetaKcal) {
         datasets.push({
           label: 'Meta de calorias', type: 'line', data: porBalde(d.cfg.metaKcal),
           borderColor: COR_PDF.alvo, borderDash: [3, 3], borderWidth: 2,
           pointRadius: 0, fill: false, stack: 'linha-alvo',
         });
       }
-      // metas de cada macronutriente, em gramas, lidas no eixo da direita
-      const metasMacro = [
-        ['Meta de proteínas (g)', d.cfg.metaP, COR_PDF.p],
-        ['Meta de carboidratos (g)', d.cfg.metaC, COR_PDF.c],
-        ['Meta de gorduras (g)', d.cfg.metaG, COR_PDF.g],
-      ].filter(([, v]) => linhasDeMeta && v);
+      // metas de cada macronutriente na MESMA escala das barras (kcal) e
+      // empilhadas como elas: cada tracejado marca onde o topo daquela faixa
+      // ficaria se a dieta alvo fosse seguida
+      const metasMacro = [];
+      if (linhasDeMeta && d.cfg.metaP && d.cfg.metaC && d.cfg.metaG) {
+        const kcalP = d.cfg.metaP * 4;
+        const kcalC = d.cfg.metaC * 4;
+        const kcalG = d.cfg.metaG * 9;
+        metasMacro.push(
+          ['Meta: topo das proteínas', kcalP, COR_PDF.p],
+          ['Meta: topo dos carboidratos', kcalP + kcalC, COR_PDF.c],
+          ['Meta: topo das gorduras', kcalP + kcalC + kcalG, COR_PDF.g]
+        );
+      }
       metasMacro.forEach(([rot, valor, cor], i) => {
         datasets.push({
           label: rot, type: 'line', data: porBalde(valor),
           borderColor: cor, borderDash: [5, 4], borderWidth: 2,
-          pointRadius: 0, fill: false, stack: `meta-macro-${i}`, yAxisID: 'yG',
+          pointRadius: 0, fill: false, stack: `meta-macro-${i}`,
         });
       });
-      const escalaGramas = metasMacro.length
-        ? {
-            yG: {
-              position: 'right',
-              beginAtZero: true,
-              grid: { display: false },
-              ticks: { color: COR_PDF.texto, font: { size: 11 } },
-              title: { display: true, text: 'g (metas)', color: COR_PDF.texto },
-            },
-          }
-        : {};
       const c1 = new Chart(cv1, {
         type: 'bar',
         data: { labels: buckets.map((b) => b.label), datasets },
@@ -818,7 +852,6 @@
           scales: {
             x: { ...comum.scales.x, stacked: true },
             y: { ...comum.scales.y, stacked: true, beginAtZero: true, title: { display: true, text: 'kcal', color: COR_PDF.texto } },
-            ...escalaGramas,
           },
         },
         plugins: [fundoBranco],
@@ -915,6 +948,10 @@
     return imagens;
   }
 
+  // "Calorias por dia/semana/mês, por macronutriente", conforme a granularidade
+  const tituloGraficoKcal = (granularidade) =>
+    `Calorias por ${{ hora: 'hora', dia: 'dia', semana: 'semana', mes: 'mês' }[granularidade] || 'dia'}, por macronutriente`;
+
   function montarRelatorioHtml(d, graficos = {}) {
     const { cfg, tot, dias, diasDetalhe } = d;
     const div = Math.max(1, dias);
@@ -968,10 +1005,11 @@
     if (graficos.kcal || graficos.acumulado || graficos.macros) {
       html += `<h2>Gráficos do período</h2>`;
       if (graficos.kcal) {
-        html += `<h3>Calorias por dia, por macronutriente</h3>
-          <img class="rp-grafico" src="${graficos.kcal}" alt="Calorias por dia" />
-          <p class="rp-legenda">Barras (eixo da esquerda, kcal): calorias de cada macronutriente.
-          Linhas tracejadas coloridas (eixo da direita, gramas): meta diária de cada macronutriente.</p>`;
+        html += `<h3>${tituloGraficoKcal(d.granularidade)}</h3>
+          <img class="rp-grafico" src="${graficos.kcal}" alt="Calorias por macronutriente" />
+          <p class="rp-legenda">Barras: calorias de cada macronutriente, empilhadas. As linhas tracejadas
+          coloridas marcam, na mesma escala, onde o topo de cada faixa ficaria se a dieta alvo fosse
+          seguida — a barra fica abaixo da linha quando o consumo daquele macro ficou abaixo da meta.</p>`;
       }
       if (graficos.acumulado) {
         html += `<h3>Déficit calórico acumulado</h3>
@@ -1179,8 +1217,8 @@
       const diasMeta = Math.max(1, dias);
       imagem(
         graficos.kcal, larg, (larg * 380) / 900,
-        'Calorias por dia, por macronutriente',
-        'Barras (eixo da esquerda, kcal): calorias de cada macronutriente. Linhas tracejadas coloridas (eixo da direita, gramas): meta diária de cada macronutriente.'
+        tituloGraficoKcal(d.granularidade),
+        'Barras: calorias de cada macronutriente, empilhadas. As linhas tracejadas coloridas marcam, na mesma escala, onde o topo de cada faixa ficaria se a dieta alvo fosse seguida - a barra fica abaixo da linha quando o consumo daquele macro ficou abaixo da meta.'
       );
       imagem(graficos.acumulado, larg, (larg * 300) / 900, 'Déficit calórico acumulado');
       imagem(
