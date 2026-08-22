@@ -106,7 +106,8 @@ body {
   border: 1px solid #e2e2e2; border-radius: 4px; margin-bottom: 6px;
   page-break-inside: avoid;
 }
-#rp-conteudo .rp-grafico-menor { max-width: 340px; }
+#rp-conteudo .rp-grafico-menor { max-width: 360px; }
+#rp-conteudo .rp-legenda { font-size: 11px; color: #666; margin: 0 0 14px; line-height: 1.45; }
 #rp-conteudo .rp-dia { margin-top: 14px; page-break-inside: avoid; }
 #rp-conteudo .rp-dia-head { font-weight: 700; font-size: 13.5px; background: #f2f2f0; padding: 4px 6px; }
 #rp-conteudo .rp-ref { font-size: 12.5px; color: #444; margin: 6px 0 2px; font-weight: 600; }

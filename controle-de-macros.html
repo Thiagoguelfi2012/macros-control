@@ -117,7 +117,8 @@ body {
   border: 1px solid #e2e2e2; border-radius: 4px; margin-bottom: 6px;
   page-break-inside: avoid;
 }
-#rp-conteudo .rp-grafico-menor { max-width: 340px; }
+#rp-conteudo .rp-grafico-menor { max-width: 360px; }
+#rp-conteudo .rp-legenda { font-size: 11px; color: #666; margin: 0 0 14px; line-height: 1.45; }
 #rp-conteudo .rp-dia { margin-top: 14px; page-break-inside: avoid; }
 #rp-conteudo .rp-dia-head { font-weight: 700; font-size: 13.5px; background: #f2f2f0; padding: 4px 6px; }
 #rp-conteudo .rp-ref { font-size: 12.5px; color: #444; margin: 6px 0 2px; font-weight: 600; }
@@ -4239,6 +4240,37 @@ const SupabaseSync = (() => {
         y: { ticks: { color: COR_PDF.texto, font: { size: 11 } }, grid: { color: COR_PDF.grade } },
       },
     };
+    // marca os dois anéis e escreve a participação (%) de cada fatia
+    const anelExternoInterno = {
+      id: 'anelExternoInterno',
+      afterDatasetsDraw: (chart) => {
+        const { ctx } = chart;
+        ctx.save();
+        if (chart.data.datasets.length > 1) {
+          ctx.font = '600 12px helvetica, sans-serif';
+          ctx.fillStyle = COR_PDF.texto;
+          ctx.textAlign = 'left';
+          ctx.fillText('Anel externo: realizado', 8, 16);
+          ctx.fillText('Anel interno (claro): meta', 8, 32);
+        }
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        chart.data.datasets.forEach((ds, di) => {
+          const soma = ds.data.reduce((x, y) => x + y, 0);
+          if (soma <= 0) return;
+          const meta = chart.getDatasetMeta(di);
+          meta.data.forEach((arco, i) => {
+            const pct = (ds.data[i] / soma) * 100;
+            if (pct < 7) return;
+            const { x, y } = arco.getCenterPoint();
+            ctx.font = `${di === 0 ? '700' : '600'} ${di === 0 ? 13 : 11}px helvetica, sans-serif`;
+            ctx.fillStyle = di === 0 ? '#ffffff' : COR_PDF.texto;
+            ctx.fillText(`${Math.round(pct)}%`, x, y);
+          });
+        });
+        ctx.restore();
+      },
+    };
     // fundo branco: o canvas é transparente e o PDF ficaria com buracos
     const fundoBranco = {
       id: 'fundoBranco',
@@ -4255,7 +4287,7 @@ const SupabaseSync = (() => {
     try {
       /* 1) calorias por dia, empilhadas por macronutriente */
       const buckets = agregar(d.entries, d.inicio, d.fim, d.granularidade);
-      const cv1 = criarCanvasOculto(900, 320);
+      const cv1 = criarCanvasOculto(900, 380);
       canvases.push(cv1);
       const mk = (rot, chave, cor, kcalPorGrama) => ({
         label: rot,
@@ -4270,28 +4302,58 @@ const SupabaseSync = (() => {
         mk('Gorduras', 'g', COR_PDF.g, 9),
       ];
       const porBalde = (v) => buckets.map((b) => (d.granularidade === 'mes' ? v * b.dias : v));
-      if (d.cfg.gastoDiario) {
+      // no filtro de 1 dia cada barra é uma hora: metas diárias não se aplicam
+      const linhasDeMeta = d.granularidade !== 'hora';
+      if (linhasDeMeta && d.cfg.gastoDiario) {
         datasets.push({
           label: 'Gasto estimado', type: 'line', data: porBalde(d.cfg.gastoDiario),
           borderColor: COR_PDF.linha, borderDash: [6, 4], borderWidth: 2,
           pointRadius: 0, fill: false, stack: 'linha-gasto',
         });
       }
-      if (d.cfg.metaKcal) {
+      if (linhasDeMeta && d.cfg.metaKcal) {
         datasets.push({
           label: 'Meta de calorias', type: 'line', data: porBalde(d.cfg.metaKcal),
           borderColor: COR_PDF.alvo, borderDash: [3, 3], borderWidth: 2,
           pointRadius: 0, fill: false, stack: 'linha-alvo',
         });
       }
+      // metas de cada macronutriente, em gramas, lidas no eixo da direita
+      const metasMacro = [
+        ['Meta de proteínas (g)', d.cfg.metaP, COR_PDF.p],
+        ['Meta de carboidratos (g)', d.cfg.metaC, COR_PDF.c],
+        ['Meta de gorduras (g)', d.cfg.metaG, COR_PDF.g],
+      ].filter(([, v]) => linhasDeMeta && v);
+      metasMacro.forEach(([rot, valor, cor], i) => {
+        datasets.push({
+          label: rot, type: 'line', data: porBalde(valor),
+          borderColor: cor, borderDash: [5, 4], borderWidth: 2,
+          pointRadius: 0, fill: false, stack: `meta-macro-${i}`, yAxisID: 'yG',
+        });
+      });
+      const escalaGramas = metasMacro.length
+        ? {
+            yG: {
+              position: 'right',
+              beginAtZero: true,
+              grid: { display: false },
+              ticks: { color: COR_PDF.texto, font: { size: 11 } },
+              title: { display: true, text: 'g (metas)', color: COR_PDF.texto },
+            },
+          }
+        : {};
       const c1 = new Chart(cv1, {
         type: 'bar',
         data: { labels: buckets.map((b) => b.label), datasets },
         options: {
           ...comum,
+          plugins: {
+            legend: { labels: { color: COR_PDF.texto, boxWidth: 22, font: { size: 11 } } },
+          },
           scales: {
             x: { ...comum.scales.x, stacked: true },
-            y: { ...comum.scales.y, stacked: true, title: { display: true, text: 'kcal', color: COR_PDF.texto } },
+            y: { ...comum.scales.y, stacked: true, beginAtZero: true, title: { display: true, text: 'kcal', color: COR_PDF.texto } },
+            ...escalaGramas,
           },
         },
         plugins: [fundoBranco],
@@ -4342,26 +4404,41 @@ const SupabaseSync = (() => {
       /* 3) distribuição dos macros */
       const kcalM = d.tot.p * 4 + d.tot.c * 4 + d.tot.g * 9;
       if (kcalM > 0) {
-        const cv3 = criarCanvasOculto(520, 320);
+        const cv3 = criarCanvasOculto(560, 340);
         canvases.push(cv3);
+        // anel externo: realizado · anel interno (claro): meta do período
+        const diasMeta = Math.max(1, d.dias);
+        const dsMacros = [{
+          label: 'Realizado',
+          data: [d.tot.p * 4, d.tot.c * 4, d.tot.g * 9],
+          backgroundColor: [COR_PDF.p, COR_PDF.c, COR_PDF.g],
+          borderColor: '#ffffff', borderWidth: 2,
+        }];
+        imagens.macrosTemMeta = !!(d.cfg.metaP || d.cfg.metaC || d.cfg.metaG);
+        if (imagens.macrosTemMeta) {
+          dsMacros.push({
+            label: 'Meta',
+            data: [
+              (d.cfg.metaP || 0) * 4 * diasMeta,
+              (d.cfg.metaC || 0) * 4 * diasMeta,
+              (d.cfg.metaG || 0) * 9 * diasMeta,
+            ],
+            backgroundColor: [COR_PDF.p + '73', COR_PDF.c + '73', COR_PDF.g + '73'],
+            borderColor: '#ffffff', borderWidth: 2,
+          });
+        }
         const c3 = new Chart(cv3, {
           type: 'doughnut',
-          data: {
-            labels: ['Proteínas', 'Carboidratos', 'Gorduras'],
-            datasets: [{
-              data: [d.tot.p * 4, d.tot.c * 4, d.tot.g * 9],
-              backgroundColor: [COR_PDF.p, COR_PDF.c, COR_PDF.g],
-              borderColor: '#ffffff', borderWidth: 2,
-            }],
-          },
+          data: { labels: ['Proteínas', 'Carboidratos', 'Gorduras'], datasets: dsMacros },
           options: {
             responsive: false,
             animation: false,
+            cutout: '42%',
             plugins: {
               legend: { position: 'bottom', labels: { color: COR_PDF.texto, boxWidth: 12, font: { size: 12 } } },
             },
           },
-          plugins: [fundoBranco],
+          plugins: [fundoBranco, anelExternoInterno],
         });
         imagens.macros = cv3.toDataURL('image/jpeg', 0.92);
         c3.destroy();
@@ -4427,7 +4504,9 @@ const SupabaseSync = (() => {
       html += `<h2>Gráficos do período</h2>`;
       if (graficos.kcal) {
         html += `<h3>Calorias por dia, por macronutriente</h3>
-          <img class="rp-grafico" src="${graficos.kcal}" alt="Calorias por dia" />`;
+          <img class="rp-grafico" src="${graficos.kcal}" alt="Calorias por dia" />
+          <p class="rp-legenda">Barras (eixo da esquerda, kcal): calorias de cada macronutriente.
+          Linhas tracejadas coloridas (eixo da direita, gramas): meta diária de cada macronutriente.</p>`;
       }
       if (graficos.acumulado) {
         html += `<h3>Déficit calórico acumulado</h3>
@@ -4435,7 +4514,11 @@ const SupabaseSync = (() => {
       }
       if (graficos.macros) {
         html += `<h3>Distribuição dos macronutrientes</h3>
-          <img class="rp-grafico rp-grafico-menor" src="${graficos.macros}" alt="Distribuição dos macros" />`;
+          <img class="rp-grafico rp-grafico-menor" src="${graficos.macros}" alt="Distribuição dos macros" />
+          ${graficos.macrosTemMeta
+            ? `<p class="rp-legenda">Anel externo: realizado no período. Anel interno (tom mais claro): meta do período
+              (meta diária × ${fmt(Math.max(1, dias), 0)} dia${Math.max(1, dias) > 1 ? 's' : ''} com registro).</p>`
+            : ''}`;
       }
     }
 
@@ -4600,9 +4683,10 @@ const SupabaseSync = (() => {
     }
 
     // gráficos (mesmas imagens da prévia)
-    const imagem = (dataUrl, larguraImg, alturaImg, legenda) => {
+    const imagem = (dataUrl, larguraImg, alturaImg, legenda, nota) => {
       if (!dataUrl) return;
-      if (y + alturaImg > doc.internal.pageSize.getHeight() - 60) {
+      const alturaNota = nota ? 24 : 0;
+      if (y + alturaImg + alturaNota > doc.internal.pageSize.getHeight() - 60) {
         doc.addPage();
         y = 46;
       }
@@ -4612,14 +4696,35 @@ const SupabaseSync = (() => {
       doc.text(txtPdf(legenda), M, y);
       y += 10;
       doc.addImage(dataUrl, 'JPEG', M, y, larguraImg, alturaImg);
-      y += alturaImg + 18;
+      y += alturaImg + 8;
+      if (nota) {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.setTextColor(110);
+        const linhas = doc.splitTextToSize(txtPdf(nota), largura - M * 2);
+        doc.text(linhas, M, y);
+        y += linhas.length * 10;
+        doc.setTextColor(40);
+      }
+      y += 12;
     };
     if (graficos.kcal || graficos.acumulado || graficos.macros) {
       titulo('Gráficos do período');
       const larg = largura - M * 2;
-      imagem(graficos.kcal, larg, (larg * 320) / 900, 'Calorias por dia, por macronutriente');
+      const diasMeta = Math.max(1, dias);
+      imagem(
+        graficos.kcal, larg, (larg * 380) / 900,
+        'Calorias por dia, por macronutriente',
+        'Barras (eixo da esquerda, kcal): calorias de cada macronutriente. Linhas tracejadas coloridas (eixo da direita, gramas): meta diária de cada macronutriente.'
+      );
       imagem(graficos.acumulado, larg, (larg * 300) / 900, 'Déficit calórico acumulado');
-      imagem(graficos.macros, larg * 0.55, ((larg * 0.55) * 320) / 520, 'Distribuição dos macronutrientes');
+      imagem(
+        graficos.macros, larg * 0.58, ((larg * 0.58) * 340) / 560,
+        'Distribuição dos macronutrientes',
+        graficos.macrosTemMeta
+          ? `Anel externo: realizado no período. Anel interno (tom mais claro): meta do período (meta diária x ${fmt(diasMeta, 0)} dia${diasMeta > 1 ? 's' : ''} com registro).`
+          : ''
+      );
     }
 
     if (diasDetalhe.length) {
