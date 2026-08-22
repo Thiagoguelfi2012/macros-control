@@ -120,8 +120,15 @@ body {
 #rp-conteudo .rp-grafico-menor { max-width: 360px; }
 #rp-conteudo .rp-legenda { font-size: 11px; color: #666; margin: 0 0 14px; line-height: 1.45; }
 #rp-conteudo .rp-dia { margin-top: 14px; page-break-inside: avoid; }
-#rp-conteudo .rp-dia-head { font-weight: 700; font-size: 13.5px; background: #f2f2f0; padding: 4px 6px; }
-#rp-conteudo .rp-ref { font-size: 12.5px; color: #444; margin: 6px 0 2px; font-weight: 600; }
+#rp-conteudo .rp-dia + .rp-dia { margin-top: 20px; }
+#rp-conteudo .rp-dia-band th {
+  text-align: left; font-size: 13px; font-weight: 700; background: #e2eaf2;
+  border-bottom: 1px solid #b9c6d4; padding: 6px;
+}
+#rp-conteudo .rp-ref-row td { background: #f3f3f0; font-weight: 650; }
+#rp-conteudo .rp-tab-dia tbody tr:not(.rp-ref-row) td:first-child { padding-left: 14px; }
+#rp-conteudo .rp-tab-dia thead tr:last-child th:nth-child(2),
+#rp-conteudo .rp-tab-dia tbody tr:not(.rp-ref-row) td:nth-child(2) { text-align: left; }
 #rp-conteudo .rp-nota { margin-top: 26px; font-size: 11.5px; color: #666; border-top: 1px solid #ddd; padding-top: 10px; }
 @media (max-width: 560px) {
   #rp-conteudo .rp-fatos { grid-template-columns: 1fr; }
@@ -4173,6 +4180,14 @@ const SupabaseSync = (() => {
     return 'Ceia';
   }
 
+  // horário da refeição: um instante, ou a faixa quando os itens não são do mesmo minuto
+  const horaRefeicao = (ref) => {
+    const hm = (dt) => dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    const ini = hm(ref.data);
+    const fim = hm(ref.fimData || ref.data);
+    return ini === fim ? ini : `${ini}-${fim}`;
+  };
+
   const qtdStrPdf = (e) => {
     const un = e.ml ? 'ml' : 'g';
     if (e.medida === 'g') return `${fmt(e.qtd)} ${un}`;
@@ -4205,9 +4220,11 @@ const SupabaseSync = (() => {
         (acc, e) => ({ kcal: acc.kcal + e.kcal, p: acc.p + e.p, c: acc.c + e.c, g: acc.g + e.g }),
         { kcal: 0, p: 0, c: 0, g: 0 }
       );
+      // uma refeição por faixa do dia (café da manhã, almoço, ...): dois
+      // registros do mesmo café não viram dois blocos iguais no relatório
       const refs = new Map();
       for (const e of itens) {
-        const chave = e.ts.slice(0, 16);
+        const chave = nomeRefeicaoPdf(new Date(e.ts));
         if (!refs.has(chave)) refs.set(chave, []);
         refs.get(chave).push(e);
       }
@@ -4215,8 +4232,10 @@ const SupabaseSync = (() => {
       return {
         data: new Date(y, m - 1, dd),
         tot: soma,
-        refeicoes: [...refs.values()].map((itensRef) => ({
+        refeicoes: [...refs.entries()].map(([nome, itensRef]) => ({
+          nome,
           data: new Date(itensRef[0].ts),
+          fimData: new Date(itensRef[itensRef.length - 1].ts),
           itens: itensRef,
           tot: itensRef.reduce(
             (acc, e) => ({ kcal: acc.kcal + e.kcal, p: acc.p + e.p, c: acc.c + e.c, g: acc.g + e.g }),
@@ -4587,21 +4606,25 @@ const SupabaseSync = (() => {
     if (!diasDetalhe.length) html += `<p>Nenhum alimento registrado neste período.</p>`;
     for (const dia of diasDetalhe) {
       html += `<div class="rp-dia">
-        <div class="rp-dia-head">${esc(dataExtenso(dia.data))} — ${fmt(dia.tot.kcal, 0)} kcal · P ${fmt(dia.tot.p, 0)} g · C ${fmt(dia.tot.c, 0)} g · G ${fmt(dia.tot.g, 0)} g</div>`;
+        <table class="rp-tab-dia">
+          <thead>
+            <tr class="rp-dia-band"><th colspan="6">${esc(dataExtenso(dia.data))} — ${fmt(dia.tot.kcal, 0)} kcal · P ${fmt(dia.tot.p, 0)} g · C ${fmt(dia.tot.c, 0)} g · G ${fmt(dia.tot.g, 0)} g</th></tr>
+            <tr><th>Alimento</th><th>Quantidade</th><th>kcal</th><th>P (g)</th><th>C (g)</th><th>G (g)</th></tr>
+          </thead>
+          <tbody>`;
       for (const ref of dia.refeicoes) {
-        html += `<div class="rp-ref">${esc(nomeRefeicaoPdf(ref.data))} · ${esc(ref.data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }))} — ${fmt(ref.tot.kcal, 0)} kcal</div>
-          <table>
-            <thead><tr><th>Alimento</th><th>Quantidade</th><th>kcal</th><th>P</th><th>C</th><th>G</th></tr></thead>
-            <tbody>`;
+        html += `<tr class="rp-ref-row">
+            <td colspan="2">${esc(ref.nome)} · ${esc(horaRefeicao(ref))}</td>
+            <td>${fmt(ref.tot.kcal, 0)}</td><td>${fmt(ref.tot.p)}</td><td>${fmt(ref.tot.c)}</td><td>${fmt(ref.tot.g)}</td>
+          </tr>`;
         for (const e of ref.itens) {
           html += `<tr>
             <td>${esc(e.nome)}</td><td>${esc(qtdStrPdf(e))}</td>
             <td>${fmt(e.kcal, 0)}</td><td>${fmt(e.p)}</td><td>${fmt(e.c)}</td><td>${fmt(e.g)}</td>
           </tr>`;
         }
-        html += `</tbody></table>`;
       }
-      html += `</div>`;
+      html += `</tbody></table></div>`;
     }
     html += `<p class="rp-nota">${esc(NOTA_RELATORIO)}</p>`;
     return html;
@@ -4631,8 +4654,8 @@ const SupabaseSync = (() => {
     const largura = doc.internal.pageSize.getWidth();
     let y = 46;
 
-    const titulo = (txt, tamanho = 12) => {
-      if (y > doc.internal.pageSize.getHeight() - 90) {
+    const titulo = (txt, tamanho = 12, espacoMinimo = 60) => {
+      if (y + 30 + espacoMinimo > doc.internal.pageSize.getHeight() - 46) {
         doc.addPage();
         y = 46;
       }
@@ -4660,6 +4683,7 @@ const SupabaseSync = (() => {
         headStyles: { fillColor: [240, 240, 238], textColor: 20, fontStyle: 'bold' },
         alternateRowStyles: { fillColor: [250, 250, 249] },
         ...opcoes,
+        ...(opcoes.head ? { head: opcoes.head.map((linha) => linha.map(limpar)) } : {}),
         ...(opcoes.foot ? { foot: opcoes.foot.map((linha) => linha.map(limpar)) } : {}),
       });
       y = doc.lastAutoTable.finalY + 16;
@@ -4795,41 +4819,56 @@ const SupabaseSync = (() => {
       });
     }
 
-    titulo('Refeições do período');
+    // o título não pode sobrar sozinho no pé da página: reserva espaço para o
+    // primeiro dia (ou para o que couber em uma página inteira)
+    const alturaPrimeiroDia = diasDetalhe.length
+      ? 52 + diasDetalhe[0].refeicoes.reduce((n, r) => n + 1 + r.itens.length, 0) * 15
+      : 40;
+    titulo('Refeições do período', 12, Math.min(alturaPrimeiroDia, 240));
     if (!diasDetalhe.length) {
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(9.5);
       doc.text('Nenhum alimento registrado neste período.', M, y);
       y += 16;
     }
+    const FAIXA_DIA = [226, 234, 242];
+    const FAIXA_REF = [243, 243, 240];
     for (const dia of diasDetalhe) {
       const corpo = [];
       for (const ref of dia.refeicoes) {
+        // linha da refeição: nome, horário e o subtotal dela nas mesmas colunas
         corpo.push([
-          {
-            content: `${nomeRefeicaoPdf(ref.data)} · ${ref.data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} — ${fmt(ref.tot.kcal, 0)} kcal`,
-            colSpan: 6,
-            styles: { fontStyle: 'bold', fillColor: [246, 246, 244], textColor: 40 },
-          },
-        ]);
+          { content: `${ref.nome} · ${horaRefeicao(ref)}`, colSpan: 2 },
+          fmt(ref.tot.kcal, 0), fmt(ref.tot.p), fmt(ref.tot.c), fmt(ref.tot.g),
+        ].map((c) => (typeof c === 'object' ? { ...c, styles: { ...c.styles, fontStyle: 'bold', fillColor: FAIXA_REF } } : { content: c, styles: { fontStyle: 'bold', fillColor: FAIXA_REF } })));
         for (const e of ref.itens) {
-          corpo.push([e.nome, qtdStrPdf(e), fmt(e.kcal, 0), fmt(e.p), fmt(e.c), fmt(e.g)]);
+          corpo.push([
+            { content: e.nome, styles: { cellPadding: { top: 3, right: 3, bottom: 3, left: 11 } } },
+            qtdStrPdf(e), fmt(e.kcal, 0), fmt(e.p), fmt(e.c), fmt(e.g),
+          ]);
         }
       }
-      if (y > doc.internal.pageSize.getHeight() - 120) {
+      // se o dia inteiro não cabe no que sobrou da página mas caberia em uma
+      // página limpa, começa nela — evita partir a tabela de um dia ao meio
+      const alturaPagina = doc.internal.pageSize.getHeight();
+      const alturaEstimada = 52 + corpo.length * 15;
+      const naoCabeAqui = y + alturaEstimada > alturaPagina - 60;
+      if (naoCabeAqui && (alturaEstimada < alturaPagina - 110 || y > alturaPagina - 160)) {
         doc.addPage();
         y = 46;
       }
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(10);
-      doc.setTextColor(20);
-      doc.text(
-        txtPdf(`${dataExtenso(dia.data)} — ${fmt(dia.tot.kcal, 0)} kcal · P ${fmt(dia.tot.p, 0)} g · C ${fmt(dia.tot.c, 0)} g · G ${fmt(dia.tot.g, 0)} g`),
-        M,
-        y
-      );
-      y += 8;
-      tabela(['Alimento', 'Quantidade', 'kcal', 'P', 'C', 'G'], corpo, {
+      // a faixa do dia é a 1ª linha do cabeçalho: se a tabela quebrar de
+      // página, o dia é repetido junto com os títulos das colunas
+      const faixaDia = {
+        content: `${dataExtenso(dia.data)} - ${fmt(dia.tot.kcal, 0)} kcal · P ${fmt(dia.tot.p, 0)} g · C ${fmt(dia.tot.c, 0)} g · G ${fmt(dia.tot.g, 0)} g`,
+        colSpan: 6,
+        styles: { fillColor: FAIXA_DIA, textColor: 20, fontStyle: 'bold', fontSize: 9.5, halign: 'left' },
+      };
+      tabela(['Alimento', 'Quantidade', 'kcal', 'P (g)', 'C (g)', 'G (g)'], corpo, {
+        head: [[faixaDia], ['Alimento', 'Quantidade', 'kcal', 'P (g)', 'C (g)', 'G (g)']],
+        showHead: 'everyPage',
+        alternateRowStyles: { fillColor: [255, 255, 255] },
+        rowPageBreak: 'avoid',
         columnStyles: {
           0: { cellWidth: 170 },
           2: { halign: 'right' }, 3: { halign: 'right' }, 4: { halign: 'right' }, 5: { halign: 'right' },

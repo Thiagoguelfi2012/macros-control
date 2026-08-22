@@ -109,8 +109,15 @@ body {
 #rp-conteudo .rp-grafico-menor { max-width: 360px; }
 #rp-conteudo .rp-legenda { font-size: 11px; color: #666; margin: 0 0 14px; line-height: 1.45; }
 #rp-conteudo .rp-dia { margin-top: 14px; page-break-inside: avoid; }
-#rp-conteudo .rp-dia-head { font-weight: 700; font-size: 13.5px; background: #f2f2f0; padding: 4px 6px; }
-#rp-conteudo .rp-ref { font-size: 12.5px; color: #444; margin: 6px 0 2px; font-weight: 600; }
+#rp-conteudo .rp-dia + .rp-dia { margin-top: 20px; }
+#rp-conteudo .rp-dia-band th {
+  text-align: left; font-size: 13px; font-weight: 700; background: #e2eaf2;
+  border-bottom: 1px solid #b9c6d4; padding: 6px;
+}
+#rp-conteudo .rp-ref-row td { background: #f3f3f0; font-weight: 650; }
+#rp-conteudo .rp-tab-dia tbody tr:not(.rp-ref-row) td:first-child { padding-left: 14px; }
+#rp-conteudo .rp-tab-dia thead tr:last-child th:nth-child(2),
+#rp-conteudo .rp-tab-dia tbody tr:not(.rp-ref-row) td:nth-child(2) { text-align: left; }
 #rp-conteudo .rp-nota { margin-top: 26px; font-size: 11.5px; color: #666; border-top: 1px solid #ddd; padding-top: 10px; }
 @media (max-width: 560px) {
   #rp-conteudo .rp-fatos { grid-template-columns: 1fr; }
