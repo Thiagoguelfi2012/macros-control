@@ -54,7 +54,10 @@ python3 -m http.server 8000
     exercícios ao montar um treino novo.
 
   Séries podem ser contadas em **repetições, segundos** (isometrias como a prancha)
-  ou **minutos** (cardio), e a carga é opcional em qualquer exercício.
+  ou **minutos** (cardio). A **carga** é o número que o usuário registra para
+  acompanhar a progressão e também tem unidade própria — **kg**, **segundos** (a
+  prancha progride em tempo, não em peso), **minutos** ou **nível** —, usada nos
+  cartões, na execução e nos eixos dos gráficos de evolução.
 
   Na primeira abertura o app já vem com a ficha atual do usuário (três treinos:
   `P \ Del \ T`, `D \ Trap \ B` e `MMII \ Abs`), com séries, repetições, carga e

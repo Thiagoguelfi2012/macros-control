@@ -44,7 +44,7 @@
   // O treino atual do usuário (MFIT Personal, professor Gustavo Gomes Soncin):
   // "Treino de força na academia — redução de gordura/hipertrofia — avançado".
   // Serve como ponto de partida na primeira abertura; depois é só editar.
-  const SEMEADURA = 2; // subir aqui quando a ficha mudar
+  const SEMEADURA = 3; // subir aqui quando a ficha mudar
   // [exercicioId, séries, repMín, repMáx, carga, intervalo, unidade]
   const TREINOS_INICIAIS = [
     {
@@ -58,7 +58,7 @@
         ['elevacao-lateral-unilateral-com-halteres', 3, 10, 12, 8, 60],
         ['triceps-testa-na-polia-com-corda', 3, 10, 12, 9, 60],
         ['triceps-paralelas-no-graviton', 3, 10, 12, 40, 60],
-        ['prancha-alta', 3, 30, 45, null, 60, 'seg'],
+        ['prancha-alta', 3, 30, 45, 60, 60, 'seg', 'seg'],
         ['bicicleta', 1, 15, 15, 6, 0, 'min'],
       ],
     },
@@ -96,6 +96,13 @@
 
   // como as repetições são contadas: vezes, segundos (isometria) ou minutos (cardio)
   const UNIDADES = { rep: 'rep', seg: 'seg', min: 'min' };
+  // a carga é o que o usuário registra para acompanhar a progressão: quilos na
+  // maioria dos exercícios, segundos numa isometria, nível numa máquina de cardio
+  const UNIDADES_CARGA = { kg: 'kg', seg: 'seg', min: 'min', nivel: 'nível' };
+  const unCarga = (e) => UNIDADES_CARGA[e.unidadeCarga] || 'kg';
+  const comCarga = (e, valor) => `${fmt(valor)} ${unCarga(e)}`;
+  const rotuloCampoCarga = (e) =>
+    ({ seg: 'Tempo (seg)', min: 'Tempo (min)', nivel: 'Nível' })[e.unidadeCarga] || 'Carga (kg)';
   const rotuloSerie = (e) => {
     const faixa = e.repMin === e.repMax ? `${e.repMin}` : `${e.repMin}-${e.repMax}`;
     const un = e.unidadeRep && e.unidadeRep !== 'rep' ? ` ${UNIDADES[e.unidadeRep]}` : '';
@@ -107,7 +114,7 @@
     return `${e.series} x ${faixa}${un}`;
   };
 
-  function montarItemTreino(exercicioId, series, repMin, repMax, carga, intervalo, unidadeRep) {
+  function montarItemTreino(exercicioId, series, repMin, repMax, carga, intervalo, unidadeRep, unidadeCarga) {
     const base = acharExercicio(exercicioId);
     return {
       id: MacroDB.novoId(),
@@ -119,6 +126,7 @@
       repMin: repMin ?? 10,
       repMax: repMax ?? 12,
       unidadeRep: unidadeRep || 'rep',
+      unidadeCarga: unidadeCarga || 'kg',
       carga: carga ?? null,
       intervalo: intervalo ?? 60,
       obs: '',
@@ -188,7 +196,7 @@
           <p class="treino-meta">${qtd} ${qtd === 1 ? 'exercício' : 'exercícios'}${grupos.length ? ` · ${esc(grupos.join(', '))}` : ''}</p>
           <p class="treino-exec">${esc(resumoExecucoes(t.id))}</p>
           ${qtd ? `<ol class="treino-previa">${t.exercicios
-            .map((e) => `<li><span>${esc(e.nome)}</span><span class="prev-serie">${rotuloSerie(e)}${e.carga ? ` · ${fmt(e.carga)} kg` : ''}</span></li>`)
+            .map((e) => `<li><span>${esc(e.nome)}</span><span class="prev-serie">${rotuloSerie(e)}${e.carga ? ` · ${comCarga(e, e.carga)}` : ''}</span></li>`)
             .join('')}</ol>` : '<p class="sub">Sem exercícios — toque em Editar para montar.</p>'}
           <div class="treino-acoes">
             <button class="btn act-historico">Histórico</button>
@@ -230,6 +238,7 @@
         repMin: e.repMin,
         repMax: e.repMax,
         unidadeRep: e.unidadeRep || 'rep',
+        unidadeCarga: e.unidadeCarga || 'kg',
         intervalo: e.intervalo,
         carga: ultimaCarga(e.exercicioId, treino.id) ?? e.carga ?? null,
         reps: '',
@@ -291,8 +300,8 @@
           </div>
           <div class="exec-campos">
             <div class="field">
-              <label>Carga (kg)</label>
-              <input type="number" class="ex-carga" min="0" step="0.5" value="${it.carga ?? ''}" inputmode="decimal" placeholder="—" />
+              <label>${rotuloCampoCarga(it)}</label>
+              <input type="number" class="ex-carga" min="0" step="${it.unidadeCarga && it.unidadeCarga !== 'kg' ? '1' : '0.5'}" value="${it.carga ?? ''}" inputmode="decimal" placeholder="—" />
             </div>
             <div class="field">
               <label>${un === 'seg' ? 'Tempo feito' : un === 'min' ? 'Minutos feitos' : 'Repetições feitas'}</label>
@@ -300,7 +309,7 @@
             </div>
             ${it.intervalo ? `<button class="btn ex-descanso" type="button" data-seg="${it.intervalo}">Descanso ${it.intervalo}s</button>` : ''}
           </div>
-          ${anterior != null ? `<p class="exec-anterior">Última vez: ${fmt(anterior)} kg</p>` : ''}
+          ${anterior != null ? `<p class="exec-anterior">Última vez: ${comCarga(it, anterior)}</p>` : ''}
         </div>`;
       })
       .join('');
@@ -339,6 +348,7 @@
       exercicioId: i.exercicioId,
       nome: i.nome,
       grupo: i.grupo,
+      unidadeCarga: i.unidadeCarga || 'kg',
       carga: i.carga == null || i.carga === '' ? null : Number(i.carga),
       reps: i.reps || '',
       feito: !!i.feito,
@@ -415,14 +425,22 @@
           <div class="field"><label>Séries</label><input type="number" class="c-series" min="1" max="20" value="${e.series}" /></div>
           <div class="field"><label>Rep. mín.</label><input type="number" class="c-repmin" min="1" max="1000" value="${e.repMin}" /></div>
           <div class="field"><label>Rep. máx.</label><input type="number" class="c-repmax" min="1" max="1000" value="${e.repMax}" /></div>
-          <div class="field"><label>Unidade</label>
+          <div class="field"><label>Un. da série</label>
             <select class="c-unidade">
-              <option value="rep"${(e.unidadeRep || 'rep') === 'rep' ? ' selected' : ''}>repetições</option>
-              <option value="seg"${e.unidadeRep === 'seg' ? ' selected' : ''}>segundos</option>
-              <option value="min"${e.unidadeRep === 'min' ? ' selected' : ''}>minutos</option>
+              <option value="rep"${(e.unidadeRep || 'rep') === 'rep' ? ' selected' : ''}>reps</option>
+              <option value="seg"${e.unidadeRep === 'seg' ? ' selected' : ''}>seg</option>
+              <option value="min"${e.unidadeRep === 'min' ? ' selected' : ''}>min</option>
             </select>
           </div>
-          <div class="field"><label>Carga (kg)</label><input type="number" class="c-carga" min="0" step="0.5" value="${e.carga ?? ''}" /></div>
+          <div class="field"><label>Carga</label><input type="number" class="c-carga" min="0" step="${(e.unidadeCarga || 'kg') === 'kg' ? '0.5' : '1'}" value="${e.carga ?? ''}" /></div>
+          <div class="field"><label>Un. da carga</label>
+            <select class="c-uncarga">
+              <option value="kg"${(e.unidadeCarga || 'kg') === 'kg' ? ' selected' : ''}>kg</option>
+              <option value="seg"${e.unidadeCarga === 'seg' ? ' selected' : ''}>seg</option>
+              <option value="min"${e.unidadeCarga === 'min' ? ' selected' : ''}>min</option>
+              <option value="nivel"${e.unidadeCarga === 'nivel' ? ' selected' : ''}>nível</option>
+            </select>
+          </div>
           <div class="field"><label>Intervalo (s)</label><input type="number" class="c-intervalo" min="0" step="15" value="${e.intervalo ?? 60}" /></div>
         </div>
       </div>`
@@ -447,6 +465,8 @@
       if (campoCarga) ex.carga = campoCarga.value === '' ? null : Number(campoCarga.value);
       const campoUn = $('.c-unidade', el);
       if (campoUn) ex.unidadeRep = campoUn.value;
+      const campoUnCarga = $('.c-uncarga', el);
+      if (campoUnCarga) ex.unidadeCarga = campoUnCarga.value;
     });
     emEdicao.nome = $('#mt-nome').value.trim();
     emEdicao.foco = $('#mt-foco').value.trim();
@@ -540,8 +560,11 @@
     for (const s of relevantes) {
       for (const it of s.itens || []) {
         if (it.carga == null) continue;
-        if (!porExercicio.has(it.exercicioId)) porExercicio.set(it.exercicioId, { nome: it.nome, pontos: [] });
-        porExercicio.get(it.exercicioId).pontos.push({ ts: s.ts, carga: it.carga });
+        if (!porExercicio.has(it.exercicioId))
+          porExercicio.set(it.exercicioId, { nome: it.nome, unidadeCarga: it.unidadeCarga || 'kg', pontos: [] });
+        const alvo = porExercicio.get(it.exercicioId);
+        if (it.unidadeCarga) alvo.unidadeCarga = it.unidadeCarga;
+        alvo.pontos.push({ ts: s.ts, carga: it.carga });
       }
     }
 
@@ -563,14 +586,15 @@
         const fim = e.pontos[e.pontos.length - 1].carga;
         const dif = fim - ini;
         const sinal = dif > 0 ? 'sobe' : dif < 0 ? 'desce' : 'igual';
-        const rotulo = dif === 0 ? 'mantida' : `${dif > 0 ? '+' : '−'}${fmt(Math.abs(dif))} kg`;
+        const un = unCarga(e);
+        const rotulo = dif === 0 ? 'mantida' : `${dif > 0 ? '+' : '−'}${fmt(Math.abs(dif))} ${un}`;
         return `
         <div class="chart-card">
           <div class="evo-head">
             <h3>${esc(e.nome)}</h3>
             <span class="evo-delta ${sinal}">${rotulo}</span>
           </div>
-          <p class="sub">${fmt(ini)} kg → ${fmt(fim)} kg · ${e.pontos.length} ${e.pontos.length === 1 ? 'registro' : 'registros'}</p>
+          <p class="sub">${fmt(ini)} ${un} → ${fmt(fim)} ${un} · ${e.pontos.length} ${e.pontos.length === 1 ? 'registro' : 'registros'}</p>
           <div class="chart-wrap small"><canvas id="evo-${esc(id)}"></canvas></div>
         </div>`;
       })
@@ -583,6 +607,7 @@
     for (const [id, e] of porExercicio.entries()) {
       const cv = document.getElementById(`evo-${id}`);
       if (!cv) continue;
+      const un = unCarga(e);
       chartsEvo.push(
         new Chart(cv, {
           type: 'line',
@@ -590,7 +615,7 @@
             labels: e.pontos.map((p) => dataBr(p.ts)),
             datasets: [
               {
-                label: 'Carga (kg)',
+                label: `Carga (${un})`,
                 data: e.pontos.map((p) => p.carga),
                 borderColor: cssVar('--accent'),
                 backgroundColor: cssVar('--accent'),
@@ -606,14 +631,14 @@
             maintainAspectRatio: false,
             plugins: {
               legend: { display: false },
-              tooltip: { callbacks: { label: (ctx) => ` ${fmt(ctx.parsed.y)} kg` } },
+              tooltip: { callbacks: { label: (ctx) => ` ${fmt(ctx.parsed.y)} ${un}` } },
             },
             scales: {
               x: { grid: { display: false }, ticks: { color: muted, font: { size: 11 }, maxRotation: 0, autoSkip: true } },
               y: {
                 grid: { color: grid, drawTicks: false },
                 border: { display: false },
-                ticks: { color: muted, font: { size: 11 }, maxTicksLimit: 5, callback: (v) => `${v} kg` },
+                ticks: { color: muted, font: { size: 11 }, maxTicksLimit: 5, callback: (v) => `${v} ${un}` },
               },
             },
           },
@@ -636,7 +661,7 @@
       .map((s) => {
         const itens = (s.itens || [])
           .filter((i) => i.carga != null || i.feito)
-          .map((i) => `${i.nome}${i.carga != null ? `: ${fmt(i.carga)} kg` : ''}${i.reps ? ` (${i.reps})` : ''}`)
+          .map((i) => `${i.nome}${i.carga != null ? `: ${comCarga(i, i.carga)}` : ''}${i.reps ? ` (${i.reps})` : ''}`)
           .join('\n  ');
         return `${dataBr(s.ts)}\n  ${itens || 'sem cargas registradas'}`;
       })
@@ -732,6 +757,10 @@
     });
     $('#mt-exercicios').addEventListener('change', (ev) => {
       if (ev.target.classList.contains('c-unidade')) lerEditor();
+      if (ev.target.classList.contains('c-uncarga')) {
+        lerEditor();
+        renderEditor(); // o passo do campo de carga muda com a unidade
+      }
     });
     $('#mt-exercicios').addEventListener('click', (ev) => {
       const bloco = ev.target.closest('.mt-ex');
