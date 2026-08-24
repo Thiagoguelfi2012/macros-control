@@ -48,10 +48,17 @@ python3 -m http.server 8000
   - **Evolução** — um gráfico de linha por exercício com a **progressão de carga**
     ao longo das execuções (filtros por treino e por período), mais a variação em kg
     entre a primeira e a última vez.
-  - **Exercícios** — biblioteca com **156 exercícios** de uma academia padrão
+  - **Exercícios** — biblioteca com **166 exercícios** de uma academia padrão
     (Smart Fit): aparelhos, polias, Smith, halteres/barras e peso corporal,
     agrupados por músculo e filtráveis por grupo e equipamento. É de onde saem os
     exercícios ao montar um treino novo.
+
+  Séries podem ser contadas em **repetições, segundos** (isometrias como a prancha)
+  ou **minutos** (cardio), e a carga é opcional em qualquer exercício.
+
+  Na primeira abertura o app já vem com a ficha atual do usuário (três treinos:
+  `P \ Del \ T`, `D \ Trap \ B` e `MMII \ Abs`), com séries, repetições, carga e
+  intervalo de cada exercício — é só ajustar ou trocar.
 - **Ajustes** (`config.html`): tela própria com gasto energético (TMB/TDEE),
   **dieta alvo** (alvos diários de calorias e macros, com as kcal implícitas
   calculadas), **backup e transferência** e **conta e sincronização**. A dieta alvo

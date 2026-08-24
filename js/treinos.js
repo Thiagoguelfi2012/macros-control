@@ -41,8 +41,11 @@
 
   /* ---- Treino pré-configurado ---- */
 
-  // O treino atual do usuário (MFIT Personal, professor Gustavo Gomes Soncin).
-  // Serve como ponto de partida na primeira abertura do app; depois é só editar.
+  // O treino atual do usuário (MFIT Personal, professor Gustavo Gomes Soncin):
+  // "Treino de força na academia — redução de gordura/hipertrofia — avançado".
+  // Serve como ponto de partida na primeira abertura; depois é só editar.
+  const SEMEADURA = 2; // subir aqui quando a ficha mudar
+  // [exercicioId, séries, repMín, repMáx, carga, intervalo, unidade]
   const TREINOS_INICIAIS = [
     {
       nome: 'Treino 1',
@@ -51,13 +54,60 @@
         ['supino-inclinado-com-barra-reta', 3, 10, 12, 25, 60],
         ['supino-reto-com-halteres', 3, 10, 12, 12, 60],
         ['crossover-polia-alta', 3, 10, 12, 11, 60],
+        ['desenvolvimento-maquina-pegada-neutra', 3, 10, 12, 18, 60],
+        ['elevacao-lateral-unilateral-com-halteres', 3, 10, 12, 8, 60],
+        ['triceps-testa-na-polia-com-corda', 3, 10, 12, 9, 60],
+        ['triceps-paralelas-no-graviton', 3, 10, 12, 40, 60],
+        ['prancha-alta', 3, 30, 45, null, 60, 'seg'],
+        ['bicicleta', 1, 15, 15, 6, 0, 'min'],
       ],
     },
-    { nome: 'Treino 2', foco: 'D \\ Trap \\ B', exercicios: [] },
-    { nome: 'Treino 3', foco: 'MMII \\ Abs', exercicios: [] },
+    {
+      nome: 'Treino 2',
+      foco: 'D \\ Trap \\ B',
+      exercicios: [
+        ['puxada-fechada-com-barra-reta', 3, 10, 12, 39, 60],
+        ['remada-maquina-pegada-neutra', 3, 10, 12, 38, 60],
+        ['crucifixo-inverso-na-maquina', 3, 10, 12, 38, 60],
+        ['pulldown-barra-aberta', 3, 10, 12, 20, 60],
+        ['rosca-direta-com-barra-h', 3, 10, 12, 12, 60],
+        ['rosca-inversa-com-barra-w', 3, 10, 12, 20, 60],
+        ['rosca-concentrada', 3, 10, 12, 10, 60],
+        ['rosca-de-punho-pegada-supinada', 3, 10, 12, 20, 60],
+        ['bicicleta', 1, 15, 15, 7, 0, 'min'],
+      ],
+    },
+    {
+      nome: 'Treino 3',
+      foco: 'MMII \\ Abs',
+      exercicios: [
+        ['leg-press-45', 3, 10, 12, 120, 60],
+        ['panturrilha-no-leg-press', 3, 10, 12, 100, 60],
+        ['cadeira-extensora-unilateral', 3, 10, 12, 18, 60],
+        ['mesa-flexora', 3, 10, 12, 23, 60],
+        ['aducao-de-quadril-na-maquina-cadeira-adutora', 3, 10, 12, 36, 60],
+        ['abducao-de-quadril-na-maquina-cadeira-abdutora', 3, 10, 12, 50, 60],
+        ['abdominal-dead-bug', 3, 12, 14, null, 60],
+        ['abdominal-na-maquina', 3, 14, 16, 48, 60],
+        ['bicicleta', 1, 15, 15, 6, 0, 'min'],
+      ],
+    },
   ];
 
-  function montarItemTreino(exercicioId, series, repMin, repMax, carga, intervalo) {
+  // como as repetições são contadas: vezes, segundos (isometria) ou minutos (cardio)
+  const UNIDADES = { rep: 'rep', seg: 'seg', min: 'min' };
+  const rotuloSerie = (e) => {
+    const faixa = e.repMin === e.repMax ? `${e.repMin}` : `${e.repMin}-${e.repMax}`;
+    const un = e.unidadeRep && e.unidadeRep !== 'rep' ? ` ${UNIDADES[e.unidadeRep]}` : '';
+    return `${e.series}x${faixa}${un}`;
+  };
+  const rotuloAlvo = (e) => {
+    const faixa = e.repMin === e.repMax ? `${e.repMin}` : `${e.repMin} a ${e.repMax}`;
+    const un = e.unidadeRep && e.unidadeRep !== 'rep' ? ` ${UNIDADES[e.unidadeRep]}` : '';
+    return `${e.series} x ${faixa}${un}`;
+  };
+
+  function montarItemTreino(exercicioId, series, repMin, repMax, carga, intervalo, unidadeRep) {
     const base = acharExercicio(exercicioId);
     return {
       id: MacroDB.novoId(),
@@ -65,10 +115,10 @@
       nome: base ? base.nome : exercicioId,
       grupo: base ? base.grupo : '',
       equipamento: base ? base.equipamento : '',
-      semCarga: base ? !!base.semCarga : false,
       series: series ?? 3,
       repMin: repMin ?? 10,
       repMax: repMax ?? 12,
+      unidadeRep: unidadeRep || 'rep',
       carga: carga ?? null,
       intervalo: intervalo ?? 60,
       obs: '',
@@ -76,11 +126,19 @@
   }
 
   async function semearTreinos() {
-    if (localStorage.getItem('treinosSemeados') === '1') return;
+    const versao = Number(localStorage.getItem('treinosSemeados') || 0);
+    if (versao >= SEMEADURA) return;
     const atuais = await MacroDB.getTreinos();
     if (atuais.length) {
-      localStorage.setItem('treinosSemeados', '1');
-      return;
+      // já existe treino no aparelho: só substitui a semeadura antiga, e apenas
+      // enquanto nenhuma execução foi registrada (aí o usuário já está usando)
+      const jaUsou = (await MacroDB.getSessoes()).length > 0;
+      const soSemeados = atuais.every((t) => TREINOS_INICIAIS.some((s) => s.nome === t.nome));
+      if (versao === 0 || jaUsou || !soSemeados) {
+        localStorage.setItem('treinosSemeados', String(SEMEADURA));
+        return;
+      }
+      for (const t of atuais) await MacroDB.deleteTreino(t.id);
     }
     for (const [i, t] of TREINOS_INICIAIS.entries()) {
       await MacroDB.saveTreino({
@@ -90,7 +148,7 @@
         exercicios: t.exercicios.map((e) => montarItemTreino(...e)),
       });
     }
-    localStorage.setItem('treinosSemeados', '1');
+    localStorage.setItem('treinosSemeados', String(SEMEADURA));
   }
 
   /* ---- Aba: lista de treinos ---- */
@@ -130,7 +188,7 @@
           <p class="treino-meta">${qtd} ${qtd === 1 ? 'exercício' : 'exercícios'}${grupos.length ? ` · ${esc(grupos.join(', '))}` : ''}</p>
           <p class="treino-exec">${esc(resumoExecucoes(t.id))}</p>
           ${qtd ? `<ol class="treino-previa">${t.exercicios
-            .map((e) => `<li><span>${esc(e.nome)}</span><span class="prev-serie">${e.series}x${e.repMin === e.repMax ? e.repMin : `${e.repMin}-${e.repMax}`}${e.semCarga ? '' : ` · ${e.carga ? `${fmt(e.carga)} kg` : 'sem carga definida'}`}</span></li>`)
+            .map((e) => `<li><span>${esc(e.nome)}</span><span class="prev-serie">${rotuloSerie(e)}${e.carga ? ` · ${fmt(e.carga)} kg` : ''}</span></li>`)
             .join('')}</ol>` : '<p class="sub">Sem exercícios — toque em Editar para montar.</p>'}
           <div class="treino-acoes">
             <button class="btn act-historico">Histórico</button>
@@ -168,12 +226,12 @@
         exercicioId: e.exercicioId,
         nome: e.nome,
         grupo: e.grupo,
-        semCarga: !!e.semCarga,
         series: e.series,
         repMin: e.repMin,
         repMax: e.repMax,
+        unidadeRep: e.unidadeRep || 'rep',
         intervalo: e.intervalo,
-        carga: e.semCarga ? null : (ultimaCarga(e.exercicioId, treino.id) ?? e.carga ?? null),
+        carga: ultimaCarga(e.exercicioId, treino.id) ?? e.carga ?? null,
         reps: '',
         feito: false,
       })),
@@ -221,7 +279,7 @@
     wrap.innerHTML = execucao.itens
       .map((it, i) => {
         const anterior = ultimaCarga(it.exercicioId, execucao.treinoId);
-        const reps = it.repMin === it.repMax ? `${it.repMin}` : `${it.repMin} a ${it.repMax}`;
+        const un = it.unidadeRep && it.unidadeRep !== 'rep' ? UNIDADES[it.unidadeRep] : '';
         return `
         <div class="exec-item${it.feito ? ' feito' : ''}" data-i="${i}">
           <div class="exec-item-head">
@@ -229,22 +287,20 @@
               <input type="checkbox" class="ex-feito" ${it.feito ? 'checked' : ''} aria-label="Marcar ${esc(it.nome)} como feito" />
               <span class="exec-nome">${esc(it.nome)}</span>
             </label>
-            <span class="exec-alvo">${it.series} x ${reps}</span>
+            <span class="exec-alvo">${rotuloAlvo(it)}</span>
           </div>
           <div class="exec-campos">
-            ${it.semCarga
-              ? '<div class="exec-sem-carga">Sem carga externa</div>'
-              : `<div class="field">
-                   <label>Carga (kg)</label>
-                   <input type="number" class="ex-carga" min="0" step="0.5" value="${it.carga ?? ''}" inputmode="decimal" />
-                 </div>`}
             <div class="field">
-              <label>Repetições feitas</label>
-              <input type="text" class="ex-reps" value="${esc(it.reps)}" placeholder="ex.: 12/10/8" />
+              <label>Carga (kg)</label>
+              <input type="number" class="ex-carga" min="0" step="0.5" value="${it.carga ?? ''}" inputmode="decimal" placeholder="—" />
+            </div>
+            <div class="field">
+              <label>${un === 'seg' ? 'Tempo feito' : un === 'min' ? 'Minutos feitos' : 'Repetições feitas'}</label>
+              <input type="text" class="ex-reps" value="${esc(it.reps)}" placeholder="${un ? `ex.: ${it.repMax}` : 'ex.: 12/10/8'}" />
             </div>
             ${it.intervalo ? `<button class="btn ex-descanso" type="button" data-seg="${it.intervalo}">Descanso ${it.intervalo}s</button>` : ''}
           </div>
-          ${!it.semCarga && anterior != null ? `<p class="exec-anterior">Última vez: ${fmt(anterior)} kg</p>` : ''}
+          ${anterior != null ? `<p class="exec-anterior">Última vez: ${fmt(anterior)} kg</p>` : ''}
         </div>`;
       })
       .join('');
@@ -357,9 +413,16 @@
         </div>
         <div class="mt-ex-campos">
           <div class="field"><label>Séries</label><input type="number" class="c-series" min="1" max="20" value="${e.series}" /></div>
-          <div class="field"><label>Rep. mín.</label><input type="number" class="c-repmin" min="1" max="100" value="${e.repMin}" /></div>
-          <div class="field"><label>Rep. máx.</label><input type="number" class="c-repmax" min="1" max="100" value="${e.repMax}" /></div>
-          ${e.semCarga ? '' : `<div class="field"><label>Carga (kg)</label><input type="number" class="c-carga" min="0" step="0.5" value="${e.carga ?? ''}" /></div>`}
+          <div class="field"><label>Rep. mín.</label><input type="number" class="c-repmin" min="1" max="1000" value="${e.repMin}" /></div>
+          <div class="field"><label>Rep. máx.</label><input type="number" class="c-repmax" min="1" max="1000" value="${e.repMax}" /></div>
+          <div class="field"><label>Unidade</label>
+            <select class="c-unidade">
+              <option value="rep"${(e.unidadeRep || 'rep') === 'rep' ? ' selected' : ''}>repetições</option>
+              <option value="seg"${e.unidadeRep === 'seg' ? ' selected' : ''}>segundos</option>
+              <option value="min"${e.unidadeRep === 'min' ? ' selected' : ''}>minutos</option>
+            </select>
+          </div>
+          <div class="field"><label>Carga (kg)</label><input type="number" class="c-carga" min="0" step="0.5" value="${e.carga ?? ''}" /></div>
           <div class="field"><label>Intervalo (s)</label><input type="number" class="c-intervalo" min="0" step="15" value="${e.intervalo ?? 60}" /></div>
         </div>
       </div>`
@@ -382,6 +445,8 @@
       ex.intervalo = num('.c-intervalo', ex.intervalo);
       const campoCarga = $('.c-carga', el);
       if (campoCarga) ex.carga = campoCarga.value === '' ? null : Number(campoCarga.value);
+      const campoUn = $('.c-unidade', el);
+      if (campoUn) ex.unidadeRep = campoUn.value;
     });
     emEdicao.nome = $('#mt-nome').value.trim();
     emEdicao.foco = $('#mt-foco').value.trim();
@@ -664,6 +729,9 @@
         emEdicao.exercicios.push(montarItemTreino(ex.id));
         renderEditor();
       });
+    });
+    $('#mt-exercicios').addEventListener('change', (ev) => {
+      if (ev.target.classList.contains('c-unidade')) lerEditor();
     });
     $('#mt-exercicios').addEventListener('click', (ev) => {
       const bloco = ev.target.closest('.mt-ex');

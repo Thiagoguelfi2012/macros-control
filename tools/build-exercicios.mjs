@@ -44,6 +44,7 @@ const LISTA = [
   ['Puxada Frontal Pegada Aberta', 'Costas', 'Polia'],
   ['Puxada Frontal Pegada Supinada', 'Costas', 'Polia'],
   ['Puxada Frontal Pegada Neutra (Triângulo)', 'Costas', 'Polia'],
+  ['Puxada Fechada com Barra Reta', 'Costas', 'Polia'],
   ['Puxada Articulada na Máquina', 'Costas', 'Máquina'],
   ['Remada Baixa na Polia (Triângulo)', 'Costas', 'Polia'],
   ['Remada Baixa Pegada Aberta', 'Costas', 'Polia'],
@@ -52,10 +53,11 @@ const LISTA = [
   ['Remada Unilateral com Halter (Serrote)', 'Costas', 'Halteres'],
   ['Remada Cavalinho', 'Costas', 'Barra'],
   ['Remada Articulada na Máquina', 'Costas', 'Máquina'],
-  ['Remada Máquina Pegada Neutra', 'Costas', 'Máquina'],
+  ['Remada Máquina (Pegada Neutra)', 'Costas', 'Máquina'],
   ['Barra Fixa', 'Costas', 'Peso corporal'],
   ['Barra Fixa Assistida (Graviton)', 'Costas', 'Máquina'],
   ['Pulldown com Braços Estendidos', 'Costas', 'Polia'],
+  ['Pulldown Barra Aberta', 'Costas', 'Polia'],
   ['Pullover na Polia Alta', 'Costas', 'Polia'],
   ['Remada Baixa Unilateral na Polia', 'Costas', 'Polia'],
   ['Levantamento Terra', 'Costas', 'Barra'],
@@ -74,9 +76,11 @@ const LISTA = [
   ['Desenvolvimento com Halteres', 'Ombros', 'Halteres'],
   ['Desenvolvimento com Barra', 'Ombros', 'Barra'],
   ['Desenvolvimento na Máquina', 'Ombros', 'Máquina'],
+  ['Desenvolvimento Máquina (Pegada Neutra)', 'Ombros', 'Máquina'],
   ['Desenvolvimento no Smith', 'Ombros', 'Smith'],
   ['Desenvolvimento Arnold', 'Ombros', 'Halteres'],
   ['Elevação Lateral com Halteres', 'Ombros', 'Halteres'],
+  ['Elevação Lateral Unilateral com Halteres', 'Ombros', 'Halteres'],
   ['Elevação Lateral na Polia', 'Ombros', 'Polia'],
   ['Elevação Lateral na Máquina', 'Ombros', 'Máquina'],
   ['Elevação Frontal com Halteres', 'Ombros', 'Halteres'],
@@ -90,6 +94,7 @@ const LISTA = [
   /* ---- Bíceps ---- */
   ['Rosca Direta com Barra', 'Bíceps', 'Barra'],
   ['Rosca Direta com Barra W', 'Bíceps', 'Barra'],
+  ['Rosca Direta com Barra H', 'Bíceps', 'Barra'],
   ['Rosca Direta com Halteres', 'Bíceps', 'Halteres'],
   ['Rosca Alternada com Halteres', 'Bíceps', 'Halteres'],
   ['Rosca Martelo', 'Bíceps', 'Halteres'],
@@ -104,6 +109,7 @@ const LISTA = [
   /* ---- Tríceps ---- */
   ['Tríceps na Polia com Barra Reta', 'Tríceps', 'Polia'],
   ['Tríceps na Polia com Corda', 'Tríceps', 'Polia'],
+  ['Tríceps Testa na Polia com Corda', 'Tríceps', 'Polia'],
   ['Tríceps na Polia com Barra V', 'Tríceps', 'Polia'],
   ['Tríceps Unilateral na Polia (Pegada Inversa)', 'Tríceps', 'Polia'],
   ['Tríceps Testa com Barra W', 'Tríceps', 'Barra'],
@@ -114,10 +120,11 @@ const LISTA = [
   ['Mergulho no Banco', 'Tríceps', 'Peso corporal'],
   ['Supino Fechado', 'Tríceps', 'Barra'],
   ['Paralelas para Tríceps', 'Tríceps', 'Peso corporal'],
+  ['Tríceps Paralelas no Gráviton', 'Tríceps', 'Máquina'],
 
   /* ---- Antebraço ---- */
-  ['Rosca de Punho com Barra', 'Antebraço', 'Barra'],
-  ['Rosca de Punho Inversa', 'Antebraço', 'Barra'],
+  ['Rosca de Punho (Pegada Supinada)', 'Antebraço', 'Barra'],
+  ['Rosca de Punho (Pegada Pronada)', 'Antebraço', 'Barra'],
   ['Rosca Inversa com Barra W', 'Antebraço', 'Barra'],
   ['Farmer Walk com Halteres', 'Antebraço', 'Halteres'],
 
@@ -128,6 +135,7 @@ const LISTA = [
   ['Leg Press 45°', 'Quadríceps', 'Máquina'],
   ['Leg Press Horizontal', 'Quadríceps', 'Máquina'],
   ['Cadeira Extensora', 'Quadríceps', 'Máquina'],
+  ['Cadeira Extensora Unilateral', 'Quadríceps', 'Máquina'],
   ['Agachamento Búlgaro', 'Quadríceps', 'Halteres'],
   ['Afundo com Halteres', 'Quadríceps', 'Halteres'],
   ['Avanço no Smith', 'Quadríceps', 'Smith'],
@@ -150,13 +158,13 @@ const LISTA = [
   ['Elevação Pélvica na Máquina', 'Glúteos', 'Máquina'],
   ['Glúteo na Polia (Coice)', 'Glúteos', 'Polia'],
   ['Glúteo na Máquina (Coice)', 'Glúteos', 'Máquina'],
-  ['Cadeira Abdutora', 'Glúteos', 'Máquina'],
+  ['Abdução de Quadril na Máquina (Cadeira Abdutora)', 'Glúteos', 'Máquina'],
   ['Abdução no Cabo', 'Glúteos', 'Polia'],
   ['Ponte de Glúteo no Solo', 'Glúteos', 'Peso corporal'],
   ['Agachamento Sumô no Smith', 'Glúteos', 'Smith'],
 
   /* ---- Adutores ---- */
-  ['Cadeira Adutora', 'Adutores', 'Máquina'],
+  ['Adução de Quadril na Máquina (Cadeira Adutora)', 'Adutores', 'Máquina'],
   ['Adução no Cabo', 'Adutores', 'Polia'],
 
   /* ---- Panturrilha ---- */
@@ -174,6 +182,8 @@ const LISTA = [
   ['Elevação de Pernas na Barra Fixa', 'Abdômen', 'Peso corporal'],
   ['Elevação de Pernas no Banco', 'Abdômen', 'Peso corporal'],
   ['Prancha Isométrica', 'Abdômen', 'Peso corporal'],
+  ['Prancha Alta', 'Abdômen', 'Peso corporal'],
+  ['Abdominal Dead Bug', 'Abdômen', 'Peso corporal'],
   ['Prancha Lateral', 'Abdômen', 'Peso corporal'],
   ['Abdominal Bicicleta', 'Abdômen', 'Peso corporal'],
   ['Abdominal Oblíquo', 'Abdômen', 'Peso corporal'],
@@ -198,7 +208,7 @@ const LISTA = [
 
   /* ---- Cardio ---- */
   ['Esteira', 'Cardio', 'Cardio'],
-  ['Bicicleta Ergométrica', 'Cardio', 'Cardio'],
+  ['Bicicleta', 'Cardio', 'Cardio'],
   ['Bicicleta Horizontal', 'Cardio', 'Cardio'],
   ['Elíptico (Transport)', 'Cardio', 'Cardio'],
   ['Escada (Stair)', 'Cardio', 'Cardio'],
@@ -217,14 +227,12 @@ const exercicios = LISTA.map(([nome, grupo, equipamento]) => {
   const id = idDe(nome);
   if (vistos.has(id)) throw new Error(`exercício duplicado: ${nome}`);
   vistos.add(id);
-  // exercícios sem carga externa não pedem kg na execução
-  const semCarga = equipamento === 'Peso corporal' || equipamento === 'Cardio';
-  return { id, nome, grupo, equipamento, semCarga };
+  return { id, nome, grupo, equipamento };
 });
 
 const js = `/* Biblioteca de exercícios (Smart Fit) — gerado por tools/build-exercicios.mjs. Não editar à mão. */
 window.EXERCICIOS = ${JSON.stringify(exercicios)};
-window.EXERCICIOS_VERSAO = 1;
+window.EXERCICIOS_VERSAO = 2;
 `;
 writeFileSync(join(ROOT, 'js/exercicios.js'), js);
 const grupos = [...new Set(exercicios.map((e) => e.grupo))];
