@@ -69,6 +69,12 @@ python3 -m http.server 8000
     agrupados por músculo e filtráveis por grupo e equipamento. É de onde saem os
     exercícios ao montar um treino novo.
 
+  Exercícios de **cardio** registram, além da carga, **tempo (min)** e **BPM
+  médio** — a biblioteca já marca isso sozinha para os aparelhos de cardio, e
+  qualquer exercício pode ligar as duas caixas no editor. Na Evolução esse
+  exercício ganha um gráfico com **três eixos** (carga à esquerda, tempo e BPM à
+  direita), cada série na sua cor.
+
   Séries podem ser contadas em **repetições, segundos** (isometrias como a prancha)
   ou **minutos** (cardio). A **carga** é o número que o usuário registra para
   acompanhar a progressão e também tem unidade própria — **kg**, **segundos** (a

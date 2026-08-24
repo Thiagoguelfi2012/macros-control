@@ -693,7 +693,13 @@ main { max-width: 860px; margin: 0 auto; padding: 20px 16px 110px; }
 .mt-ex-campos { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
 .mt-ex-campos .field { flex: 1 1 78px; margin-bottom: 0; }
 .mt-ex-campos .field label { font-size: 11.5px; }
-.mt-ex-campos .field input { padding: 6px 8px; font-size: 14px; }
+.mt-ex-campos .field input, .mt-ex-campos .field select { padding: 6px 8px; font-size: 14px; }
+.mt-ex-registra {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  margin-top: 8px; font-size: 12px; color: var(--muted);
+}
+.mt-ex-registra label { display: flex; align-items: center; gap: 5px; color: var(--ink-2); cursor: pointer; }
+.mt-ex-registra input { width: 16px; height: 16px; accent-color: var(--accent); }
 
 /* ---- Escolher exercício ---- */
 .escolher-lista { max-height: 46vh; overflow-y: auto; margin-bottom: 16px; }

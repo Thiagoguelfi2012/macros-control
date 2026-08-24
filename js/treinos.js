@@ -175,7 +175,11 @@
 
   function montarItemTreino(exercicioId, series, repMin, repMax, carga, intervalo, unidadeRep, unidadeCarga) {
     const base = acharExercicio(exercicioId);
+    // cardio se acompanha por tempo e frequência cardíaca, não só por carga
+    const cardio = !!base && base.equipamento === 'Cardio';
     return {
+      registraTempo: cardio,
+      registraBpm: cardio,
       id: MacroDB.novoId(),
       exercicioId,
       nome: base ? base.nome : exercicioId,
@@ -469,15 +473,18 @@
   // Último valor registrado para aquele exercício, em qualquer treino — é ele
   // que aparece pronto no campo ao executar. A execução em andamento fica de
   // fora, senão o campo se referenciaria a si mesmo.
-  function ultimaCarga(exercicioId, exceto) {
+  function ultimoValor(exercicioId, campo, exceto) {
     for (let i = sessoes.length - 1; i >= 0; i--) {
       const s = sessoes[i];
       if (exceto && s.id === exceto) continue;
-      const item = (s.itens || []).find((x) => x.exercicioId === exercicioId && x.carga != null && x.feito !== false);
-      if (item) return item.carga;
+      const item = (s.itens || []).find(
+        (x) => x.exercicioId === exercicioId && x[campo] != null && x.feito !== false
+      );
+      if (item) return item[campo];
     }
     return null;
   }
+  const ultimaCarga = (exercicioId, exceto) => ultimoValor(exercicioId, 'carga', exceto);
 
   function iniciarTreino(treino) {
     execucao = {
@@ -496,7 +503,13 @@
         unidadeRep: e.unidadeRep || 'rep',
         unidadeCarga: e.unidadeCarga || 'kg',
         intervalo: e.intervalo,
+        registraTempo: !!e.registraTempo,
+        registraBpm: !!e.registraBpm,
         carga: ultimaCarga(e.exercicioId) ?? e.carga ?? null,
+        tempoMin: e.registraTempo
+          ? ultimoValor(e.exercicioId, 'tempoMin') ?? (e.unidadeRep === 'min' ? e.repMax : null)
+          : null,
+        bpm: e.registraBpm ? ultimoValor(e.exercicioId, 'bpm') ?? null : null,
         reps: '',
         feito: false,
       })),
@@ -561,10 +574,20 @@
               <label>${rotuloCampoCarga(it)}</label>
               <input type="number" class="ex-carga" min="0" step="${it.unidadeCarga && it.unidadeCarga !== 'kg' ? '1' : '0.5'}" value="${it.carga ?? ''}" inputmode="decimal" placeholder="—" />
             </div>
-            <div class="field">
+            ${it.registraTempo ? `<div class="field">
+              <label>Tempo (min)</label>
+              <input type="number" class="ex-tempo" min="0" step="1" value="${it.tempoMin ?? ''}" inputmode="numeric" placeholder="—" />
+            </div>` : ''}
+            ${it.registraBpm ? `<div class="field">
+              <label>BPM médio</label>
+              <input type="number" class="ex-bpm" min="0" max="250" step="1" value="${it.bpm ?? ''}" inputmode="numeric" placeholder="—" />
+            </div>` : ''}
+            ${it.registraTempo && un
+              ? '' /* o campo de tempo já cobre a série medida em minutos/segundos */
+              : `<div class="field">
               <label>${un === 'seg' ? 'Tempo feito' : un === 'min' ? 'Minutos feitos' : 'Repetições feitas'}</label>
               <input type="text" class="ex-reps" value="${esc(it.reps)}" placeholder="${un ? `ex.: ${it.repMax}` : 'ex.: 12/10/8'}" />
-            </div>
+            </div>`}
             ${it.intervalo ? `<button class="btn ex-descanso" type="button" data-seg="${it.intervalo}">Descanso ${it.intervalo}s</button>` : ''}
           </div>
           ${anterior != null ? `<p class="exec-anterior">Última vez: ${comCarga(it, anterior)}</p>` : ''}
@@ -615,6 +638,8 @@
         unidadeCarga: i.unidadeCarga || 'kg',
         carga: i.feito ? valor : null,
         cargaAnotada: valor,
+        tempoMin: i.feito && i.tempoMin != null && i.tempoMin !== '' ? Number(i.tempoMin) : null,
+        bpm: i.feito && i.bpm != null && i.bpm !== '' ? Number(i.bpm) : null,
         reps: i.reps || '',
         feito: !!i.feito,
       };
@@ -744,6 +769,11 @@
           </div>
           <div class="field"><label>Intervalo (s)</label><input type="number" class="c-intervalo" min="0" step="15" value="${e.intervalo ?? 60}" /></div>
         </div>
+        <div class="mt-ex-registra">
+          <span>Registrar também:</span>
+          <label><input type="checkbox" class="c-reg-tempo" ${e.registraTempo ? 'checked' : ''} /> tempo (min)</label>
+          <label><input type="checkbox" class="c-reg-bpm" ${e.registraBpm ? 'checked' : ''} /> BPM</label>
+        </div>
       </div>`
       )
       .join('');
@@ -768,6 +798,10 @@
       if (campoUn) ex.unidadeRep = campoUn.value;
       const campoUnCarga = $('.c-uncarga', el);
       if (campoUnCarga) ex.unidadeCarga = campoUnCarga.value;
+      const cTempo = $('.c-reg-tempo', el);
+      if (cTempo) ex.registraTempo = cTempo.checked;
+      const cBpm = $('.c-reg-bpm', el);
+      if (cBpm) ex.registraBpm = cBpm.checked;
     });
     emEdicao.nome = $('#mt-nome').value.trim();
     emEdicao.foco = $('#mt-foco').value.trim();
@@ -842,8 +876,6 @@
     id: 'rotulosDePonto',
     afterDatasetsDraw(chart) {
       const { ctx, chartArea } = chart;
-      const meta = chart.getDatasetMeta(0);
-      const dados = chart.data.datasets[0].data;
       const ALTURA = 13;
       ctx.save();
       ctx.font = '600 11px ui-sans-serif, system-ui, sans-serif';
@@ -853,21 +885,57 @@
       const desenhados = [];
       const bate = (r) =>
         desenhados.some((d) => r.x1 > d.x0 - 6 && r.x0 < d.x1 + 6 && r.y1 > d.y0 - 2 && r.y0 < d.y1 + 2);
-      meta.data.forEach((ponto, i) => {
-        const v = dados[i];
-        if (v == null) return;
-        const texto = `${fmt(v)}${sufixo ? ` ${sufixo}` : ''}`;
+      let pares = [];
+      chart.data.datasets.forEach((ds, di) => {
+        const meta = chart.getDatasetMeta(di);
+        if (meta.hidden) return;
+        const cor = chart.data.datasets.length > 1 ? ds.borderColor : null;
+        const sfx = ds.sufixoRotulo || sufixo;
+        const comValor = [];
+        meta.data.forEach((ponto, i) => {
+          const v = ds.data[i];
+          if (v != null) comValor.push({ ponto, v, cor, sufixo: sfx });
+        });
+        // muitos pontos não cabem rotulados: fica só o que muda (mais o
+        // primeiro e o último), que é justamente onde a progressão acontece;
+        // se ainda for demais, sobram as pontas e os extremos
+        let escolhidos = comValor;
+        if (comValor.length * chart.data.datasets.length > 14) {
+          escolhidos = comValor.filter(
+            (x, i) => i === 0 || i === comValor.length - 1 || x.v !== comValor[i - 1].v
+          );
+          if (escolhidos.length > 8) {
+            const vals = comValor.map((x) => x.v);
+            const min = Math.min(...vals);
+            const max = Math.max(...vals);
+            escolhidos = comValor
+              .filter((x, i) => i === 0 || i === comValor.length - 1 || x.v === min || x.v === max)
+              .filter((x, i, arr) => i === 0 || x.v !== arr[i - 1].v);
+          }
+        }
+        pares = pares.concat(escolhidos);
+      });
+      pares.forEach(({ ponto, v, cor, sufixo: sfx }) => {
+        const texto = `${fmt(v)}${sfx ? ` ${sfx}` : ''}`;
+        ctx.fillStyle = cor || cssVar('--ink');
         const meia = ctx.measureText(texto).width / 2;
         // sem vazar pelas laterais do gráfico
         const x = Math.min(Math.max(ponto.x, chartArea.left + meia), chartArea.right - meia);
         // sempre acima do ponto; se colidir com um rótulo já escrito, sobe um
         // degrau — assim todo ponto mostra o seu valor sem sobreposição
         let y = ponto.y - 9;
-        for (let passo = 0; passo < 4; passo++) {
+        let livre = false;
+        for (let passo = 0; passo < 5; passo++) {
           const r = { x0: x - meia, x1: x + meia, y0: y - ALTURA, y1: y };
-          if (!bate(r) && r.y0 >= chartArea.top - 20) break;
+          if (!bate(r)) {
+            livre = true;
+            break;
+          }
           y -= ALTURA;
         }
+        // não escreve fora da área do gráfico: melhor faltar um rótulo do que
+        // ele aparecer solto por cima do título
+        if (!livre || y - ALTURA < chartArea.top - 22) return;
         desenhados.push({ x0: x - meia, x1: x + meia, y0: y - ALTURA, y1: y });
         ctx.fillText(texto, x, y);
       });
@@ -901,12 +969,14 @@
     const porExercicio = new Map();
     for (const s of relevantes) {
       for (const it of s.itens || []) {
-        if (it.carga == null || it.feito === false) continue;
+        if (it.feito === false) continue;
+        const temAlgo = it.carga != null || it.tempoMin != null || it.bpm != null;
+        if (!temAlgo) continue;
         if (!porExercicio.has(it.exercicioId))
           porExercicio.set(it.exercicioId, { nome: it.nome, unidadeCarga: it.unidadeCarga || 'kg', pontos: [] });
         const alvo = porExercicio.get(it.exercicioId);
         if (it.unidadeCarga) alvo.unidadeCarga = it.unidadeCarga;
-        alvo.pontos.push({ ts: s.ts, carga: it.carga });
+        alvo.pontos.push({ ts: s.ts, carga: it.carga, tempoMin: it.tempoMin ?? null, bpm: it.bpm ?? null });
       }
     }
 
@@ -998,19 +1068,37 @@
       : '';
     wrap.innerHTML = blocoDuracao + [...porExercicio.entries()]
       .map(([id, e]) => {
-        const ini = e.pontos[0].carga;
-        const fim = e.pontos[e.pontos.length - 1].carga;
+        const un = unCarga(e);
+        // séries disponíveis para este exercício, na ordem de importância
+        const series = [
+          { campo: 'carga', rotulo: 'Carga', sufixo: un },
+          { campo: 'tempoMin', rotulo: 'Tempo', sufixo: 'min' },
+          { campo: 'bpm', rotulo: 'BPM', sufixo: 'bpm' },
+        ].filter((sr) => e.pontos.some((p) => p[sr.campo] != null));
+        e.series = series;
+        const principal = series[0];
+        const comValor = e.pontos.filter((p) => p[principal.campo] != null);
+        const ini = comValor[0][principal.campo];
+        const fim = comValor[comValor.length - 1][principal.campo];
         const dif = fim - ini;
         const sinal = dif > 0 ? 'sobe' : dif < 0 ? 'desce' : 'igual';
-        const un = unCarga(e);
-        const rotulo = dif === 0 ? 'mantida' : `${dif > 0 ? '+' : '−'}${fmt(Math.abs(dif))} ${un}`;
+        const rotulo = dif === 0 ? 'mantida' : `${dif > 0 ? '+' : '−'}${fmt(Math.abs(dif))} ${principal.sufixo}`;
+        const resumoOutras = series
+          .slice(1)
+          .map((sr) => {
+            const vals = e.pontos.filter((p) => p[sr.campo] != null);
+            const a2 = vals[0][sr.campo];
+            const b2 = vals[vals.length - 1][sr.campo];
+            return `${sr.rotulo} ${fmt(a2)} → ${fmt(b2)} ${sr.sufixo}`;
+          })
+          .join(' · ');
         return `
         <div class="chart-card">
           <div class="evo-head">
             <h3>${esc(e.nome)}</h3>
             <span class="evo-delta ${sinal}">${rotulo}</span>
           </div>
-          <p class="sub">${fmt(ini)} ${un} → ${fmt(fim)} ${un} · ${e.pontos.length} ${e.pontos.length === 1 ? 'registro' : 'registros'}</p>
+          <p class="sub">${principal.rotulo} ${fmt(ini)} ${principal.sufixo} → ${fmt(fim)} ${principal.sufixo}${resumoOutras ? ` · ${resumoOutras}` : ''} · ${e.pontos.length} ${e.pontos.length === 1 ? 'registro' : 'registros'}</p>
           <div class="chart-wrap evo"><canvas id="evo-${esc(id)}"></canvas></div>
         </div>`;
       })
@@ -1101,41 +1189,60 @@
       const cv = document.getElementById(`evo-${id}`);
       if (!cv) continue;
       const un = unCarga(e);
+      const CORES = { carga: cssVar('--accent'), tempoMin: cssVar('--s3'), bpm: cssVar('--s2') };
+      const EIXO = { carga: 'y', tempoMin: 'yTempo', bpm: 'yBpm' };
+      const series = e.series || [{ campo: 'carga', rotulo: 'Carga', sufixo: un }];
+      const escalas = { x: eixos(un, e.pontos.map((p) => p.carga)).x };
+      for (const [n, sr] of series.entries()) {
+        const valores = e.pontos.map((p) => p[sr.campo]).filter((v) => v != null);
+        const base = eixos(sr.sufixo, valores).y;
+        escalas[EIXO[sr.campo]] = {
+          ...base,
+          position: n === 0 ? 'left' : 'right',
+          grid: { ...base.grid, display: n === 0 },
+          ticks: { ...base.ticks, color: series.length > 1 ? CORES[sr.campo] : base.ticks.color },
+        };
+      }
       chartsEvo.push(
         new Chart(cv, {
           type: 'line',
           data: {
             labels: e.pontos.map((p) => dataCurta(p.ts)),
-            datasets: [
-              {
-                label: `Carga (${un})`,
-                data: e.pontos.map((p) => p.carga),
-                borderColor: cssVar('--accent'),
-                backgroundColor: cssVar('--accent'),
-                borderWidth: 2,
-                pointRadius: 4,
-                pointHoverRadius: 6,
-                tension: 0, // sem suavizar: a linha vai de ponto a ponto
-                fill: false,
-              },
-            ],
+            datasets: series.map((sr) => ({
+              label: `${sr.rotulo} (${sr.sufixo})`,
+              data: e.pontos.map((p) => p[sr.campo]),
+              yAxisID: EIXO[sr.campo],
+              sufixoRotulo: sr.sufixo,
+              borderColor: CORES[sr.campo],
+              backgroundColor: CORES[sr.campo],
+              borderWidth: 2,
+              pointRadius: 4,
+              pointHoverRadius: 6,
+              tension: 0,
+              spanGaps: true,
+              fill: false,
+            })),
           },
           options: {
             responsive: true,
             maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
             plugins: {
-              legend: { display: false },
+              legend: {
+                display: series.length > 1,
+                labels: { color: ink2, usePointStyle: true, pointStyleWidth: 10, boxHeight: 8, font: { size: 11 } },
+              },
               tooltip: {
                 callbacks: {
                   title: (itens) => dataBr(e.pontos[itens[0].dataIndex].ts),
-                  label: (ctx) => ` ${fmt(ctx.parsed.y)} ${un}`,
+                  label: (ctx) => ` ${ctx.dataset.label.split(' (')[0]}: ${fmt(ctx.parsed.y)} ${ctx.dataset.sufixoRotulo}`,
                 },
               },
             },
             layout: { padding: { top: 30, bottom: 4 } },
-            scales: eixos(un, e.pontos.map((p) => p.carga)),
+            scales: escalas,
           },
-          plugins: [rotulosDePonto(un)],
+          plugins: [rotulosDePonto()],
         })
       );
       void ink2;
@@ -1353,6 +1460,8 @@
       if (!bloco) return;
       const it = execucao.itens[Number(bloco.dataset.i)];
       if (ev.target.classList.contains('ex-carga')) it.carga = ev.target.value === '' ? null : Number(ev.target.value);
+      if (ev.target.classList.contains('ex-tempo')) it.tempoMin = ev.target.value === '' ? null : Number(ev.target.value);
+      if (ev.target.classList.contains('ex-bpm')) it.bpm = ev.target.value === '' ? null : Number(ev.target.value);
       if (ev.target.classList.contains('ex-reps')) it.reps = ev.target.value;
       salvarExecucaoLocal();
       if (it.feito) gravarParcial(); // mudou a carga de um já marcado: regrava
