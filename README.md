@@ -65,6 +65,12 @@ python3 -m http.server 8000
   prancha progride em tempo, não em peso), **minutos** ou **nível** —, usada nos
   cartões, na execução e nos eixos dos gráficos de evolução.
 
+  O **histórico de cargas anterior ao app** (vindo da tela "Progresso de Cargas"
+  do MFIT Personal) é importado junto com a ficha, com ids determinísticos — as
+  execuções antigas já aparecem nos gráficos de evolução e reimportar não
+  duplica nada. Para trazer histórico de outro aparelho, o caminho continua sendo
+  o backup `.json` em Ajustes.
+
   Na primeira abertura o app já vem com a ficha atual do usuário (três treinos:
   `P \ Del \ T`, `D \ Trap \ B` e `MMII \ Abs`), com séries, repetições, carga e
   intervalo de cada exercício — é só ajustar ou trocar.

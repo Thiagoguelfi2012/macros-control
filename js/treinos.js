@@ -189,6 +189,79 @@
     };
   }
 
+  /* ---- Histórico de cargas vindo do MFIT Personal ---- */
+
+  // Execuções anteriores ao app, lidas da tela "Progresso de Cargas" do MFIT.
+  // As datas são as colunas; cada exercício traz a carga daquela coluna (null
+  // quando não foi registrado naquele dia). Os ids das execuções são
+  // determinísticos, então reimportar nunca duplica.
+  const HISTORICO_VERSAO = 1;
+  const HISTORICO_MFIT = {
+    'Treino 1': {
+      // 01/08 aparece duas vezes no MFIT: foram duas execuções no mesmo dia
+      datas: [
+        '2026-08-01T07:00', '2026-08-01T19:00', '2026-08-05T19:00', '2026-08-08T19:00',
+        '2026-08-13T19:00', '2026-08-16T19:00', '2026-08-20T19:00',
+      ],
+      cargas: {
+        'supino-inclinado-com-barra-reta': [20, 20, 20, 25, 25, 25, 25],
+        'supino-reto-com-halteres': [8, 8, 8, 8, 10, 10, 12],
+        'crossover-polia-alta': [9, 9, 9, 9, 11, 11, 11],
+        'desenvolvimento-maquina-pegada-neutra': [16, 16, 16, 16, 16, 18, 18],
+        'elevacao-lateral-unilateral-com-halteres': [6, 6, 6, 6, 6, 8, 8],
+        'triceps-testa-na-polia-com-corda': [null, null, null, null, null, null, 9],
+        'triceps-paralelas-no-graviton': [50, null, 50, 50, 50, 40, 40],
+        'prancha-alta': [null, null, null, null, null, 60, 60],
+        bicicleta: [5, null, 5, 5, 5, 6, 6],
+      },
+    },
+  };
+
+  async function importarHistorico() {
+    if (Number(localStorage.getItem('historicoMfit') || 0) >= HISTORICO_VERSAO) return;
+    const lista = await MacroDB.getTreinos();
+    let sessoesCriadas = 0;
+    ignorarRecarga = true;
+    try {
+      for (const [nomeTreino, h] of Object.entries(HISTORICO_MFIT)) {
+        const treino = lista.find((t) => t.nome === nomeTreino);
+        if (!treino) continue;
+        for (const [i, quando] of h.datas.entries()) {
+          const itens = [];
+          for (const [exId, valores] of Object.entries(h.cargas)) {
+            const carga = valores[i];
+            if (carga == null) continue;
+            const doTreino = (treino.exercicios || []).find((e) => e.exercicioId === exId);
+            const base = doTreino || acharExercicio(exId);
+            itens.push({
+              exercicioId: exId,
+              nome: base ? base.nome : exId,
+              grupo: base ? base.grupo : '',
+              unidadeCarga: (doTreino && doTreino.unidadeCarga) || 'kg',
+              carga,
+              reps: '',
+              feito: true,
+            });
+          }
+          if (!itens.length) continue;
+          await MacroDB.saveSessao({
+            id: `mfit-${treino.id}-${i}`,
+            treinoId: treino.id,
+            treinoNome: treino.nome,
+            ts: new Date(quando).toISOString(),
+            origem: 'MFIT Personal',
+            itens,
+          });
+          sessoesCriadas++;
+        }
+      }
+    } finally {
+      ignorarRecarga = false;
+    }
+    localStorage.setItem('historicoMfit', String(HISTORICO_VERSAO));
+    return sessoesCriadas;
+  }
+
   async function semearTreinos() {
     const versao = Number(localStorage.getItem('treinosSemeados') || 0);
     if (versao >= SEMEADURA) return;
@@ -791,7 +864,8 @@
           .filter((i) => i.carga != null || i.feito)
           .map((i) => `${i.nome}${i.carga != null ? `: ${comCarga(i, i.carga)}` : ''}${i.reps ? ` (${i.reps})` : ''}`)
           .join('\n  ');
-        return `${dataBr(s.ts)}${s.duracaoSeg ? ` · ${minutos(s.duracaoSeg)}` : ''}\n  ${itens || 'sem cargas registradas'}`;
+        const extra = s.duracaoSeg ? ` · ${minutos(s.duracaoSeg)}` : s.origem ? ` · importado do ${s.origem}` : '';
+        return `${dataBr(s.ts)}${extra}\n  ${itens || 'sem cargas registradas'}`;
       })
       .join('\n\n');
     alert(`${treino.nome} — ${lista.length} ${lista.length === 1 ? 'execução' : 'execuções'}\n\n${linhas}`);
@@ -839,6 +913,7 @@
   async function init() {
     preencherSelects();
     await semearTreinos();
+    await importarHistorico();
     await carregar();
 
     // execução interrompida (app minimizado, aba fechada) volta de onde parou
