@@ -36,8 +36,12 @@ python3 -m http.server 8000
   **déficit/superávit calórico** do período, calculado a partir do gasto médio
   diário definido em Configurações.
 - **Treinos** (`treinos.html`, área Treino): três abas.
-  - **Treinos** — cartões com os treinos montados (nome, foco, quantas vezes foi
-    executado, quando e por quanto tempo), botão de **Iniciar treino** e editor
+  - **Treinos** — no topo, a **frequência da semana**: um círculo por dia
+    (segunda a domingo), marcado nos dias em que houve treino, com o dia de hoje
+    destacado e a média das últimas semanas logo abaixo (o histórico importado
+    entra nessa conta). Em seguida, cartões com os treinos montados (nome, foco,
+    quantas vezes foi executado, quando e por quanto tempo), botão de
+    **Iniciar treino** e editor
     completo para criar, reordenar e excluir. Cada exercício da lista traz uma
     **miniatura ilustrada** (desenho do equipamento, colorido pelo grupo muscular)
     que abre a **busca do exercício no YouTube**, e a **carga é editável ali
@@ -56,10 +60,10 @@ python3 -m http.server 8000
   - **Evolução** — card de **frequência** (dias com treino no período, média por
     semana e uma barra por semana), **duração dos treinos** em barras (com tempo
     total e média) e um gráfico de linha por exercício com a **progressão de
-    carga** ao longo das execuções, com o **valor escrito em cada ponto** (rótulos
-    que colidiriam são omitidos em telas estreitas). Filtros por treino e por
-    período; execuções deixadas abertas por mais de 4 h ficam fora das contas de
-    tempo.
+    carga** ao longo das execuções, com o **valor escrito em cada ponto**, uma
+    marca no eixo X por execução e no eixo Y por carga registrada. Filtros por
+    treino e por período (7, 15, 30, 90, 180 dias, 1 ano ou tudo); execuções
+    deixadas abertas por mais de 4 h ficam fora das contas de tempo.
   - **Exercícios** — biblioteca com **166 exercícios** de uma academia padrão
     (Smart Fit): aparelhos, polias, Smith, halteres/barras e peso corporal,
     agrupados por músculo e filtráveis por grupo e equipamento. É de onde saem os

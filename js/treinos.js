@@ -336,7 +336,80 @@
     return `Executado ${lista.length} ${lista.length === 1 ? 'vez' : 'vezes'}, última em ${dataBr(ultima.ts)}${dur}`;
   }
 
+  // Frequência da semana corrente, no alto da aba Treinos: um círculo por dia
+  // (segunda a domingo), marcado quando houve treino — inclusive os importados.
+  const DIAS_SIGLA = ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'];
+
+  function renderFreqSemana() {
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const segunda = new Date(hoje);
+    segunda.setDate(segunda.getDate() - ((segunda.getDay() + 6) % 7));
+
+    const chave = (d) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+    const treinados = new Map();
+    for (const s of sessoes) {
+      const d = new Date(s.ts);
+      d.setHours(0, 0, 0, 0);
+      const k = chave(d);
+      if (!treinados.has(k)) treinados.set(k, []);
+      treinados.get(k).push(s.treinoNome || 'Treino');
+    }
+
+    const dias = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(segunda);
+      d.setDate(d.getDate() + i);
+      return { data: d, nomes: treinados.get(chave(d)) || [], hoje: d.getTime() === hoje.getTime(), futuro: d > hoje };
+    });
+    const feitos = dias.filter((d) => d.nomes.length).length;
+
+    // ritmo das últimas 4 semanas fechadas, para dar contexto ao número
+    const semanas = [];
+    for (let i = 1; i <= 4; i++) {
+      const ini = new Date(segunda);
+      ini.setDate(ini.getDate() - 7 * i);
+      const fim = new Date(ini);
+      fim.setDate(fim.getDate() + 7);
+      const n = new Set(
+        sessoes
+          .map((s) => {
+            const d = new Date(s.ts);
+            d.setHours(0, 0, 0, 0);
+            return d;
+          })
+          .filter((d) => d >= ini && d < fim)
+          .map(chave)
+      ).size;
+      semanas.push(n);
+    }
+    const anteriores = semanas.filter((n) => n > 0);
+    const media = anteriores.length
+      ? Math.round((anteriores.reduce((a, b) => a + b, 0) / anteriores.length) * 10) / 10
+      : null;
+
+    $('#freq-semana').innerHTML = `
+      <div class="semana-card">
+        <div class="semana-topo">
+          <h3>Frequência da semana</h3>
+          <span class="semana-conta"><b>${feitos}</b> ${feitos === 1 ? 'dia' : 'dias'}</span>
+        </div>
+        <div class="semana-dias">
+          ${dias.map((d, i) => `
+            <div class="semana-dia${d.nomes.length ? ' treinou' : ''}${d.hoje ? ' hoje' : ''}${d.futuro ? ' futuro' : ''}"
+                 title="${d.data.toLocaleDateString('pt-BR')}${d.nomes.length ? ` — ${esc(d.nomes.join(', '))}` : ''}">
+              <span class="sd-bola">${d.nomes.length ? (d.nomes.length > 1 ? d.nomes.length : '✓') : ''}</span>
+              <span class="sd-letra">${DIAS_SIGLA[i]}</span>
+              <span class="sd-num">${d.data.getDate()}</span>
+            </div>`).join('')}
+        </div>
+        <p class="semana-sub">${media != null
+          ? `Média de ${fmt(media)} ${media === 1 ? 'dia' : 'dias'} por semana nas últimas ${anteriores.length} ${anteriores.length === 1 ? 'semana' : 'semanas'}`
+          : 'Assim que você registrar treinos, o ritmo semanal aparece aqui'}</p>
+      </div>`;
+  }
+
   function renderLista() {
+    renderFreqSemana();
     const wrap = $('#lista-treinos');
     if (!treinos.length) {
       wrap.innerHTML = `
