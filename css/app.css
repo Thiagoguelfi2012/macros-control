@@ -799,10 +799,20 @@ main { max-width: 860px; margin: 0 auto; padding: 20px 16px 110px; }
   background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
   padding: 14px 16px; margin-bottom: 14px;
 }
-.semana-topo { display: flex; align-items: baseline; gap: 10px; }
-.semana-topo h3 { margin: 0; font-size: 15px; flex: 1; }
-.semana-conta { font-size: 13px; color: var(--ink-2); }
-.semana-conta b { font-size: 18px; color: var(--ink); font-variant-numeric: tabular-nums; }
+.semana-card { touch-action: pan-y; }
+.semana-topo { display: flex; align-items: center; gap: 6px; }
+.semana-tit { flex: 1; min-width: 0; text-align: center; }
+.semana-topo h3 { margin: 0; font-size: 15px; }
+.semana-periodo { display: block; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.sem-nav {
+  flex: none; font-size: 20px; line-height: 1; padding: 2px 10px;
+  color: var(--ink-2); border-radius: 8px;
+}
+.sem-nav:disabled { opacity: 0.3; cursor: default; }
+.sem-nav:disabled:hover { background: none; color: var(--ink-2); }
+.semana-sub b { color: var(--ink); font-size: 14px; font-variant-numeric: tabular-nums; }
+.semana-dica { margin: 4px 0 0; font-size: 11px; color: var(--muted); text-align: center; }
+@media (hover: hover) and (pointer: fine) { .semana-dica { display: none; } }
 .semana-dias { display: flex; gap: 4px; margin: 12px 0 8px; }
 .semana-dia { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 0; }
 .sd-bola {

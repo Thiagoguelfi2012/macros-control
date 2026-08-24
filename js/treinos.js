@@ -343,12 +343,28 @@
   // Frequência da semana corrente, no alto da aba Treinos: um círculo por dia
   // (segunda a domingo), marcado quando houve treino — inclusive os importados.
   const DIAS_SIGLA = ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'];
+  let semanaOffset = 0; // 0 = semana atual, -1 = anterior, e assim por diante
+
+  const segundaDe = (d) => {
+    const x = new Date(d);
+    x.setHours(0, 0, 0, 0);
+    x.setDate(x.getDate() - ((x.getDay() + 6) % 7));
+    return x;
+  };
+
+  // até onde dá para voltar: a semana do primeiro registro
+  function offsetMinimo() {
+    if (!sessoes.length) return 0;
+    const atual = segundaDe(new Date());
+    const primeira = segundaDe(new Date(sessoes[0].ts));
+    return -Math.round((atual - primeira) / (7 * 86400000));
+  }
 
   function renderFreqSemana() {
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
     const segunda = new Date(hoje);
-    segunda.setDate(segunda.getDate() - ((segunda.getDay() + 6) % 7));
+    segunda.setDate(segunda.getDate() - ((segunda.getDay() + 6) % 7) + semanaOffset * 7);
 
     const chave = (d) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
     const treinados = new Map();
@@ -367,7 +383,7 @@
     });
     const feitos = dias.filter((d) => d.nomes.length).length;
 
-    // ritmo das últimas 4 semanas fechadas, para dar contexto ao número
+    // ritmo das 4 semanas anteriores à exibida, para dar contexto ao número
     const semanas = [];
     for (let i = 1; i <= 4; i++) {
       const ini = new Date(segunda);
@@ -391,11 +407,24 @@
       ? Math.round((anteriores.reduce((a, b) => a + b, 0) / anteriores.length) * 10) / 10
       : null;
 
+    const domingo = new Date(segunda);
+    domingo.setDate(domingo.getDate() + 6);
+    const dm = (d) => `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const quando =
+      semanaOffset === 0 ? 'esta semana' : semanaOffset === -1 ? 'semana passada' : `${-semanaOffset} semanas atrás`;
+
+
     $('#freq-semana').innerHTML = `
       <div class="semana-card">
         <div class="semana-topo">
-          <h3>Frequência da semana</h3>
-          <span class="semana-conta"><b>${feitos}</b> ${feitos === 1 ? 'dia' : 'dias'}</span>
+          <button class="btn btn-ghost sem-nav" data-passo="-1" aria-label="Semana anterior"
+            ${semanaOffset <= offsetMinimo() ? 'disabled' : ''}>‹</button>
+          <div class="semana-tit">
+            <h3>Frequência da semana</h3>
+            <span class="semana-periodo">${dm(segunda)} a ${dm(domingo)} · ${quando}</span>
+          </div>
+          <button class="btn btn-ghost sem-nav" data-passo="1" aria-label="Próxima semana"
+            ${semanaOffset >= 0 ? 'disabled' : ''}>›</button>
         </div>
         <div class="semana-dias">
           ${dias.map((d, i) => `
@@ -406,10 +435,19 @@
               <span class="sd-num">${d.data.getDate()}</span>
             </div>`).join('')}
         </div>
-        <p class="semana-sub">${media != null
-          ? `Média de ${fmt(media)} ${media === 1 ? 'dia' : 'dias'} por semana nas últimas ${anteriores.length} ${anteriores.length === 1 ? 'semana' : 'semanas'}`
-          : 'Assim que você registrar treinos, o ritmo semanal aparece aqui'}</p>
+        <p class="semana-sub">
+          <b>${feitos}</b> ${feitos === 1 ? 'dia' : 'dias'} com treino${media != null
+            ? ` · média de ${fmt(media)} ${anteriores.length === 1 ? 'na semana anterior' : `nas ${anteriores.length} semanas anteriores`}`
+            : ''}
+        </p>
+        <p class="semana-dica">Arraste para o lado para ver outras semanas</p>
       </div>`;
+  }
+
+  function andarSemana(passo) {
+    const antes = semanaOffset;
+    semanaOffset = Math.min(0, Math.max(offsetMinimo(), semanaOffset + passo));
+    if (semanaOffset !== antes) renderFreqSemana();
   }
 
   function renderLista() {
@@ -1292,6 +1330,7 @@
 
   async function carregar() {
     [treinos, sessoes] = await Promise.all([MacroDB.getTreinos(), MacroDB.getSessoes()]);
+    semanaOffset = Math.min(0, Math.max(offsetMinimo(), semanaOffset));
     renderLista();
     preencherSelectTreinos();
     if (!$('#aba-evolucao').hidden) renderEvolucao();
@@ -1360,6 +1399,34 @@
       else if (ev.target.closest('.act-iniciar')) iniciarTreino(treino);
       else if (ev.target.closest('.act-evolucao')) verEvolucao(treino);
     });
+
+    // navegação entre semanas: botões e arrasto lateral no cartão
+    $('#freq-semana').addEventListener('click', (ev) => {
+      const b = ev.target.closest('.sem-nav');
+      if (b && !b.disabled) andarSemana(Number(b.dataset.passo));
+    });
+    let toque = null;
+    $('#freq-semana').addEventListener(
+      'touchstart',
+      (ev) => {
+        if (ev.touches.length !== 1) return;
+        toque = { x: ev.touches[0].clientX, y: ev.touches[0].clientY };
+      },
+      { passive: true }
+    );
+    $('#freq-semana').addEventListener(
+      'touchend',
+      (ev) => {
+        if (!toque || !ev.changedTouches.length) return;
+        const dx = ev.changedTouches[0].clientX - toque.x;
+        const dy = ev.changedTouches[0].clientY - toque.y;
+        toque = null;
+        // só gesto claramente horizontal, para não brigar com a rolagem
+        if (Math.abs(dx) < 45 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+        andarSemana(dx > 0 ? -1 : 1); // arrastar para a direita volta no tempo
+      },
+      { passive: true }
+    );
 
     $('#btn-novo-treino').addEventListener('click', () => abrirEditor(null));
 

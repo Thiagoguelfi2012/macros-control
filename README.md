@@ -37,9 +37,11 @@ python3 -m http.server 8000
   diário definido em Configurações.
 - **Treinos** (`treinos.html`, área Treino): três abas.
   - **Treinos** — no topo, a **frequência da semana**: um círculo por dia
-    (segunda a domingo), marcado nos dias em que houve treino, com o dia de hoje
-    destacado e a média das últimas semanas logo abaixo (o histórico importado
-    entra nessa conta). Em seguida, cartões com os treinos montados (nome, foco,
+    (segunda a domingo), marcado nos dias em que houve treino (com o número
+    quando houve mais de um), o dia de hoje destacado e a média das semanas
+    anteriores logo abaixo. Dá para **andar pelas semanas passadas** arrastando
+    o cartão para o lado (ou pelas setas ‹ ›), até a semana do primeiro
+    registro — o histórico importado entra nessa conta. Em seguida, cartões com os treinos montados (nome, foco,
     quantas vezes foi executado, quando e por quanto tempo), botões de
     **Iniciar treino** e **Evolução** (que abre a aba de evolução já filtrada
     naquele treino) e editor
