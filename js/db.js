@@ -1,9 +1,9 @@
 /* Camada de dados: IndexedDB (alimentos + registros) e localStorage (configurações). */
 const MacroDB = (() => {
   const DB_NAME = 'macros-db';
-  const DB_VERSION = 2;
+  const DB_VERSION = 3;
   const FOODS_URL = 'data/foods.json';
-  const FOODS_VERSION = 26; // deve acompanhar o campo v de data/foods.json
+  const FOODS_VERSION = 27; // deve acompanhar o campo v de data/foods.json
   let dbPromise = null;
   let foodsCache = null; // array em memória para busca instantânea
 
@@ -22,6 +22,14 @@ const MacroDB = (() => {
         }
         if (!db.objectStoreNames.contains('custom')) {
           db.createObjectStore('custom', { keyPath: 'i' });
+        }
+        // treinos montados pelo usuário e execuções (com a carga do dia)
+        if (!db.objectStoreNames.contains('treinos')) {
+          db.createObjectStore('treinos', { keyPath: 'id' });
+        }
+        if (!db.objectStoreNames.contains('sessoes')) {
+          const st = db.createObjectStore('sessoes', { keyPath: 'id' });
+          st.createIndex('ts', 'ts');
         }
       };
       req.onsuccess = () => resolve(req.result);
@@ -59,6 +67,10 @@ const MacroDB = (() => {
   const LS_CUSTOM = 'customFallback';
   const lsCustom = () => JSON.parse(localStorage.getItem(LS_CUSTOM) || '[]');
   const lsCustomSave = (arr) => localStorage.setItem(LS_CUSTOM, JSON.stringify(arr));
+  const LS_TREINOS = 'treinosFallback';
+  const LS_SESSOES = 'sessoesFallback';
+  const lsLer = (k) => JSON.parse(localStorage.getItem(k) || '[]');
+  const lsGravar = (k, arr) => localStorage.setItem(k, JSON.stringify(arr));
 
   /* ---- Alimentos próprios (cadastrados pelo usuário) ---- */
 
@@ -214,6 +226,88 @@ const MacroDB = (() => {
     }
   }
 
+  /* ---- Treinos e execuções ---- */
+
+  // Um treino: { id, nome, foco, exercicios: [{ id, exercicioId, nome, grupo,
+  // equipamento, series, repMin, repMax, carga, intervalo, obs }], criadoEm }.
+  // Uma execução: { id, treinoId, treinoNome, ts, fimTs, itens: [{ exercicioId,
+  // nome, carga, reps, feito }] }.
+
+  const novoId = () =>
+    `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+
+  async function lerStore(nome, chaveFallback) {
+    try {
+      const db = await open();
+      return await wrap(tx(db, nome, 'readonly').getAll());
+    } catch {
+      return lsLer(chaveFallback);
+    }
+  }
+
+  async function gravarStore(nome, chaveFallback, item) {
+    try {
+      const db = await open();
+      await wrap(tx(db, nome, 'readwrite').put(item));
+    } catch {
+      lsGravar(chaveFallback, [...lsLer(chaveFallback).filter((x) => x.id !== item.id), item]);
+    }
+  }
+
+  async function apagarStore(nome, chaveFallback, id) {
+    try {
+      const db = await open();
+      await wrap(tx(db, nome, 'readwrite').delete(id));
+    } catch {
+      lsGravar(chaveFallback, lsLer(chaveFallback).filter((x) => x.id !== id));
+    }
+  }
+
+  const ordenarTreinos = (lista) =>
+    lista.slice().sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0) || String(a.criadoEm).localeCompare(String(b.criadoEm)));
+
+  async function getTreinos() {
+    return ordenarTreinos(await lerStore('treinos', LS_TREINOS));
+  }
+
+  async function getTreino(id) {
+    return (await getTreinos()).find((t) => t.id === id) || null;
+  }
+
+  async function saveTreino(treino) {
+    const item = { ...treino };
+    if (!item.id) item.id = novoId();
+    if (!item.criadoEm) item.criadoEm = new Date().toISOString();
+    if (item.ordem == null) item.ordem = (await getTreinos()).length;
+    await gravarStore('treinos', LS_TREINOS, item);
+    notifyChange('treino');
+    return item;
+  }
+
+  async function deleteTreino(id) {
+    await apagarStore('treinos', LS_TREINOS, id);
+    notifyChange('treino');
+  }
+
+  async function getSessoes() {
+    const lista = await lerStore('sessoes', LS_SESSOES);
+    return lista.slice().sort((a, b) => String(a.ts).localeCompare(String(b.ts)));
+  }
+
+  async function saveSessao(sessao) {
+    const item = { ...sessao };
+    if (!item.id) item.id = novoId();
+    if (!item.ts) item.ts = new Date().toISOString();
+    await gravarStore('sessoes', LS_SESSOES, item);
+    notifyChange('sessao');
+    return item;
+  }
+
+  async function deleteSessao(id) {
+    await apagarStore('sessoes', LS_SESSOES, id);
+    notifyChange('sessao');
+  }
+
   /* ---- Configurações ---- */
 
   function getSettings() {
@@ -272,9 +366,11 @@ const MacroDB = (() => {
     try {
       const db = await open();
       await new Promise((resolve, reject) => {
-        const t = db.transaction(['entries', 'custom'], 'readwrite');
+        const t = db.transaction(['entries', 'custom', 'treinos', 'sessoes'], 'readwrite');
         t.objectStore('entries').clear();
         t.objectStore('custom').clear();
+        t.objectStore('treinos').clear();
+        t.objectStore('sessoes').clear();
         t.oncomplete = resolve;
         t.onerror = () => reject(t.error);
       });
@@ -283,28 +379,38 @@ const MacroDB = (() => {
     }
     localStorage.removeItem(LS_KEY);
     localStorage.removeItem(LS_CUSTOM);
+    localStorage.removeItem(LS_TREINOS);
+    localStorage.removeItem(LS_SESSOES);
     localStorage.removeItem('cestaRefeicao');
+    localStorage.removeItem('sessaoEmAndamento');
+    localStorage.removeItem('treinosSemeados');
     for (const k of CHAVES_CONFIG) localStorage.removeItem(k);
     foodsCache = null; // recarrega a base sem os alimentos próprios do anterior
     notifyChange('limpeza');
   }
 
   async function hasLocalData() {
-    const [entries, custom] = await Promise.all([getAllEntries(), getCustomFoods()]);
-    return entries.length > 0 || custom.length > 0;
+    const [entries, custom, treinos, sessoes] = await Promise.all([
+      getAllEntries(), getCustomFoods(), getTreinos(), getSessoes(),
+    ]);
+    return entries.length > 0 || custom.length > 0 || treinos.length > 0 || sessoes.length > 0;
   }
 
   /* ---- Backup (exportar/importar/sincronizar) ---- */
 
   async function exportBackup() {
-    const [entries, custom] = await Promise.all([getAllEntries(), getCustomFoods()]);
+    const [entries, custom, treinos, sessoes] = await Promise.all([
+      getAllEntries(), getCustomFoods(), getTreinos(), getSessoes(),
+    ]);
     return {
       app: 'controle-de-macros',
-      versao: 1,
+      versao: 2,
       exportadoEm: new Date().toISOString(),
       settings: getSettings(),
       custom,
       entries,
+      treinos,
+      sessoes,
     };
   }
 
@@ -328,8 +434,23 @@ const MacroDB = (() => {
     }
     const customs = (Array.isArray(obj.custom) ? obj.custom : []).filter((f) => f && f.i && f.n);
     for (const f of customs) await addCustomFood(f);
+    // treinos e execuções vêm com id próprio: o backup mais recente vence
+    const treinos = (Array.isArray(obj.treinos) ? obj.treinos : []).filter((t) => t && t.id);
+    for (const t of treinos) await gravarStore('treinos', LS_TREINOS, t);
+    const sessoesVistas = new Set((await getSessoes()).map((x) => x.id));
+    const sessoes = (Array.isArray(obj.sessoes) ? obj.sessoes : []).filter((x) => x && x.id);
+    let sessoesNovas = 0;
+    for (const x of sessoes) {
+      if (sessoesVistas.has(x.id)) continue;
+      await gravarStore('sessoes', LS_SESSOES, x);
+      sessoesNovas++;
+    }
     if (obj.settings) saveSettings(obj.settings);
-    return { novos, repetidos: obj.entries.length - novos, customs: customs.length };
+    if (treinos.length || sessoesNovas) notifyChange('treino');
+    return {
+      novos, repetidos: obj.entries.length - novos, customs: customs.length,
+      treinos: treinos.length, sessoes: sessoesNovas,
+    };
   }
 
   return {
@@ -353,5 +474,13 @@ const MacroDB = (() => {
     getEntriesBetween,
     getSettings,
     saveSettings,
+    getTreinos,
+    getTreino,
+    saveTreino,
+    deleteTreino,
+    getSessoes,
+    saveSessao,
+    deleteSessao,
+    novoId,
   };
 })();

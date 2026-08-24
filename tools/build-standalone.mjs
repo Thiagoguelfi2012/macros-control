@@ -17,6 +17,13 @@ const extractMain = (html) => html.match(/<main>([\s\S]*?)<\/main>/)[1];
 const mainDiario = extractMain(read('index.html')); // inclui FAB e modais
 const mainRelatorios = extractMain(read('relatorios.html'));
 const mainConfig = extractMain(read('config.html'));
+const mainTreinos = extractMain(read('treinos.html'));
+// a execução e os modais de treino vivem fora do <main>
+const treinoHtml = read('treinos.html');
+const overlayExecucao = treinoHtml.match(/<!-- ---- Execução do treino ---- -->[\s\S]*?<!-- ---- Editor de treino ---- -->/)[0]
+  .replace('<!-- ---- Editor de treino ---- -->', '');
+const modaisTreino = treinoHtml.match(/<!-- ---- Editor de treino ---- -->[\s\S]*?<\/div>\s*<\/div>\s*<\/div>\s*<script/)[0]
+  .replace(/<script$/, '');
 // o relatório para impressão vive fora do <main>, mas precisa ir junto
 const overlayRelatorio = read('relatorios.html').match(/<div id="relatorio-print"[\s\S]*?<\/div>\s*<\/div>/)[0];
 
@@ -37,14 +44,25 @@ ${read('css/app.css')}
 </style>
 </head>
 <body>
-<header class="topbar">
-  <div class="brand"><span class="dot"></span> Controle de Macros</div>
-  <nav>
+<div class="barras">
+  <header class="topbar">
+    <div class="brand"><span class="dot"></span> <span class="txt">Controle de Macros</span></div>
+    <nav class="nav-areas">
+      <a href="#" data-area="nutricao" class="active">Nutrição</a>
+      <a href="#" data-area="treino">Treino</a>
+      <a href="#" data-area="ajustes" data-view="view-config">Ajustes</a>
+    </nav>
+  </header>
+  <div class="subnav" id="subnav-nutricao">
     <a href="#" data-view="view-diario" class="active">Diário</a>
     <a href="#" data-view="view-relatorios">Relatórios</a>
-    <a href="#" data-view="view-config">Configurações</a>
-  </nav>
-</header>
+  </div>
+  <div class="subnav" id="subnav-treino" hidden>
+    <button data-aba="lista" class="active">Treinos</button>
+    <button data-aba="evolucao">Evolução</button>
+    <button data-aba="biblioteca">Exercícios</button>
+  </div>
+</div>
 
 <section id="view-diario">
   <main>${mainDiario}</main>
@@ -54,11 +72,18 @@ ${read('css/app.css')}
   <main>${mainRelatorios}</main>
 </section>
 
+<section id="view-treinos" hidden>
+  <main>${mainTreinos}</main>
+</section>
+
 <section id="view-config" hidden>
   <main>${mainConfig}</main>
 </section>
 
 ${overlayRelatorio}
+
+${overlayExecucao}
+${modaisTreino}
 
 <script>${foodsJs}</script>
 <script>
@@ -77,6 +102,9 @@ ${read('vendor/jspdf.plugin.autotable.min.js')}
 ${read('js/db.js')}
 </script>
 <script>
+${read('js/exercicios.js')}
+</script>
+<script>
 ${read('js/busca.js')}
 </script>
 <script>
@@ -89,21 +117,44 @@ ${read('js/diario.js')}
 ${read('js/relatorios.js')}
 </script>
 <script>
+${read('js/treinos.js')}
+</script>
+<script>
 ${read('js/config.js')}
 </script>
 <script>
 ${read('js/refresh.js')}
 </script>
 <script>
-// troca de abas da versão de página única
-document.querySelectorAll('.topbar nav a[data-view]').forEach((a) => {
+// navegação em dois níveis da versão de página única
+const mostrarView = (id) => {
+  document.querySelectorAll('section[id^="view-"]').forEach((s) => (s.hidden = s.id !== id));
+  if (id === 'view-relatorios') document.dispatchEvent(new Event('relatorios:refresh'));
+  if (id === 'view-diario') document.dispatchEvent(new Event('diario:refresh'));
+  if (id === 'view-config') document.dispatchEvent(new Event('config:refresh'));
+  if (id === 'view-treinos') document.dispatchEvent(new Event('treinos:refresh'));
+};
+const VIEW_INICIAL = { nutricao: 'view-diario', treino: 'view-treinos', ajustes: 'view-config' };
+document.querySelectorAll('.nav-areas a[data-area]').forEach((a) => {
   a.addEventListener('click', (ev) => {
     ev.preventDefault();
-    document.querySelectorAll('.topbar nav a[data-view]').forEach((x) => x.classList.toggle('active', x === a));
-    document.querySelectorAll('section[id^="view-"]').forEach((s) => (s.hidden = s.id !== a.dataset.view));
-    if (a.dataset.view === 'view-relatorios') document.dispatchEvent(new Event('relatorios:refresh'));
-    if (a.dataset.view === 'view-diario') document.dispatchEvent(new Event('diario:refresh'));
-    if (a.dataset.view === 'view-config') document.dispatchEvent(new Event('config:refresh'));
+    const area = a.dataset.area;
+    document.querySelectorAll('.nav-areas a[data-area]').forEach((x) => x.classList.toggle('active', x === a));
+    document.getElementById('subnav-nutricao').hidden = area !== 'nutricao';
+    document.getElementById('subnav-treino').hidden = area !== 'treino';
+    if (area === 'nutricao') {
+      const ativo = document.querySelector('#subnav-nutricao a.active') || document.querySelector('#subnav-nutricao a');
+      mostrarView(ativo.dataset.view);
+    } else {
+      mostrarView(VIEW_INICIAL[area]);
+    }
+  });
+});
+document.querySelectorAll('#subnav-nutricao a[data-view]').forEach((a) => {
+  a.addEventListener('click', (ev) => {
+    ev.preventDefault();
+    document.querySelectorAll('#subnav-nutricao a[data-view]').forEach((x) => x.classList.toggle('active', x === a));
+    mostrarView(a.dataset.view);
   });
 });
 </script>

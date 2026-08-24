@@ -49,6 +49,7 @@ const SupabaseSync = (() => {
     }
     document.dispatchEvent(new Event('diario:refresh'));
     document.dispatchEvent(new Event('relatorios:refresh'));
+    document.dispatchEvent(new Event('treinos:refresh'));
   };
 
   function salvarSessao() {
@@ -198,7 +199,7 @@ const SupabaseSync = (() => {
       const remoto = await baixarRemoto();
       if (remoto) {
         const r = await MacroDB.mergeBackup(remoto);
-        if (r.novos || r.customs) await recarregarTelas();
+        if (r.novos || r.customs || r.treinos || r.sessoes) await recarregarTelas();
       }
       await subirBackup();
     } catch (e) {

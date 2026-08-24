@@ -5,17 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Relatórios — Controle de Macros</title>
   <link rel="icon" href="data:," />
-  <link rel="stylesheet" href="css/app.css?v=26" />
+  <link rel="stylesheet" href="css/app.css?v=27" />
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand"><span class="dot"></span> <span class="txt">Controle de Macros</span></div>
-    <nav>
+  <div class="barras">
+    <header class="topbar">
+      <div class="brand"><span class="dot"></span> <span class="txt">Controle de Macros</span></div>
+      <nav class="nav-areas">
+        <a href="index.html" class="active">Nutrição</a>
+        <a href="treinos.html">Treino</a>
+        <a href="config.html">Ajustes</a>
+      </nav>
+    </header>
+    <div class="subnav">
       <a href="index.html">Diário</a>
       <a href="relatorios.html" class="active">Relatórios</a>
-      <a href="config.html">Configurações</a>
-    </nav>
-  </header>
+    </div>
+  </div>
 
   <main>
     <div class="filters">
@@ -78,12 +84,12 @@
     <div id="rp-conteudo"></div>
   </div>
 
-  <script src="vendor/chart.umd.min.js?v=26"></script>
-  <script src="vendor/jspdf.umd.min.js?v=26"></script>
-  <script src="vendor/jspdf.plugin.autotable.min.js?v=26"></script>
-  <script src="js/db.js?v=26"></script>
-  <script src="js/sync.js?v=26"></script>
-  <script src="js/relatorios.js?v=26"></script>
-  <script src="js/refresh.js?v=26"></script>
+  <script src="vendor/chart.umd.min.js?v=27"></script>
+  <script src="vendor/jspdf.umd.min.js?v=27"></script>
+  <script src="vendor/jspdf.plugin.autotable.min.js?v=27"></script>
+  <script src="js/db.js?v=27"></script>
+  <script src="js/sync.js?v=27"></script>
+  <script src="js/relatorios.js?v=27"></script>
+  <script src="js/refresh.js?v=27"></script>
 </body>
 </html>

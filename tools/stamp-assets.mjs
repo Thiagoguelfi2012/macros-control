@@ -15,7 +15,7 @@ import { fileURLToPath } from 'node:url';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const versao = readFileSync(join(ROOT, 'js/db.js'), 'utf8').match(/FOODS_VERSION = (\d+)/)[1];
 
-for (const arquivo of ['index.html', 'relatorios.html', 'config.html']) {
+for (const arquivo of ['index.html', 'relatorios.html', 'config.html', 'treinos.html']) {
   const caminho = join(ROOT, arquivo);
   const html = readFileSync(caminho, 'utf8')
     .replace(/(src|href)="((?:js|css|vendor)\/[^"?]+)(?:\?v=\d+)?"/g, `$1="$2?v=${versao}"`);

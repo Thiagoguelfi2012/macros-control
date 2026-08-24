@@ -610,7 +610,7 @@
     if (!alvoKcal) {
       card.innerHTML = `
         <div class="hoje-top"><span class="hoje-label">Meta de hoje</span><span class="hoje-kcal"><b>${fmt(kcalHoje, 0)}</b> kcal</span></div>
-        <div class="hoje-config">Defina sua dieta alvo ou gasto diário em <a href="config.html">Configurações</a> para acompanhar sua meta aqui.</div>`;
+        <div class="hoje-config">Defina sua dieta alvo ou gasto diário em <a href="config.html">Ajustes</a> para acompanhar sua meta aqui.</div>`;
     } else {
       const pct = Math.min(100, (kcalHoje / alvoKcal) * 100);
       const over = kcalHoje > alvoKcal;
@@ -650,7 +650,7 @@
       .join('');
     const conteudo = temMetaMacro
       ? rows
-      : `<div class="hoje-config">Defina os alvos de macros na seção "Dieta alvo" das <a href="config.html" class="link-rel">Configurações</a>.</div>`;
+      : `<div class="hoje-config">Defina os alvos de macros na seção "Dieta alvo" em <a href="config.html" class="link-rel">Ajustes</a>.</div>`;
     const aberto = localStorage.getItem('hojeMacrosAberto') !== '0';
     card.insertAdjacentHTML(
       'beforeend',

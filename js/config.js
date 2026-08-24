@@ -103,7 +103,10 @@
   const resumoImport = (r) =>
     `Importado: ${r.novos} registro${r.novos === 1 ? '' : 's'} novo${r.novos === 1 ? '' : 's'}` +
     (r.repetidos ? ` (${r.repetidos} já existia${r.repetidos === 1 ? '' : 'm'})` : '') +
-    `, ${r.customs} alimento${r.customs === 1 ? '' : 's'} próprio${r.customs === 1 ? '' : 's'} e configurações aplicadas.`;
+    `, ${r.customs} alimento${r.customs === 1 ? '' : 's'} próprio${r.customs === 1 ? '' : 's'}` +
+    (r.treinos ? `, ${r.treinos} treino${r.treinos === 1 ? '' : 's'}` : '') +
+    (r.sessoes ? `, ${r.sessoes} execução${r.sessoes === 1 ? '' : 'ões'} de treino` : '') +
+    ` e configurações aplicadas.`;
 
   // hospedada, a página roda dentro de um iframe: downloads podem ser
   // bloqueados pelo sandbox — daí as camadas de fallback na exportação

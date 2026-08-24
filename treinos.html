@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Treinos — Controle de Macros</title>
+  <link rel="icon" href="data:," />
+  <link rel="stylesheet" href="css/app.css?v=27" />
+</head>
+<body>
+  <div class="barras">
+    <header class="topbar">
+      <div class="brand"><span class="dot"></span> <span class="txt">Controle de Macros</span></div>
+      <nav class="nav-areas">
+        <a href="index.html">Nutrição</a>
+        <a href="treinos.html" class="active">Treino</a>
+        <a href="config.html">Ajustes</a>
+      </nav>
+    </header>
+    <div class="subnav" id="subnav-treino">
+      <button data-aba="lista" class="active">Treinos</button>
+      <button data-aba="evolucao">Evolução</button>
+      <button data-aba="biblioteca">Exercícios</button>
+    </div>
+  </div>
+
+  <main>
+    <!-- ---- Aba: lista de treinos ---- -->
+    <section id="aba-lista">
+      <div id="lista-treinos" aria-live="polite">
+        <p class="loading">Carregando treinos…</p>
+      </div>
+      <button class="btn btn-primary add-fab" id="btn-novo-treino">+ Novo treino</button>
+    </section>
+
+    <!-- ---- Aba: evolução de carga ---- -->
+    <section id="aba-evolucao" hidden>
+      <div class="filters">
+        <div class="field">
+          <label for="sel-evo-treino">Treino</label>
+          <select id="sel-evo-treino"></select>
+        </div>
+        <div class="field">
+          <label for="sel-evo-periodo">Período</label>
+          <select id="sel-evo-periodo">
+            <option value="30">Últimos 30 dias</option>
+            <option value="90" selected>Últimos 90 dias</option>
+            <option value="180">Últimos 180 dias</option>
+            <option value="0">Tudo</option>
+          </select>
+        </div>
+      </div>
+      <div id="evo-resumo"></div>
+      <div id="evo-graficos"></div>
+    </section>
+
+    <!-- ---- Aba: biblioteca de exercícios ---- -->
+    <section id="aba-biblioteca" hidden>
+      <div class="filters">
+        <div class="field">
+          <label for="inp-busca-ex">Buscar exercício</label>
+          <input type="search" id="inp-busca-ex" placeholder="ex.: supino, leg press, rosca" />
+        </div>
+        <div class="field">
+          <label for="sel-grupo-ex">Grupo muscular</label>
+          <select id="sel-grupo-ex"><option value="">Todos</option></select>
+        </div>
+        <div class="field">
+          <label for="sel-equip-ex">Equipamento</label>
+          <select id="sel-equip-ex"><option value="">Todos</option></select>
+        </div>
+      </div>
+      <p class="sub" id="biblioteca-sub"></p>
+      <div id="lista-exercicios"></div>
+    </section>
+  </main>
+
+  <!-- ---- Execução do treino ---- -->
+  <div id="execucao" hidden>
+    <div class="exec-barra">
+      <button class="btn" id="exec-sair">‹ Voltar</button>
+      <div class="exec-titulo"><b id="exec-nome"></b><span id="exec-cronometro">00:00</span></div>
+      <button class="btn btn-primary" id="exec-finalizar">Finalizar</button>
+    </div>
+    <div class="exec-conteudo">
+      <div id="exec-itens"></div>
+      <div class="exec-rodape">
+        <div id="exec-resumo" class="sub"></div>
+        <button class="btn btn-primary" id="exec-finalizar-2">Finalizar treino</button>
+        <button class="btn btn-danger-text" id="exec-descartar">Descartar execução</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ---- Editor de treino ---- -->
+  <div class="modal-backdrop" id="modal-treino">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mt-titulo">
+      <h2 id="mt-titulo">Novo treino</h2>
+      <div class="field-row">
+        <div class="field">
+          <label for="mt-nome">Nome do treino *</label>
+          <input type="text" id="mt-nome" placeholder="ex.: Treino 1" />
+        </div>
+        <div class="field">
+          <label for="mt-foco">Foco / grupos</label>
+          <input type="text" id="mt-foco" placeholder="ex.: P \ Del \ T" />
+        </div>
+      </div>
+
+      <div class="imp-title">Exercícios</div>
+      <div id="mt-exercicios"></div>
+      <button class="btn" id="mt-add" type="button">+ Adicionar exercício</button>
+
+      <div class="modal-actions">
+        <button class="btn btn-danger-text" id="mt-excluir" type="button" hidden>Excluir treino</button>
+        <button class="btn" id="mt-cancelar" type="button">Cancelar</button>
+        <button class="btn btn-primary" id="mt-salvar" type="button">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ---- Escolher exercício da biblioteca ---- -->
+  <div class="modal-backdrop" id="modal-escolher">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="me-titulo">
+      <h2 id="me-titulo">Escolher exercício</h2>
+      <div class="field">
+        <label for="me-busca">Buscar</label>
+        <input type="search" id="me-busca" placeholder="ex.: supino inclinado, cadeira extensora" />
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="me-grupo">Grupo</label>
+          <select id="me-grupo"><option value="">Todos</option></select>
+        </div>
+        <div class="field">
+          <label for="me-equip">Equipamento</label>
+          <select id="me-equip"><option value="">Todos</option></select>
+        </div>
+      </div>
+      <div id="me-resultados" class="escolher-lista"></div>
+      <div class="modal-actions">
+        <button class="btn" id="me-cancelar" type="button">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="vendor/chart.umd.min.js?v=27"></script>
+  <script src="js/db.js?v=27"></script>
+  <script src="js/exercicios.js?v=27"></script>
+  <script src="js/sync.js?v=27"></script>
+  <script src="js/treinos.js?v=27"></script>
+  <script src="js/refresh.js?v=27"></script>
+</body>
+</html>

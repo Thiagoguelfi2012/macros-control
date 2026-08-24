@@ -175,7 +175,7 @@
       balancoHtml = `
         <div class="tile balance">
           <div class="t-label">Déficit / superávit</div>
-          <div class="t-value" style="font-size:14px;font-weight:500;color:var(--muted)">Configure seu gasto médio diário em Configurações</div>
+          <div class="t-value" style="font-size:14px;font-weight:500;color:var(--muted)">Configure seu gasto médio diário em Ajustes</div>
         </div>`;
     }
     // num período de um dia só, "média por dia" repetiria o total: omite

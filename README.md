@@ -1,7 +1,11 @@
 # Controle de Macros
 
-Site para controle de calorias, proteínas, carboidratos e gorduras — 100% front-end
+Site para controle de **nutrição** (calorias, proteínas, carboidratos e gorduras) e de
+**treino** (montagem de treinos, registro de carga e progressão) — 100% front-end
 (HTML/CSS/JS puro), sem servidor: funciona offline e roda em qualquer hosting estático.
+
+A navegação é em dois níveis para as duas áreas não se misturarem: a barra de cima
+escolhe **Nutrição · Treino · Ajustes** e a de baixo mostra as telas da área escolhida.
 
 ## Como rodar
 
@@ -31,7 +35,24 @@ python3 -m http.server 8000
   estimado e da dieta alvo; déficit calórico acumulado; distribuição dos macros;
   **déficit/superávit calórico** do período, calculado a partir do gasto médio
   diário definido em Configurações.
-- **Configurações** (`config.html`): tela própria com gasto energético (TMB/TDEE),
+- **Treinos** (`treinos.html`, área Treino): três abas.
+  - **Treinos** — cartões com os treinos montados (nome, foco, exercícios com
+    séries/repetições/carga, quantas vezes foi executado e quando), botão de
+    **Iniciar treino** e editor completo para criar, reordenar e excluir.
+  - **Execução** — ao iniciar, a tela mostra cada exercício com o alvo de séries e
+    repetições, campo de **carga do dia** (já preenchido com a última carga usada),
+    repetições feitas, um cronômetro de **descanso** com o intervalo do exercício e
+    o tempo total do treino. Marcar como feito, sair e voltar depois: a execução em
+    andamento fica guardada por 12 h. Ao finalizar, a carga do dia vira a carga
+    padrão do treino para a próxima vez.
+  - **Evolução** — um gráfico de linha por exercício com a **progressão de carga**
+    ao longo das execuções (filtros por treino e por período), mais a variação em kg
+    entre a primeira e a última vez.
+  - **Exercícios** — biblioteca com **156 exercícios** de uma academia padrão
+    (Smart Fit): aparelhos, polias, Smith, halteres/barras e peso corporal,
+    agrupados por músculo e filtráveis por grupo e equipamento. É de onde saem os
+    exercícios ao montar um treino novo.
+- **Ajustes** (`config.html`): tela própria com gasto energético (TMB/TDEE),
   **dieta alvo** (alvos diários de calorias e macros, com as kcal implícitas
   calculadas), **backup e transferência** e **conta e sincronização**. A dieta alvo
   alimenta o card "Dieta alvo × consumo" e o anel do gráfico de distribuição nos
@@ -111,8 +132,11 @@ externas — use o app no endereço próprio (GitHub Pages) ou no arquivo standa
 
 ## Dados
 
-- Registros de consumo: **IndexedDB** do navegador (com fallback em `localStorage`
-  quando o IndexedDB é bloqueado, ex.: `file://` e iframes).
+- Registros de consumo, treinos e execuções de treino: **IndexedDB** do navegador
+  (com fallback em `localStorage` quando o IndexedDB é bloqueado, ex.: `file://` e
+  iframes). Tudo entra no backup e na sincronização.
+- Biblioteca de exercícios: `js/exercicios.js`, gerado por
+  `tools/build-exercicios.mjs` a partir de uma lista curada — não depende de rede.
 - Configurações (TMB/TDEE e dieta alvo): `localStorage`.
 - Banco de alimentos: `data/foods.json` (~2,3 MB, **17.496 itens**, ~10.900 com
   medidas caseiras e ~890 líquidos medidos em ml/L), carregado no IndexedDB na
@@ -150,15 +174,18 @@ em `js/db.js` para forçar os navegadores a recarregarem a base.
 ## Estrutura
 
 ```
-index.html                     tela Diário
-relatorios.html                tela Relatórios
-config.html                    tela Configurações
+index.html                     Nutrição › Diário
+relatorios.html                Nutrição › Relatórios
+treinos.html                   Treino › treinos, execução, evolução e exercícios
+config.html                    Ajustes
 css/app.css                    estilos (tokens de tema claro/escuro)
 js/db.js                       camada IndexedDB + localStorage (+ backup/merge)
 js/busca.js                    busca tokenizada sem acentos, TACO/IBGE priorizados
 js/diario.js                   tela Diário
 js/relatorios.js               tela Relatórios (Chart.js)
-js/config.js                   tela Configurações (gasto, dieta alvo, backup, conta)
+js/treinos.js                  treinos, execução com carga e evolução (Chart.js)
+js/exercicios.js               biblioteca de exercícios da academia (gerado)
+js/config.js                   tela Ajustes (gasto, dieta alvo, backup, conta)
 js/sync.js                     conta (Supabase Auth) + sincronização do backup
 js/refresh.js                  pull-to-refresh
 data/foods.json                banco de ~17.500 alimentos gerado
@@ -166,5 +193,6 @@ vendor/                        Tom Select e Chart.js vendorizados (offline)
 tools/build-foods.mjs          gerador do banco de alimentos
 tools/curados.mjs              camada curada (pratos de vida real)
 tools/marcas.mjs               camada de marcas brasileiras (valores de rótulo)
+tools/build-exercicios.mjs     gerador da biblioteca de exercícios
 tools/build-standalone.mjs     gera controle-de-macros.html (arquivo único)
 ```

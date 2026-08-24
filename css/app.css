@@ -241,8 +241,8 @@ body {
 }
 
 /* ---- Cabeçalho / navegação ---- */
+.barras { position: sticky; top: 0; z-index: 20; }
 .topbar {
-  position: sticky; top: 0; z-index: 20;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
   padding: 0 16px;
@@ -260,6 +260,23 @@ body {
 }
 .topbar nav a.active { color: var(--accent); border-bottom-color: var(--accent); }
 .topbar nav a:hover { color: var(--ink); }
+
+/* segunda barra: as telas de dentro da área escolhida acima */
+.subnav {
+  background: var(--page); border-bottom: 1px solid var(--border);
+  display: flex; gap: 4px; padding: 0 16px;
+  overflow-x: auto; scrollbar-width: none;
+}
+.subnav::-webkit-scrollbar { display: none; }
+.subnav a, .subnav button {
+  font: inherit; font-size: 14px; font-weight: 500;
+  color: var(--muted); text-decoration: none; white-space: nowrap;
+  background: none; border: none; border-bottom: 2px solid transparent;
+  padding: 10px 10px; cursor: pointer;
+}
+.subnav a.active, .subnav button.active { color: var(--ink); border-bottom-color: var(--ink-2); }
+.subnav a:hover, .subnav button:hover { color: var(--ink); }
+body.sem-rolagem { overflow: hidden; }
 
 main { max-width: 860px; margin: 0 auto; padding: 20px 16px 110px; }
 @media (max-width: 560px) {
@@ -606,3 +623,111 @@ main { max-width: 860px; margin: 0 auto; padding: 20px 16px 110px; }
 .save-ok { color: var(--good-text); font-size: 13px; margin-left: 8px; }
 
 .loading { color: var(--muted); text-align: center; padding: 40px; }
+
+
+/* ================= Treino ================= */
+
+/* ---- Cartão de treino ---- */
+.treino-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+  padding: 16px; margin-bottom: 14px;
+}
+.treino-head { display: flex; align-items: flex-start; gap: 10px; }
+.treino-head h3 { margin: 0; font-size: 17px; }
+.treino-head .btn-ghost { margin-left: auto; font-size: 13px; flex: none; }
+.treino-foco { margin: 2px 0 0; font-size: 13px; color: var(--ink-2); }
+.treino-meta { margin: 10px 0 0; font-size: 12.5px; color: var(--muted); }
+.treino-exec { margin: 2px 0 12px; font-size: 12.5px; color: var(--accent); }
+.treino-previa { list-style: decimal; margin: 0 0 14px; padding-left: 22px; }
+.treino-previa li {
+  display: flex; justify-content: space-between; gap: 12px;
+  font-size: 13.5px; padding: 4px 0; border-bottom: 1px solid var(--grid);
+}
+.treino-previa li:last-child { border-bottom: none; }
+.treino-previa .prev-serie { color: var(--muted); font-size: 12.5px; white-space: nowrap; }
+.treino-acoes { display: flex; gap: 8px; }
+.treino-acoes .act-iniciar { flex: 1; }
+
+/* ---- Editor de treino ---- */
+.mt-ex {
+  border: 1px solid var(--border); border-radius: 10px;
+  padding: 10px 12px; margin-bottom: 10px; background: var(--page);
+}
+.mt-ex-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.mt-ex-nome { font-weight: 600; font-size: 14px; }
+.mt-ex-tag { font-size: 11.5px; color: var(--muted); }
+.mt-ex-acoes { margin-left: auto; display: flex; gap: 2px; }
+.mt-ex-acoes .btn { padding: 2px 8px; font-size: 15px; line-height: 1.4; }
+.mt-ex-campos { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.mt-ex-campos .field { flex: 1 1 78px; margin-bottom: 0; }
+.mt-ex-campos .field label { font-size: 11.5px; }
+.mt-ex-campos .field input { padding: 6px 8px; font-size: 14px; }
+
+/* ---- Escolher exercício ---- */
+.escolher-lista { max-height: 46vh; overflow-y: auto; margin-bottom: 16px; }
+.escolher-item {
+  width: 100%; text-align: left; font: inherit; cursor: pointer;
+  background: none; border: none; border-bottom: 1px solid var(--grid);
+  padding: 10px 6px; display: flex; flex-direction: column; gap: 2px; color: var(--ink);
+}
+.escolher-item:hover { background: var(--wash); }
+.ei-nome { font-size: 14px; font-weight: 500; }
+.ei-tag { font-size: 11.5px; color: var(--muted); }
+
+/* ---- Biblioteca ---- */
+.bib-grupo { margin-bottom: 18px; }
+.bib-grupo h3 {
+  font-size: 14px; margin: 0 0 8px; display: flex; align-items: center; gap: 8px;
+  border-bottom: 1px solid var(--border); padding-bottom: 6px;
+}
+.bib-qtd {
+  font-size: 11.5px; font-weight: 500; color: var(--muted);
+  background: var(--wash); border-radius: 999px; padding: 1px 8px;
+}
+.bib-itens { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 6px 14px; }
+.bib-item { display: flex; justify-content: space-between; gap: 10px; font-size: 13.5px; padding: 3px 0; }
+
+/* ---- Evolução ---- */
+.evo-head { display: flex; align-items: baseline; gap: 10px; }
+.evo-head h3 { flex: 1; }
+.evo-delta { font-size: 13px; font-weight: 700; white-space: nowrap; }
+.evo-delta.sobe { color: var(--good-text); }
+.evo-delta.desce { color: var(--bad-text); }
+.evo-delta.igual { color: var(--muted); }
+
+/* ---- Execução do treino ---- */
+#execucao {
+  position: fixed; inset: 0; z-index: 40; background: var(--page);
+  display: flex; flex-direction: column;
+}
+.exec-barra {
+  display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+}
+.exec-titulo { flex: 1; display: flex; flex-direction: column; align-items: center; line-height: 1.3; }
+.exec-titulo b { font-size: 14px; }
+#exec-cronometro { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.exec-conteudo { flex: 1; overflow-y: auto; padding: 14px 16px 40px; max-width: 860px; margin: 0 auto; width: 100%; }
+.exec-item {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  padding: 12px 14px; margin-bottom: 10px;
+}
+.exec-item.feito { border-color: var(--good-text); background: color-mix(in srgb, var(--good-text) 6%, var(--surface)); }
+.exec-item-head { display: flex; align-items: center; gap: 10px; }
+.exec-check { display: flex; align-items: center; gap: 10px; cursor: pointer; flex: 1; }
+.exec-check input { width: 20px; height: 20px; accent-color: var(--accent); flex: none; }
+.exec-nome { font-weight: 600; font-size: 15px; }
+.exec-item.feito .exec-nome { text-decoration: line-through; color: var(--ink-2); }
+.exec-alvo { font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+.exec-campos { display: flex; gap: 10px; align-items: flex-end; margin-top: 10px; flex-wrap: wrap; }
+.exec-campos .field { margin-bottom: 0; flex: 1 1 120px; }
+.exec-campos .ex-descanso { flex: none; white-space: nowrap; }
+.exec-campos .ex-descanso.descansando { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.exec-sem-carga { font-size: 13px; color: var(--muted); flex: 1 1 120px; padding-bottom: 9px; }
+.exec-anterior { margin: 8px 0 0; font-size: 12px; color: var(--muted); }
+.exec-rodape { margin-top: 20px; display: flex; flex-direction: column; gap: 10px; align-items: stretch; }
+.exec-rodape .btn-primary { padding: 14px; font-size: 16px; }
+@media (max-width: 560px) {
+  .exec-barra .btn { padding: 8px 10px; font-size: 14px; }
+  .bib-itens { grid-template-columns: 1fr; }
+}
