@@ -44,16 +44,22 @@ python3 -m http.server 8000
     mesmo**, sem precisar abrir o editor do treino.
   - **Execução** — ao iniciar, a tela mostra cada exercício com miniatura, alvo de
     séries e repetições, **caixa para marcar como concluído**, campo de **carga do
-    dia** (já preenchido com a última carga usada), repetições feitas e um
-    cronômetro de **descanso** com o intervalo do exercício. O **tempo de treino**
-    corre no topo desde o Iniciar e é gravado ao Finalizar. Dá para sair e voltar
-    depois: a execução em andamento fica guardada por 12 h. Ao finalizar, a carga
-    do dia vira a carga padrão do treino para a próxima vez.
-  - **Evolução** — **duração dos treinos** em barras (com tempo total e média do
-    período) e um gráfico de linha por exercício com a **progressão de carga** ao
-    longo das execuções (filtros por treino e por período), mais a variação entre a
-    primeira e a última vez. Execuções deixadas abertas por mais de 4 h ficam fora
-    das contas de tempo.
+    dia** (já preenchido com o **último valor registrado para aquele exercício**,
+    em qualquer treino), repetições feitas e um cronômetro de **descanso** com o
+    intervalo do exercício. **Marcar a caixa é o que cria o registro**: o ponto no
+    gráfico nasce ali, não no Finalizar — corrigir a carga de um exercício já
+    marcado regrava, desmarcar remove o ponto. Um valor digitado sem marcar fica
+    guardado (`cargaAnotada`), mas não vira ponto. O **tempo de treino** corre no
+    topo desde o Iniciar e é gravado ao Finalizar; um treino sem nenhum exercício
+    marcado ainda conta para a frequência e para o tempo treinado. Dá para sair e
+    voltar depois: a execução em andamento fica guardada por 12 h.
+  - **Evolução** — card de **frequência** (dias com treino no período, média por
+    semana e uma barra por semana), **duração dos treinos** em barras (com tempo
+    total e média) e um gráfico de linha por exercício com a **progressão de
+    carga** ao longo das execuções, com o **valor escrito em cada ponto** (rótulos
+    que colidiriam são omitidos em telas estreitas). Filtros por treino e por
+    período; execuções deixadas abertas por mais de 4 h ficam fora das contas de
+    tempo.
   - **Exercícios** — biblioteca com **166 exercícios** de uma academia padrão
     (Smart Fit): aparelhos, polias, Smith, halteres/barras e peso corporal,
     agrupados por músculo e filtráveis por grupo e equipamento. É de onde saem os

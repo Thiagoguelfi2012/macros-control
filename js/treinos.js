@@ -390,11 +390,14 @@
     else localStorage.removeItem(CHAVE_EXEC);
   }
 
-  function ultimaCarga(exercicioId, treinoId) {
+  // Último valor registrado para aquele exercício, em qualquer treino — é ele
+  // que aparece pronto no campo ao executar. A execução em andamento fica de
+  // fora, senão o campo se referenciaria a si mesmo.
+  function ultimaCarga(exercicioId, exceto) {
     for (let i = sessoes.length - 1; i >= 0; i--) {
       const s = sessoes[i];
-      if (treinoId && s.treinoId !== treinoId) continue;
-      const item = (s.itens || []).find((x) => x.exercicioId === exercicioId && x.carga != null);
+      if (exceto && s.id === exceto) continue;
+      const item = (s.itens || []).find((x) => x.exercicioId === exercicioId && x.carga != null && x.feito !== false);
       if (item) return item.carga;
     }
     return null;
@@ -402,6 +405,7 @@
 
   function iniciarTreino(treino) {
     execucao = {
+      id: MacroDB.novoId(),
       treinoId: treino.id,
       treinoNome: treino.nome,
       treinoFoco: treino.foco || '',
@@ -416,7 +420,7 @@
         unidadeRep: e.unidadeRep || 'rep',
         unidadeCarga: e.unidadeCarga || 'kg',
         intervalo: e.intervalo,
-        carga: ultimaCarga(e.exercicioId, treino.id) ?? e.carga ?? null,
+        carga: ultimaCarga(e.exercicioId) ?? e.carga ?? null,
         reps: '',
         feito: false,
       })),
@@ -464,7 +468,7 @@
     const wrap = $('#exec-itens');
     wrap.innerHTML = execucao.itens
       .map((it, i) => {
-        const anterior = ultimaCarga(it.exercicioId, execucao.treinoId);
+        const anterior = ultimaCarga(it.exercicioId, execucao.id);
         const un = it.unidadeRep && it.unidadeRep !== 'rep' ? UNIDADES[it.unidadeRep] : '';
         return `
         <div class="exec-item${it.feito ? ' feito' : ''}" data-i="${i}">
@@ -523,23 +527,61 @@
     const t = setInterval(tick, 1000);
   }
 
+  // Monta os itens da execução: a carga só conta como registro quando o
+  // exercício está marcado; o valor digitado sem marcar fica em cargaAnotada.
+  const itensDaExecucao = () =>
+    execucao.itens.map((i) => {
+      const valor = i.carga == null || i.carga === '' ? null : Number(i.carga);
+      return {
+        exercicioId: i.exercicioId,
+        nome: i.nome,
+        grupo: i.grupo,
+        unidadeCarga: i.unidadeCarga || 'kg',
+        carga: i.feito ? valor : null,
+        cargaAnotada: valor,
+        reps: i.reps || '',
+        feito: !!i.feito,
+      };
+    });
+
+  // Marcar um exercício já grava o registro daquele dia, sem esperar o
+  // Finalizar: se o app fechar no meio, o que foi feito não se perde.
+  let gravandoSessao = null;
+  function gravarParcial() {
+    clearTimeout(gravandoSessao);
+    gravandoSessao = setTimeout(async () => {
+      if (!execucao) return;
+      const itens = itensDaExecucao();
+      const sessao = {
+        id: execucao.id,
+        treinoId: execucao.treinoId,
+        treinoNome: execucao.treinoNome,
+        ts: execucao.ts,
+        emAndamento: true,
+        itens,
+      };
+      ignorarRecarga = true;
+      try {
+        await MacroDB.saveSessao(sessao);
+      } finally {
+        ignorarRecarga = false;
+      }
+      // mantém a lista em memória coerente para o "última vez" dos próximos
+      const i = sessoes.findIndex((x) => x.id === sessao.id);
+      if (i >= 0) sessoes[i] = sessao;
+      else sessoes.push(sessao);
+    }, 300);
+  }
+
   async function finalizarTreino() {
-    const itens = execucao.itens.map((i) => ({
-      exercicioId: i.exercicioId,
-      nome: i.nome,
-      grupo: i.grupo,
-      unidadeCarga: i.unidadeCarga || 'kg',
-      carga: i.carga == null || i.carga === '' ? null : Number(i.carga),
-      reps: i.reps || '',
-      feito: !!i.feito,
-    }));
-    if (!itens.some((i) => i.feito || i.carga != null)) {
-      alert('Marque pelo menos um exercício ou informe uma carga antes de finalizar.');
-      return;
-    }
+    clearTimeout(gravandoSessao);
+    const itens = itensDaExecucao();
+    const feitos = itens.filter((i) => i.feito).length;
+    if (!feitos && !confirm('Nenhum exercício foi marcado como concluído. Finalizar assim? O treino ainda conta para a frequência e para o tempo treinado, mas nenhuma carga entra nos gráficos.')) return;
     const fim = new Date();
     const duracaoSeg = Math.max(0, Math.round((fim.getTime() - new Date(execucao.ts).getTime()) / 1000));
     await MacroDB.saveSessao({
+      id: execucao.id,
       treinoId: execucao.treinoId,
       treinoNome: execucao.treinoNome,
       ts: execucao.ts,
@@ -552,7 +594,7 @@
     if (treino) {
       let mudou = false;
       for (const ex of treino.exercicios || []) {
-        const feito = itens.find((i) => i.exercicioId === ex.exercicioId && i.carga != null);
+        const feito = itens.find((i) => i.exercicioId === ex.exercicioId && i.feito && i.carga != null);
         if (feito && feito.carga !== ex.carga) {
           ex.carga = feito.carga;
           mudou = true;
@@ -717,6 +759,34 @@
 
   /* ---- Evolução ---- */
 
+  // Escreve o valor em cima de cada ponto (ou barra). Se dois rótulos vizinhos
+  // fossem se sobrepor, o segundo é omitido — melhor faltar um número do que
+  // sair uma sopa de dígitos numa tela estreita.
+  const rotulosDePonto = (sufixo) => ({
+    id: 'rotulosDePonto',
+    afterDatasetsDraw(chart) {
+      const { ctx } = chart;
+      const meta = chart.getDatasetMeta(0);
+      const dados = chart.data.datasets[0].data;
+      ctx.save();
+      ctx.font = '600 11px ui-sans-serif, system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.fillStyle = cssVar('--ink');
+      let ocupadoAte = -Infinity;
+      meta.data.forEach((ponto, i) => {
+        const v = dados[i];
+        if (v == null) return;
+        const texto = `${fmt(v)}${sufixo ? ` ${sufixo}` : ''}`;
+        const largura = ctx.measureText(texto).width;
+        if (ponto.x - largura / 2 < ocupadoAte + 4) return;
+        ocupadoAte = ponto.x + largura / 2;
+        ctx.fillText(texto, ponto.x, ponto.y - 7);
+      });
+      ctx.restore();
+    },
+  });
+
   function destruirCharts() {
     for (const c of chartsEvo) c.destroy();
     chartsEvo = [];
@@ -733,6 +803,7 @@
 
     if (!relevantes.length) {
       $('#evo-resumo').innerHTML = '';
+      $('#evo-frequencia').innerHTML = '';
       $('#evo-graficos').innerHTML =
         '<div class="empty-state"><p>Nenhuma execução registrada neste período.</p><p class="sub">Inicie um treino e informe a carga de cada exercício para ver a progressão aqui.</p></div>';
       return;
@@ -742,7 +813,7 @@
     const porExercicio = new Map();
     for (const s of relevantes) {
       for (const it of s.itens || []) {
-        if (it.carga == null) continue;
+        if (it.carga == null || it.feito === false) continue;
         if (!porExercicio.has(it.exercicioId))
           porExercicio.set(it.exercicioId, { nome: it.nome, unidadeCarga: it.unidadeCarga || 'kg', pontos: [] });
         const alvo = porExercicio.get(it.exercicioId);
@@ -767,6 +838,63 @@
         <div class="tile"><div class="t-label">Tempo treinado</div><div class="t-value">${tempoTotal}</div><div class="t-sub">${comDuracao.length ? `média de ${tempoMedio} por treino` : 'sem tempo registrado'}</div></div>
         <div class="tile"><div class="t-label">Exercícios com carga</div><div class="t-value">${porExercicio.size}</div><div class="t-sub">registrados</div></div>
         <div class="tile"><div class="t-label">Com evolução</div><div class="t-value">${evoluiram}</div><div class="t-sub">carga maior que a primeira</div></div>
+      </div>`;
+
+    // dias distintos com treino no período, e o ritmo por semana
+    const diasComTreino = new Set(
+      relevantes.map((x) => {
+        const d = new Date(x.ts);
+        return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+      })
+    );
+    const primeiro = new Date(relevantes[0].ts);
+    primeiro.setHours(0, 0, 0, 0);
+    // a janela começa no filtro ou no primeiro registro, o que for mais recente:
+    // dias anteriores ao início do uso não devem diluir a média
+    const hojeMeiaNoite = new Date();
+    hojeMeiaNoite.setHours(0, 0, 0, 0);
+    const inicioFiltro = new Date(hojeMeiaNoite);
+    if (dias) inicioFiltro.setDate(inicioFiltro.getDate() - (dias - 1));
+    const inicioJanela = new Date(Math.max(dias ? inicioFiltro.getTime() : primeiro.getTime(), primeiro.getTime()));
+    const diasJanela = Math.max(1, Math.round((hojeMeiaNoite - inicioJanela) / 86400000) + 1);
+    const desdeOInicio = !dias || inicioJanela.getTime() === primeiro.getTime();
+    const porSemana = Math.round((diasComTreino.size / diasJanela) * 7 * 10) / 10;
+
+    // últimas semanas do período, cada uma com quantos dias tiveram treino
+    const chaveSemana = (d) => {
+      const x = new Date(d);
+      x.setHours(0, 0, 0, 0);
+      x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); // segunda-feira
+      return x;
+    };
+    const semanas = new Map();
+    for (const dia of diasComTreino) {
+      const [y, m, dd] = dia.split('-').map(Number);
+      const seg = chaveSemana(new Date(y, m, dd));
+      const k = seg.getTime();
+      if (!semanas.has(k)) semanas.set(k, { inicio: seg, dias: 0 });
+      semanas.get(k).dias++;
+    }
+    const listaSemanas = [...semanas.values()].sort((a, b) => a.inicio - b.inicio).slice(-12);
+    const maxSemana = Math.max(1, ...listaSemanas.map((x) => x.dias));
+    $('#evo-frequencia').innerHTML = `
+      <div class="chart-card freq-card">
+        <h3>Frequência de treinos</h3>
+        <p class="sub">Dias em que houve treino${desdeOInicio ? ', contados desde o primeiro registro' : ' no período'}</p>
+        <div class="freq-numero">
+          <b>${diasComTreino.size}</b>
+          <span>${diasComTreino.size === 1 ? 'dia' : 'dias'} de ${diasJanela} · média de ${fmt(porSemana)} por semana</span>
+        </div>
+        ${listaSemanas.length > 1 ? `
+        <div class="freq-semanas">
+          ${listaSemanas.map((sem) => `
+            <div class="freq-sem" title="Semana de ${sem.inicio.toLocaleDateString('pt-BR')}: ${sem.dias} ${sem.dias === 1 ? 'dia' : 'dias'}">
+              <span class="freq-qtd">${sem.dias}</span>
+              <span class="freq-barra" style="height:${Math.round((sem.dias / maxSemana) * 100)}%"></span>
+              <span class="freq-rot">${sem.inicio.getDate()}/${sem.inicio.getMonth() + 1}</span>
+            </div>`).join('')}
+        </div>
+        <p class="freq-legenda">Dias com treino por semana (segunda a domingo)</p>` : ''}
       </div>`;
 
     const wrap = $('#evo-graficos');
@@ -840,8 +968,10 @@
                 },
               },
             },
+            layout: { padding: { top: 18 } },
             scales: eixos('min'),
           },
+          plugins: [rotulosDePonto('min')],
         })
       );
     }
@@ -874,8 +1004,10 @@
               legend: { display: false },
               tooltip: { callbacks: { label: (ctx) => ` ${fmt(ctx.parsed.y)} ${un}` } },
             },
+            layout: { padding: { top: 18 } },
             scales: eixos(un),
           },
+          plugins: [rotulosDePonto(un)],
         })
       );
       void ink2;
@@ -954,6 +1086,7 @@
       const salvo = JSON.parse(localStorage.getItem(CHAVE_EXEC) || 'null');
       if (salvo && salvo.itens && Date.now() - new Date(salvo.ts).getTime() < 12 * 3600 * 1000) {
         execucao = salvo;
+        if (!execucao.id) execucao.id = MacroDB.novoId(); // execução iniciada antes da gravação parcial
         abrirExecucao();
       } else if (salvo) {
         localStorage.removeItem(CHAVE_EXEC);
@@ -1094,6 +1227,7 @@
       if (ev.target.classList.contains('ex-carga')) it.carga = ev.target.value === '' ? null : Number(ev.target.value);
       if (ev.target.classList.contains('ex-reps')) it.reps = ev.target.value;
       salvarExecucaoLocal();
+      if (it.feito) gravarParcial(); // mudou a carga de um já marcado: regrava
     });
     $('#exec-itens').addEventListener('change', (ev) => {
       const bloco = ev.target.closest('.exec-item');
@@ -1103,6 +1237,7 @@
       bloco.classList.toggle('feito', it.feito);
       atualizarResumoExecucao();
       salvarExecucaoLocal();
+      gravarParcial(); // marcar o exercício já cria o registro do dia
     });
     $('#exec-itens').addEventListener('click', (ev) => {
       const b = ev.target.closest('.ex-descanso');
@@ -1113,11 +1248,19 @@
     });
     $('#exec-finalizar').addEventListener('click', finalizarTreino);
     $('#exec-finalizar-2').addEventListener('click', finalizarTreino);
-    $('#exec-descartar').addEventListener('click', () => {
-      if (!confirm('Descartar esta execução? Nada será salvo.')) return;
+    $('#exec-descartar').addEventListener('click', async () => {
+      if (!confirm('Descartar esta execução? Os exercícios já marcados também serão apagados.')) return;
+      clearTimeout(gravandoSessao);
+      const id = execucao.id;
       execucao = null;
       salvarExecucaoLocal();
       fecharExecucao();
+      if (id) {
+        await MacroDB.deleteSessao(id);
+        const i = sessoes.findIndex((x) => x.id === id);
+        if (i >= 0) sessoes.splice(i, 1);
+      }
+      await carregar();
     });
 
     document.addEventListener('keydown', (ev) => {
