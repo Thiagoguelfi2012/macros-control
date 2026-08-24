@@ -353,7 +353,6 @@ export const MARCAS = [
   { n: "Chocolate Garoto ao leite (barra)", kcal: 540, p: 6.5, c: 58.5, g: 30.5, m: [["barra (80 g)", 80], ["quadrado (10 g)", 10]] },
   { n: "Chocolate Tortuguita ao leite (Arcor)", kcal: 535, p: 5.5, c: 60, g: 30, m: [["unidade (18 g)", 18]] },
   { n: "Chocolate Lacta Oreo (barra)", kcal: 525, p: 6, c: 61, g: 28, m: [["barra (87 g)", 87], ["quadrado (11 g)", 11]] },
-  { n: "Chocolate Milka ao leite", kcal: 540, p: 6.5, c: 57, g: 31, m: [["barra (80 g)", 80]] },
   { n: "Salgadinho Cebolitos", kcal: 495, p: 7, c: 62, g: 24, m: [["pacote (48 g)", 48]] },
   { n: "Salgadinho Baconzitos", kcal: 505, p: 6.5, c: 60, g: 26, m: [["pacote (48 g)", 48]] },
   { n: "Salgadinho Stiksy (Elma Chips)", kcal: 470, p: 7, c: 66, g: 19, m: [["pacote (48 g)", 48]] },
@@ -713,7 +712,6 @@ export const MARCAS = [
   { n: "Pipoca pronta Yoki cinema (balde)", kcal: 480, p: 7, c: 55, g: 26, m: [["porção (25 g)", 25]] },
 
   // Chocolates e doces que faltavam
-  { n: "Kinder Bueno", kcal: 570, p: 8.6, c: 49.5, g: 37.3, m: [["unidade (43 g)", 43], ["barrinha (21,5 g)", 21.5]] },
   { n: "Kinder Ovo (chocolate)", kcal: 566, p: 8.8, c: 53.5, g: 35, m: [["unidade (20 g)", 20]] },
   { n: "Ferrero Rocher", kcal: 577, p: 7.3, c: 44.2, g: 42.7, m: [["unidade (12,5 g)", 12.5], ["3 unidades (37,5 g)", 37.5]] },
   { n: "Paçoquita (Santa Helena)", kcal: 487, p: 12.5, c: 52.5, g: 25, m: [["unidade (21 g)", 21]] },
@@ -832,15 +830,4 @@ export const MARCAS = [
   { n: "Biscoito Papapá coco", kcal: 450, p: 6, c: 65, g: 18, m: [["pacote (30 g)", 30], ["unidade (8 g)", 8]] },
   { n: "Biscoito integral de cacau com banana (média)", kcal: 440, p: 6.5, c: 67, g: 15.5, m: [["pacote (30 g)", 30], ["unidade (8 g)", 8]] },
   // ---- Cacau Show ----
-  { n: "Mousse Lanut Cacau Show", kcal: 340, p: 5, c: 34, g: 20, m: [["pote (120 g)", 120], ["pote (200 g)", 200]] },
-  { n: "Mousse Lanut Cacau Show avelã", kcal: 350, p: 5.5, c: 33, g: 21.5, m: [["pote (120 g)", 120], ["pote (200 g)", 200]] },
-  { n: "Creme Lanut Cacau Show (pote de creme de avelã)", kcal: 555, p: 6, c: 52, g: 35, m: [["colher de sopa (15 g)", 15], ["pote (160 g)", 160]] },
-  { n: "Chocolate Cacau Show ao leite (tablete)", kcal: 545, p: 7, c: 57, g: 31, m: [["tablete (80 g)", 80], ["quadrado (10 g)", 10]] },
-  { n: "Chocolate Cacau Show 50% cacau (tablete)", kcal: 520, p: 6.5, c: 48, g: 33, m: [["tablete (80 g)", 80], ["quadrado (10 g)", 10]] },
-  { n: "Chocolate Cacau Show branco (tablete)", kcal: 560, p: 6, c: 58, g: 33, m: [["tablete (80 g)", 80], ["quadrado (10 g)", 10]] },
-  { n: "Trufa Cacau Show (unidade)", kcal: 470, p: 4.5, c: 50, g: 27, m: [["unidade (28 g)", 28]] },
-  { n: "Bombom Cacau Show Lacreme (unidade)", kcal: 520, p: 6, c: 52, g: 31, m: [["unidade (20 g)", 20]] },
-  { n: "Ovo de Páscoa Cacau Show (porção)", kcal: 540, p: 6.5, c: 56, g: 31, m: [["porção (25 g)", 25], ["ovo 150 g (150 g)", 150]] },
-  { n: "Pão de mel Cacau Show", kcal: 400, p: 4, c: 60, g: 15, m: [["unidade (50 g)", 50]] },
-  { n: "Cacau Show tablete Intense 70% cacau", kcal: 545, p: 8, c: 36, g: 38, m: [["tablete (80 g)", 80], ["quadrado (10 g)", 10]] },
 ];

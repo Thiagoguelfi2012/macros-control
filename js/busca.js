@@ -26,6 +26,14 @@ const FoodSearch = (() => {
       .replace(/\bwooper\b/g, 'whopper')
       .replace(/\bbk\b/g, 'burger king')
       .replace(/\bbach?io\b/g, 'bacio') // "bachio di latte" → Bacio di Latte
+      // linhas escritas de várias formas pelo público
+      .replace(/\bla ?creme\b/g, 'lacreme') // "la creme" → Lacreme (Cacau Show)
+      .replace(/\bmil ?folhas?\b/g, 'mil folhas')
+      .replace(/\bnha ?benta\b/g, 'nha benta')
+      .replace(/\bkopen ?hagen\b/g, 'kopenhagen')
+      .replace(/\bcacaushow\b/g, 'cacau show')
+      .replace(/\bhersheys?\b/g, 'hersheys')
+      .replace(/\bwaffer(s)?\b/g, 'wafer$1') // grafia comum com dois efes
       .replace(/\bmc ?donalds?\b/g, 'mcdonalds')
       .replace(/\bhamburger(s)?\b/g, 'hamburguer$1')
       .replace(/\bx (burguer|burger|salada|tudo|bacon|egg)\b/g, 'x$1')
