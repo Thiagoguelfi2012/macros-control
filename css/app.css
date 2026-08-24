@@ -766,6 +766,19 @@ main { max-width: 860px; margin: 0 auto; padding: 20px 16px 110px; }
 .exec-campos .ex-descanso.descansando { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 .exec-sem-carga { font-size: 13px; color: var(--muted); flex: 1 1 120px; padding-bottom: 9px; }
 .exec-anterior { margin: 8px 0 0; font-size: 12px; color: var(--muted); }
+.exec-dica {
+  margin-top: 8px; padding: 8px 10px; border-radius: 9px;
+  background: var(--wash); border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  font-size: 12.5px; color: var(--ink-2); line-height: 1.35;
+}
+.exec-dica span { flex: 1 1 150px; }
+.exec-dica b { color: var(--ink); }
+.exec-dica .ex-subir {
+  flex: none; padding: 5px 11px; font-size: 12.5px; font-weight: 600;
+  color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  background: var(--surface);
+}
 .exec-rodape { margin-top: 20px; display: flex; flex-direction: column; gap: 10px; align-items: stretch; }
 .exec-rodape .btn-primary { padding: 14px; font-size: 16px; }
 @media (max-width: 560px) {
@@ -828,3 +841,14 @@ main { max-width: 860px; margin: 0 auto; padding: 20px 16px 110px; }
 .sd-letra { font-size: 12px; color: var(--ink-2); font-weight: 600; }
 .sd-num { font-size: 10.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .semana-sub { margin: 0; font-size: 12px; color: var(--muted); }
+
+/* ---- Treino em andamento (faixa de retomada) ---- */
+.retomar-card {
+  background: var(--wash); border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  border-radius: 14px; padding: 12px 14px; margin-bottom: 14px;
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+}
+.retomar-info { flex: 1 1 180px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.retomar-info b { font-size: 14.5px; }
+.retomar-info span { font-size: 12.5px; color: var(--ink-2); }
+.retomar-acoes { display: flex; gap: 8px; flex: none; }

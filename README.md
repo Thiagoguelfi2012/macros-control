@@ -53,13 +53,27 @@ python3 -m http.server 8000
     séries e repetições, **caixa para marcar como concluído**, campo de **carga do
     dia** (já preenchido com o **último valor registrado para aquele exercício**,
     em qualquer treino), repetições feitas e um cronômetro de **descanso** com o
-    intervalo do exercício. **Marcar a caixa é o que cria o registro**: o ponto no
-    gráfico nasce ali, não no Finalizar — corrigir a carga de um exercício já
+    intervalo do exercício, e um **insight de progressão** quando a carga daquele
+    exercício não muda há três registros ou mais, com sugestão do próximo degrau
+    plausível (+1, +2, +2,5 ou +5 kg conforme a faixa) e um botão para aceitar.
+    **Marcar a caixa é o que cria o registro**: o ponto no gráfico nasce ali, não
+    no Finalizar — corrigir a carga de um exercício já
     marcado regrava, desmarcar remove o ponto. Um valor digitado sem marcar fica
     guardado (`cargaAnotada`), mas não vira ponto. O **tempo de treino** corre no
     topo desde o Iniciar e é gravado ao Finalizar; um treino sem nenhum exercício
-    marcado ainda conta para a frequência e para o tempo treinado. Dá para sair e
-    voltar depois: a execução em andamento fica guardada por 12 h.
+    marcado ainda conta para a frequência e para o tempo treinado.
+
+    O treino começado é **guardado continuamente** (no `localStorage` a cada
+    toque e no IndexedDB a cada exercício marcado, com gravação imediata ao
+    minimizar ou fechar o app), então fechar sem querer não perde nada: ao
+    reabrir, a execução volta de onde parou por até 24 h, e uma faixa
+    **"treino em andamento"** no topo da lista permite retomar ou descartar.
+    Tocar em "Iniciar treino" no mesmo treino retoma em vez de recomeçar.
+
+    Enquanto não é finalizado, o treino é só um rascunho: **não conta** na
+    frequência, nas contagens nem nos gráficos. Descartar apaga o rascunho, e um
+    rascunho abandonado (app fechado sem finalizar nem descartar) é removido na
+    próxima abertura — só treino finalizado vira registro.
   - **Evolução** — card de **frequência** (dias com treino no período, média por
     semana e uma barra por semana), **duração dos treinos** em barras (com tempo
     total e média) e um gráfico de linha por exercício com a **progressão de

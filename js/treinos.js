@@ -79,7 +79,7 @@
     </a>`;
 
   const minutos = (seg) => {
-    if (!seg) return '';
+    if (!seg || seg < 60) return ''; // menos de um minuto não vira "0 min"
     const m = Math.round(seg / 60);
     if (m < 60) return `${m} min`;
     return `${Math.floor(m / 60)}h${String(m % 60).padStart(2, '0')}`;
@@ -330,13 +330,17 @@
 
   /* ---- Aba: lista de treinos ---- */
 
-  const sessoesDe = (treinoId) => sessoes.filter((s) => s.treinoId === treinoId);
+  // Só treino finalizado conta. A execução em andamento existe apenas como
+  // rascunho seguro contra o app fechar no meio — ela não entra na frequência,
+  // nas contagens nem nos gráficos até você tocar em Finalizar.
+  const finalizadas = () => sessoes.filter((s) => !s.emAndamento);
+  const sessoesDe = (treinoId) => finalizadas().filter((s) => s.treinoId === treinoId);
 
   function resumoExecucoes(treinoId) {
     const lista = sessoesDe(treinoId);
     if (!lista.length) return 'Ainda não executado';
     const ultima = lista[lista.length - 1];
-    const dur = ultima.duracaoSeg ? ` · ${minutos(ultima.duracaoSeg)}` : '';
+    const dur = minutos(ultima.duracaoSeg) ? ` · ${minutos(ultima.duracaoSeg)}` : '';
     return `Executado ${lista.length} ${lista.length === 1 ? 'vez' : 'vezes'}, última em ${dataBr(ultima.ts)}${dur}`;
   }
 
@@ -354,9 +358,10 @@
 
   // até onde dá para voltar: a semana do primeiro registro
   function offsetMinimo() {
-    if (!sessoes.length) return 0;
+    const lista = finalizadas();
+    if (!lista.length) return 0;
     const atual = segundaDe(new Date());
-    const primeira = segundaDe(new Date(sessoes[0].ts));
+    const primeira = segundaDe(new Date(lista[0].ts));
     return -Math.round((atual - primeira) / (7 * 86400000));
   }
 
@@ -368,7 +373,7 @@
 
     const chave = (d) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
     const treinados = new Map();
-    for (const s of sessoes) {
+    for (const s of finalizadas()) {
       const d = new Date(s.ts);
       d.setHours(0, 0, 0, 0);
       const k = chave(d);
@@ -391,7 +396,7 @@
       const fim = new Date(ini);
       fim.setDate(fim.getDate() + 7);
       const n = new Set(
-        sessoes
+        finalizadas()
           .map((s) => {
             const d = new Date(s.ts);
             d.setHours(0, 0, 0, 0);
@@ -450,8 +455,31 @@
     if (semanaOffset !== antes) renderFreqSemana();
   }
 
+  function renderRetomar() {
+    const alvo = $('#retomar-treino');
+    if (!alvo) return;
+    if (!execucao) {
+      alvo.innerHTML = '';
+      return;
+    }
+    const feitos = execucao.itens.filter((i) => i.feito).length;
+    const seg = Math.max(0, Math.floor((Date.now() - new Date(execucao.ts).getTime()) / 1000));
+    alvo.innerHTML = `
+      <div class="retomar-card">
+        <div class="retomar-info">
+          <b>${esc(execucao.treinoNome)} em andamento</b>
+          <span>${minutos(seg) || 'começou agora'} · ${feitos} de ${execucao.itens.length} exercícios concluídos</span>
+        </div>
+        <div class="retomar-acoes">
+          <button class="btn btn-danger-text" id="retomar-descartar" type="button">Descartar</button>
+          <button class="btn btn-primary" id="retomar-abrir" type="button">Retomar</button>
+        </div>
+      </div>`;
+  }
+
   function renderLista() {
     renderFreqSemana();
+    renderRetomar();
     const wrap = $('#lista-treinos');
     if (!treinos.length) {
       wrap.innerHTML = `
@@ -512,8 +540,9 @@
   // que aparece pronto no campo ao executar. A execução em andamento fica de
   // fora, senão o campo se referenciaria a si mesmo.
   function ultimoValor(exercicioId, campo, exceto) {
-    for (let i = sessoes.length - 1; i >= 0; i--) {
-      const s = sessoes[i];
+    const lista = finalizadas();
+    for (let i = lista.length - 1; i >= 0; i--) {
+      const s = lista[i];
       if (exceto && s.id === exceto) continue;
       const item = (s.itens || []).find(
         (x) => x.exercicioId === exercicioId && x[campo] != null && x.feito !== false
@@ -524,7 +553,56 @@
   }
   const ultimaCarga = (exercicioId, exceto) => ultimoValor(exercicioId, 'carga', exceto);
 
+  // Quantos registros seguidos com a mesma carga. Três ou mais é o sinal de
+  // que aquele exercício parou de progredir e merece um empurrão.
+  function cargaParada(exercicioId, exceto) {
+    const vals = [];
+    const lista = finalizadas();
+    for (let i = lista.length - 1; i >= 0 && vals.length < 10; i--) {
+      const s = lista[i];
+      if (exceto && s.id === exceto) continue;
+      const it = (s.itens || []).find(
+        (x) => x.exercicioId === exercicioId && x.carga != null && x.feito !== false
+      );
+      if (it) vals.push(it.carga);
+    }
+    if (vals.length < 3) return null;
+    const atual = vals[0];
+    let n = 0;
+    for (const v of vals) {
+      if (v !== atual) break;
+      n++;
+    }
+    return n >= 3 ? { repeticoes: n, carga: atual } : null;
+  }
+
+  // Próximo degrau plausível: os saltos que existem de fato na academia
+  // (anilhas de 1, 2 e 2,5 kg; pinos de máquina; tempo de isometria).
+  function proximoPasso(carga, unidade) {
+    if (unidade === 'seg') return carga + 5;
+    if (unidade === 'min') return carga + 2;
+    if (unidade === 'nivel') return carga + 1;
+    if (carga < 10) return carga + 1;
+    if (carga < 20) return carga + 2;
+    if (carga < 50) return carga + 2.5;
+    return carga + 5;
+  }
+
   function iniciarTreino(treino) {
+    // já existe treino em andamento: retoma em vez de começar outro por cima
+    if (execucao) {
+      if (execucao.treinoId === treino.id) {
+        abrirExecucao();
+        return;
+      }
+      if (!confirm(
+        `Você tem "${execucao.treinoNome}" em andamento. Começar "${treino.nome}" descarta o que já foi marcado nele. Continuar?`
+      )) {
+        abrirExecucao();
+        return;
+      }
+      descartarExecucao(false);
+    }
     execucao = {
       id: MacroDB.novoId(),
       treinoId: treino.id,
@@ -556,6 +634,20 @@
     abrirExecucao();
   }
 
+  async function descartarExecucao(recarregar = true) {
+    clearTimeout(gravandoSessao);
+    const id = execucao && execucao.id;
+    execucao = null;
+    salvarExecucaoLocal();
+    fecharExecucao();
+    if (id) {
+      await MacroDB.deleteSessao(id);
+      const i = sessoes.findIndex((x) => x.id === id);
+      if (i >= 0) sessoes.splice(i, 1);
+    }
+    if (recarregar) await carregar();
+  }
+
   function abrirExecucao() {
     if (!execucao) return;
     $('#exec-nome').textContent = `${execucao.treinoNome}${execucao.treinoFoco ? ` · ${execucao.treinoFoco}` : ''}`;
@@ -569,6 +661,7 @@
     $('#execucao').hidden = true;
     document.body.classList.remove('sem-rolagem');
     pararCronometro();
+    renderRetomar(); // a faixa na lista mostra que o treino continua aberto
   }
 
   function iniciarCronometro() {
@@ -629,6 +722,15 @@
             ${it.intervalo ? `<button class="btn ex-descanso" type="button" data-seg="${it.intervalo}">Descanso ${it.intervalo}s</button>` : ''}
           </div>
           ${anterior != null ? `<p class="exec-anterior">Última vez: ${comCarga(it, anterior)}</p>` : ''}
+          ${(() => {
+            const parada = it.carga != null ? cargaParada(it.exercicioId, execucao.id) : null;
+            if (!parada) return '';
+            const sugestao = proximoPasso(parada.carga, it.unidadeCarga || 'kg');
+            return `<div class="exec-dica">
+              <span>Mesma carga nos últimos <b>${parada.repeticoes}</b> registros. Que tal tentar ${comCarga(it, sugestao)}?</span>
+              <button class="btn ex-subir" type="button" data-valor="${sugestao}">Usar ${fmt(sugestao)}</button>
+            </div>`;
+          })()}
         </div>`;
       })
       .join('');
@@ -727,6 +829,7 @@
       fimTs: fim.toISOString(),
       duracaoSeg,
       itens,
+      // sem emAndamento: a partir daqui o treino conta em tudo
     });
     // a carga do dia vira a carga padrão do treino para a próxima vez
     const treino = treinos.find((t) => t.id === execucao.treinoId);
@@ -991,7 +1094,7 @@
     const treinoId = $('#sel-evo-treino').value;
     const dias = Number($('#sel-evo-periodo').value);
     const limite = dias ? Date.now() - dias * 86400000 : 0;
-    const relevantes = sessoes.filter(
+    const relevantes = finalizadas().filter(
       (s) => (!treinoId || s.treinoId === treinoId) && new Date(s.ts).getTime() >= limite
     );
 
@@ -1343,17 +1446,27 @@
     await carregar();
 
     // execução interrompida (app minimizado, aba fechada) volta de onde parou
+    // Treino começado volta de onde parou por até 24 h. Passado esse prazo, o
+    // rascunho é descartado — treino que não foi finalizado não vira registro.
     try {
       const salvo = JSON.parse(localStorage.getItem(CHAVE_EXEC) || 'null');
-      if (salvo && salvo.itens && Date.now() - new Date(salvo.ts).getTime() < 12 * 3600 * 1000) {
+      const idade = salvo ? Date.now() - new Date(salvo.ts).getTime() : 0;
+      if (salvo && salvo.itens && idade < 24 * 3600 * 1000) {
         execucao = salvo;
-        if (!execucao.id) execucao.id = MacroDB.novoId(); // execução iniciada antes da gravação parcial
+        if (!execucao.id) execucao.id = MacroDB.novoId(); // iniciada antes da gravação parcial
         abrirExecucao();
       } else if (salvo) {
         localStorage.removeItem(CHAVE_EXEC);
       }
     } catch {
       localStorage.removeItem(CHAVE_EXEC);
+    }
+    // Rascunho que não é o treino em andamento é lixo de execução descartada
+    // ou abandonada: some, para não contar como treino feito.
+    const orfaos = sessoes.filter((x) => x.emAndamento && (!execucao || x.id !== execucao.id));
+    if (orfaos.length) {
+      for (const o of orfaos) await MacroDB.deleteSessao(o.id);
+      await carregar();
     }
 
     $('#subnav-treino').addEventListener('click', (ev) => {
@@ -1427,6 +1540,15 @@
       },
       { passive: true }
     );
+
+    $('#retomar-treino').addEventListener('click', async (ev) => {
+      if (ev.target.closest('#retomar-abrir')) abrirExecucao();
+      else if (ev.target.closest('#retomar-descartar')) {
+        if (confirm('Descartar o treino em andamento? Os exercícios já marcados serão apagados.')) {
+          await descartarExecucao();
+        }
+      }
+    });
 
     $('#btn-novo-treino').addEventListener('click', () => abrirEditor(null));
 
@@ -1532,7 +1654,26 @@
     });
     $('#exec-itens').addEventListener('click', (ev) => {
       const b = ev.target.closest('.ex-descanso');
-      if (b) descanso(b, Number(b.dataset.seg));
+      if (b) {
+        descanso(b, Number(b.dataset.seg));
+        return;
+      }
+      const subir = ev.target.closest('.ex-subir');
+      if (!subir) return;
+      // aceitar a sugestão só preenche o campo: marcar o exercício continua
+      // sendo o que cria o registro
+      const bloco = subir.closest('.exec-item');
+      const it = execucao.itens[Number(bloco.dataset.i)];
+      const valor = Number(subir.dataset.valor);
+      it.carga = valor;
+      const campo = $('.ex-carga', bloco);
+      if (campo) {
+        campo.value = valor;
+        campo.focus();
+      }
+      $('.exec-dica', bloco).remove();
+      salvarExecucaoLocal();
+      if (it.feito) gravarParcial();
     });
     $('#exec-sair').addEventListener('click', () => {
       fecharExecucao(); // a execução fica guardada para retomar
@@ -1541,17 +1682,7 @@
     $('#exec-finalizar-2').addEventListener('click', finalizarTreino);
     $('#exec-descartar').addEventListener('click', async () => {
       if (!confirm('Descartar esta execução? Os exercícios já marcados também serão apagados.')) return;
-      clearTimeout(gravandoSessao);
-      const id = execucao.id;
-      execucao = null;
-      salvarExecucaoLocal();
-      fecharExecucao();
-      if (id) {
-        await MacroDB.deleteSessao(id);
-        const i = sessoes.findIndex((x) => x.id === id);
-        if (i >= 0) sessoes.splice(i, 1);
-      }
-      await carregar();
+      await descartarExecucao();
     });
 
     document.addEventListener('keydown', (ev) => {
@@ -1559,6 +1690,19 @@
       if ($('#modal-escolher').classList.contains('open')) $('#modal-escolher').classList.remove('open');
       else if ($('#modal-treino').classList.contains('open')) fecharEditor();
       else if (!$('#execucao').hidden) fecharExecucao();
+    });
+
+    // fechar o app, trocar de aba ou minimizar: grava na hora, sem esperar o
+    // debounce, para nunca perder o que já foi marcado
+    const gravarAgora = () => {
+      if (!execucao) return;
+      salvarExecucaoLocal();
+      clearTimeout(gravandoSessao);
+      gravarParcial();
+    };
+    window.addEventListener('pagehide', gravarAgora);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') gravarAgora();
     });
 
     document.addEventListener('treinos:refresh', carregar);
