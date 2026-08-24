@@ -40,8 +40,9 @@ python3 -m http.server 8000
     (segunda a domingo), marcado nos dias em que houve treino, com o dia de hoje
     destacado e a média das últimas semanas logo abaixo (o histórico importado
     entra nessa conta). Em seguida, cartões com os treinos montados (nome, foco,
-    quantas vezes foi executado, quando e por quanto tempo), botão de
-    **Iniciar treino** e editor
+    quantas vezes foi executado, quando e por quanto tempo), botões de
+    **Iniciar treino** e **Evolução** (que abre a aba de evolução já filtrada
+    naquele treino) e editor
     completo para criar, reordenar e excluir. Cada exercício da lista traz uma
     **miniatura ilustrada** (desenho do equipamento, colorido pelo grupo muscular)
     que abre a **busca do exercício no YouTube**, e a **carga é editável ali

@@ -5951,7 +5951,7 @@ const SupabaseSync = (() => {
               </li>`)
             .join('')}</ul>` : '<p class="sub">Sem exercícios — toque em Editar para montar.</p>'}
           <div class="treino-acoes">
-            <button class="btn act-historico">Histórico</button>
+            <button class="btn act-evolucao">Evolução</button>
             <button class="btn btn-primary act-iniciar"${qtd ? '' : ' disabled'}>Iniciar treino</button>
           </div>
         </div>`;
@@ -6745,29 +6745,16 @@ const SupabaseSync = (() => {
     }
   }
 
-  /* ---- Histórico de um treino ---- */
-
-  function mostrarHistorico(treino) {
-    const lista = sessoesDe(treino.id).slice().reverse();
-    if (!lista.length) {
-      alert(`${treino.nome} ainda não foi executado.`);
-      return;
-    }
-    const linhas = lista
-      .slice(0, 12)
-      .map((s) => {
-        const itens = (s.itens || [])
-          .filter((i) => i.carga != null || i.feito)
-          .map((i) => `${i.nome}${i.carga != null ? `: ${comCarga(i, i.carga)}` : ''}${i.reps ? ` (${i.reps})` : ''}`)
-          .join('\n  ');
-        const extra = s.duracaoSeg ? ` · ${minutos(s.duracaoSeg)}` : s.origem ? ` · importado do ${s.origem}` : '';
-        return `${dataBr(s.ts)}${extra}\n  ${itens || 'sem cargas registradas'}`;
-      })
-      .join('\n\n');
-    alert(`${treino.nome} — ${lista.length} ${lista.length === 1 ? 'execução' : 'execuções'}\n\n${linhas}`);
-  }
-
   /* ---- Abas ---- */
+
+  // O botão do cartão leva para a Evolução já filtrada naquele treino, em vez
+  // de abrir um alerta com o histórico em texto.
+  function verEvolucao(treino) {
+    const sel = $('#sel-evo-treino');
+    if ([...sel.options].some((o) => o.value === treino.id)) sel.value = treino.id;
+    trocarAba('evolucao');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 
   function trocarAba(aba) {
     $$('#subnav-treino button').forEach((b) => b.classList.toggle('active', b.dataset.aba === aba));
@@ -6867,7 +6854,7 @@ const SupabaseSync = (() => {
       if (!treino) return;
       if (ev.target.closest('.act-editar')) abrirEditor(treino);
       else if (ev.target.closest('.act-iniciar')) iniciarTreino(treino);
-      else if (ev.target.closest('.act-historico')) mostrarHistorico(treino);
+      else if (ev.target.closest('.act-evolucao')) verEvolucao(treino);
     });
 
     $('#btn-novo-treino').addEventListener('click', () => abrirEditor(null));
