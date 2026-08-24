@@ -1101,6 +1101,7 @@
     if (!relevantes.length) {
       $('#evo-resumo').innerHTML = '';
       $('#evo-frequencia').innerHTML = '';
+      $('#evo-execucoes').innerHTML = '';
       $('#evo-graficos').innerHTML =
         '<div class="empty-state"><p>Nenhuma execução registrada neste período.</p><p class="sub">Inicie um treino e informe a carga de cada exercício para ver a progressão aqui.</p></div>';
       return;
@@ -1194,6 +1195,37 @@
             </div>`).join('')}
         </div>
         <p class="freq-legenda">Dias com treino por semana (segunda a domingo)</p>` : ''}
+      </div>`;
+
+    // lista das execuções, com a opção de apagar um treino registrado por engano
+    const emOrdem = relevantes.slice().reverse();
+    $('#evo-execucoes').innerHTML = `
+      <div class="chart-card">
+        <h3>Execuções do período</h3>
+        <p class="sub">${emOrdem.length} ${emOrdem.length === 1 ? 'treino registrado' : 'treinos registrados'} · dá para excluir um que tenha entrado sem querer</p>
+        <ul class="exec-lista">
+          ${emOrdem.slice(0, 40).map((x) => {
+            const feitos = (x.itens || []).filter((i) => i.feito).length;
+            const cargas = (x.itens || []).filter((i) => i.carga != null).length;
+            const dur = minutos(x.duracaoSeg);
+            const detalhes = [
+              feitos ? `${feitos} ${feitos === 1 ? 'exercício' : 'exercícios'}` : 'nenhum exercício marcado',
+              cargas ? `${cargas} com carga` : '',
+              dur,
+              x.origem ? `importado do ${esc(x.origem)}` : '',
+            ].filter(Boolean).join(' · ');
+            return `
+            <li class="exec-linha">
+              <div class="el-info">
+                <b>${dataBr(x.ts)}</b>
+                <span>${esc(x.treinoNome || 'Treino')} · ${detalhes}</span>
+              </div>
+              <button class="btn btn-ghost btn-danger-text act-del-sessao" type="button"
+                data-id="${esc(x.id)}" aria-label="Excluir treino de ${dataBr(x.ts)}">Excluir</button>
+            </li>`;
+          }).join('')}
+        </ul>
+        ${emOrdem.length > 40 ? `<p class="sub">Mostrando as 40 mais recentes de ${emOrdem.length}.</p>` : ''}
       </div>`;
 
     const wrap = $('#evo-graficos');
@@ -1627,6 +1659,21 @@
     }
 
     /* evolução */
+    $('#evo-execucoes').addEventListener('click', async (ev) => {
+      const b = ev.target.closest('.act-del-sessao');
+      if (!b) return;
+      const sessao = sessoes.find((x) => x.id === b.dataset.id);
+      if (!sessao) return;
+      if (!confirm(
+        `Excluir o treino de ${dataBr(sessao.ts)} (${sessao.treinoNome || 'Treino'})? ` +
+        'Ele sai da frequência e dos gráficos. Não dá para desfazer.'
+      )) return;
+      await MacroDB.deleteSessao(sessao.id);
+      const i = sessoes.findIndex((x) => x.id === sessao.id);
+      if (i >= 0) sessoes.splice(i, 1);
+      renderLista();
+      renderEvolucao();
+    });
     $('#sel-evo-treino').addEventListener('change', renderEvolucao);
     $('#sel-evo-periodo').addEventListener('change', renderEvolucao);
 

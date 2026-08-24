@@ -852,3 +852,15 @@ main { max-width: 860px; margin: 0 auto; padding: 20px 16px 110px; }
 .retomar-info b { font-size: 14.5px; }
 .retomar-info span { font-size: 12.5px; color: var(--ink-2); }
 .retomar-acoes { display: flex; gap: 8px; flex: none; }
+
+/* ---- Lista de execuções (com exclusão) ---- */
+.exec-lista { list-style: none; margin: 8px 0 0; padding: 0; }
+.exec-linha {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 0; border-bottom: 1px solid var(--grid);
+}
+.exec-linha:last-child { border-bottom: none; }
+.el-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.el-info b { font-size: 13.5px; font-variant-numeric: tabular-nums; }
+.el-info span { font-size: 12px; color: var(--muted); }
+.act-del-sessao { flex: none; font-size: 12.5px; padding: 4px 10px; }

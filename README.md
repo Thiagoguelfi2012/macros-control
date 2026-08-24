@@ -75,7 +75,9 @@ python3 -m http.server 8000
     rascunho abandonado (app fechado sem finalizar nem descartar) é removido na
     próxima abertura — só treino finalizado vira registro.
   - **Evolução** — card de **frequência** (dias com treino no período, média por
-    semana e uma barra por semana), **duração dos treinos** em barras (com tempo
+    semana e uma barra por semana), a **lista das execuções** do período com
+    data, treino, quantos exercícios e quanto durou, cada uma com um botão para
+    **excluir** um treino que tenha entrado por engano, **duração dos treinos** em barras (com tempo
     total e média) e um gráfico de linha por exercício com a **progressão de
     carga** ao longo das execuções, com o **valor escrito em cada ponto**, uma
     marca no eixo X por execução e no eixo Y por carga registrada. Filtros por
