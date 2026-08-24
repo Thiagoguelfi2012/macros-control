@@ -36,18 +36,24 @@ python3 -m http.server 8000
   **déficit/superávit calórico** do período, calculado a partir do gasto médio
   diário definido em Configurações.
 - **Treinos** (`treinos.html`, área Treino): três abas.
-  - **Treinos** — cartões com os treinos montados (nome, foco, exercícios com
-    séries/repetições/carga, quantas vezes foi executado e quando), botão de
-    **Iniciar treino** e editor completo para criar, reordenar e excluir.
-  - **Execução** — ao iniciar, a tela mostra cada exercício com o alvo de séries e
-    repetições, campo de **carga do dia** (já preenchido com a última carga usada),
-    repetições feitas, um cronômetro de **descanso** com o intervalo do exercício e
-    o tempo total do treino. Marcar como feito, sair e voltar depois: a execução em
-    andamento fica guardada por 12 h. Ao finalizar, a carga do dia vira a carga
-    padrão do treino para a próxima vez.
-  - **Evolução** — um gráfico de linha por exercício com a **progressão de carga**
-    ao longo das execuções (filtros por treino e por período), mais a variação em kg
-    entre a primeira e a última vez.
+  - **Treinos** — cartões com os treinos montados (nome, foco, quantas vezes foi
+    executado, quando e por quanto tempo), botão de **Iniciar treino** e editor
+    completo para criar, reordenar e excluir. Cada exercício da lista traz uma
+    **miniatura ilustrada** (desenho do equipamento, colorido pelo grupo muscular)
+    que abre a **busca do exercício no YouTube**, e a **carga é editável ali
+    mesmo**, sem precisar abrir o editor do treino.
+  - **Execução** — ao iniciar, a tela mostra cada exercício com miniatura, alvo de
+    séries e repetições, **caixa para marcar como concluído**, campo de **carga do
+    dia** (já preenchido com a última carga usada), repetições feitas e um
+    cronômetro de **descanso** com o intervalo do exercício. O **tempo de treino**
+    corre no topo desde o Iniciar e é gravado ao Finalizar. Dá para sair e voltar
+    depois: a execução em andamento fica guardada por 12 h. Ao finalizar, a carga
+    do dia vira a carga padrão do treino para a próxima vez.
+  - **Evolução** — **duração dos treinos** em barras (com tempo total e média do
+    período) e um gráfico de linha por exercício com a **progressão de carga** ao
+    longo das execuções (filtros por treino e por período), mais a variação entre a
+    primeira e a última vez. Execuções deixadas abertas por mais de 4 h ficam fora
+    das contas de tempo.
   - **Exercícios** — biblioteca com **166 exercícios** de uma academia padrão
     (Smart Fit): aparelhos, polias, Smith, halteres/barras e peso corporal,
     agrupados por músculo e filtráveis por grupo e equipamento. É de onde saem os

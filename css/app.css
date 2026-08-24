@@ -638,13 +638,44 @@ main { max-width: 860px; margin: 0 auto; padding: 20px 16px 110px; }
 .treino-foco { margin: 2px 0 0; font-size: 13px; color: var(--ink-2); }
 .treino-meta { margin: 10px 0 0; font-size: 12.5px; color: var(--muted); }
 .treino-exec { margin: 2px 0 12px; font-size: 12.5px; color: var(--accent); }
-.treino-previa { list-style: decimal; margin: 0 0 14px; padding-left: 22px; }
-.treino-previa li {
-  display: flex; justify-content: space-between; gap: 12px;
-  font-size: 13.5px; padding: 4px 0; border-bottom: 1px solid var(--grid);
+.treino-previa { list-style: none; margin: 0 0 14px; padding: 0; }
+
+/* linha de exercício: miniatura + nome/série + carga editável na hora */
+.ex-linha {
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 0; border-bottom: 1px solid var(--grid);
 }
-.treino-previa li:last-child { border-bottom: none; }
-.treino-previa .prev-serie { color: var(--muted); font-size: 12.5px; white-space: nowrap; }
+.ex-linha:last-child { border-bottom: none; }
+.ex-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.ex-nome { font-size: 13.5px; line-height: 1.3; }
+.ex-serie { font-size: 11.5px; color: var(--muted); }
+.ex-carga-campo { display: flex; align-items: center; gap: 5px; flex: none; }
+.ex-carga-campo input {
+  width: 64px; font: inherit; font-size: 14px; text-align: right;
+  color: var(--ink); background: var(--page);
+  border: 1px solid var(--baseline); border-radius: 8px; padding: 6px 8px;
+  font-variant-numeric: tabular-nums;
+}
+.ex-carga-campo input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+.ex-carga-campo input.salvo { border-color: var(--good-text); background: color-mix(in srgb, var(--good-text) 10%, var(--page)); }
+.ex-un { font-size: 11.5px; color: var(--muted); width: 26px; }
+
+/* miniatura ilustrada; toque abre a busca do exercício no YouTube */
+.ex-thumb {
+  position: relative; flex: none; width: 44px; height: 44px; border-radius: 10px;
+  display: grid; place-items: center; text-decoration: none;
+  background: color-mix(in srgb, var(--cor-ex) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--cor-ex) 26%, transparent);
+}
+.ex-thumb:hover { background: color-mix(in srgb, var(--cor-ex) 24%, transparent); }
+.ex-thumb-svg { width: 30px; height: 30px; display: block; }
+.ex-play {
+  position: absolute; right: -3px; bottom: -3px;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--ink); color: var(--page);
+  font-size: 7px; line-height: 16px; text-align: center;
+  padding-left: 1px; border: 1.5px solid var(--surface);
+}
 .treino-acoes { display: flex; gap: 8px; }
 .treino-acoes .act-iniciar { flex: 1; }
 
@@ -714,6 +745,9 @@ main { max-width: 860px; margin: 0 auto; padding: 20px 16px 110px; }
 }
 .exec-item.feito { border-color: var(--good-text); background: color-mix(in srgb, var(--good-text) 6%, var(--surface)); }
 .exec-item-head { display: flex; align-items: center; gap: 10px; }
+.exec-item-head .ex-thumb { width: 40px; height: 40px; }
+.exec-item-head .ex-thumb-svg { width: 26px; height: 26px; }
+.exec-item.feito .ex-thumb { opacity: 0.55; }
 .exec-check { display: flex; align-items: center; gap: 10px; cursor: pointer; flex: 1; }
 .exec-check input { width: 20px; height: 20px; accent-color: var(--accent); flex: none; }
 .exec-nome { font-weight: 600; font-size: 15px; }

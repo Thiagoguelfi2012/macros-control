@@ -29,6 +29,59 @@
     });
   }
 
+  /* ---- Miniatura do exercício e link para o vídeo ---- */
+
+  // Uma cor por grupo muscular: a miniatura fica reconhecível de relance e
+  // funciona nos dois temas (fundo é a mesma cor bem diluída).
+  const COR_GRUPO = {
+    Peito: '#2a78d6', Costas: '#1baf7a', Ombros: '#eb6834', Bíceps: '#8b5cf6',
+    Tríceps: '#d946a6', Antebraço: '#0891b2', Trapézio: '#16a34a',
+    Quadríceps: '#ca8a04', 'Posterior de coxa': '#ea580c', Glúteos: '#db2777',
+    Adutores: '#7c3aed', Panturrilha: '#0d9488', Abdômen: '#dc2626',
+    Lombar: '#65a30d', 'Corpo inteiro': '#4f46e5', Cardio: '#0ea5e9',
+  };
+
+  // Desenhos de linha por tipo de equipamento (viewBox 48x48).
+  const DESENHO = {
+    Barra: '<path d="M6 24h36M10 17v14M14 19v10M38 17v14M34 19v10"/>',
+    Halteres: '<path d="M14 24h20M10 18v12M17 20v8M31 20v8M38 18v12"/>',
+    Máquina: '<path d="M10 40V10h6v30M16 16h14a8 8 0 0 1 0 16H16M34 40h6V26"/><path d="M10 16h6M10 22h6M10 28h6"/>',
+    Polia: '<circle cx="24" cy="11" r="4"/><path d="M24 15v13M18 28h12l-2 8H20z"/><path d="M20 40h8"/>',
+    Smith: '<path d="M12 8v32M36 8v32M8 22h32M14 18v8M34 18v8"/>',
+    'Peso corporal': '<circle cx="24" cy="11" r="4"/><path d="M24 15v13M14 20l10 4 10-4M18 40l6-12 6 12"/>',
+    Kettlebell: '<path d="M19 18a5 5 0 0 1 10 0"/><path d="M17 18h14a10 10 0 0 1 4 8v8a4 4 0 0 1-4 4H17a4 4 0 0 1-4-4v-8a10 10 0 0 1 4-8z"/>',
+    Anilha: '<circle cx="24" cy="24" r="14"/><circle cx="24" cy="24" r="5"/>',
+    Funcional: '<path d="M6 30c6-12 12 12 18 0s12 12 18 0"/><path d="M6 20c6-12 12 12 18 0"/>',
+    Cardio: '<circle cx="13" cy="33" r="7"/><circle cx="35" cy="33" r="7"/><path d="M13 33l8-14h8M21 19l8 14M29 19h6"/>',
+  };
+
+  const svgExercicio = (grupo, equipamento) => {
+    const cor = COR_GRUPO[grupo] || '#2a78d6';
+    const traco = DESENHO[equipamento] || DESENHO.Máquina;
+    return `<svg class="ex-thumb-svg" viewBox="0 0 48 48" aria-hidden="true"
+      style="--cor-ex:${cor}"><g fill="none" stroke="${cor}" stroke-width="2.4"
+      stroke-linecap="round" stroke-linejoin="round">${traco}</g></svg>`;
+  };
+
+  const linkYoutube = (nome) =>
+    `https://www.youtube.com/results?search_query=${encodeURIComponent(`${nome} execução correta`)}`;
+
+  // miniatura clicável: abre a busca do exercício no YouTube
+  const thumbExercicio = (e) => `
+    <a class="ex-thumb" href="${linkYoutube(e.nome)}" target="_blank" rel="noopener noreferrer"
+       title="Ver ${esc(e.nome)} no YouTube" aria-label="Ver ${esc(e.nome)} no YouTube"
+       style="--cor-ex:${COR_GRUPO[e.grupo] || '#2a78d6'}">
+      ${svgExercicio(e.grupo, e.equipamento)}
+      <span class="ex-play" aria-hidden="true">▶</span>
+    </a>`;
+
+  const minutos = (seg) => {
+    if (!seg) return '';
+    const m = Math.round(seg / 60);
+    if (m < 60) return `${m} min`;
+    return `${Math.floor(m / 60)}h${String(m % 60).padStart(2, '0')}`;
+  };
+
   /* ---- Estado ---- */
 
   let treinos = [];
@@ -37,6 +90,9 @@
   let execucao = null; // { treinoId, treinoNome, ts, itens: [...] }
   let cronometro = null;
   let chartsEvo = [];
+  // gravações feitas pela própria tela não devem redesenhar a lista por baixo
+  // do usuário (ele pode estar com o dedo no campo de carga)
+  let ignorarRecarga = false;
   const CHAVE_EXEC = 'sessaoEmAndamento';
 
   /* ---- Treino pré-configurado ---- */
@@ -167,7 +223,8 @@
     const lista = sessoesDe(treinoId);
     if (!lista.length) return 'Ainda não executado';
     const ultima = lista[lista.length - 1];
-    return `Executado ${lista.length} ${lista.length === 1 ? 'vez' : 'vezes'}, última em ${dataBr(ultima.ts)}`;
+    const dur = ultima.duracaoSeg ? ` · ${minutos(ultima.duracaoSeg)}` : '';
+    return `Executado ${lista.length} ${lista.length === 1 ? 'vez' : 'vezes'}, última em ${dataBr(ultima.ts)}${dur}`;
   }
 
   function renderLista() {
@@ -195,9 +252,22 @@
           </div>
           <p class="treino-meta">${qtd} ${qtd === 1 ? 'exercício' : 'exercícios'}${grupos.length ? ` · ${esc(grupos.join(', '))}` : ''}</p>
           <p class="treino-exec">${esc(resumoExecucoes(t.id))}</p>
-          ${qtd ? `<ol class="treino-previa">${t.exercicios
-            .map((e) => `<li><span>${esc(e.nome)}</span><span class="prev-serie">${rotuloSerie(e)}${e.carga ? ` · ${comCarga(e, e.carga)}` : ''}</span></li>`)
-            .join('')}</ol>` : '<p class="sub">Sem exercícios — toque em Editar para montar.</p>'}
+          ${qtd ? `<ul class="treino-previa">${t.exercicios
+            .map((e) => `
+              <li class="ex-linha" data-ex="${esc(e.id)}">
+                ${thumbExercicio(e)}
+                <span class="ex-info">
+                  <span class="ex-nome">${esc(e.nome)}</span>
+                  <span class="ex-serie">${rotuloSerie(e)}</span>
+                </span>
+                <span class="ex-carga-campo">
+                  <input type="number" class="card-carga" min="0" step="${(e.unidadeCarga || 'kg') === 'kg' ? '0.5' : '1'}"
+                    value="${e.carga ?? ''}" placeholder="—" inputmode="decimal"
+                    aria-label="Carga de ${esc(e.nome)} em ${unCarga(e)}" />
+                  <span class="ex-un">${unCarga(e)}</span>
+                </span>
+              </li>`)
+            .join('')}</ul>` : '<p class="sub">Sem exercícios — toque em Editar para montar.</p>'}
           <div class="treino-acoes">
             <button class="btn act-historico">Histórico</button>
             <button class="btn btn-primary act-iniciar"${qtd ? '' : ' disabled'}>Iniciar treino</button>
@@ -273,6 +343,7 @@
       const s = seg % 60;
       const p2 = (n) => String(n).padStart(2, '0');
       $('#exec-cronometro').textContent = h ? `${h}:${p2(m)}:${p2(s)}` : `${p2(m)}:${p2(s)}`;
+      if (seg % 30 === 0) atualizarResumoExecucao();
     };
     tick();
     cronometro = setInterval(tick, 1000);
@@ -292,6 +363,7 @@
         return `
         <div class="exec-item${it.feito ? ' feito' : ''}" data-i="${i}">
           <div class="exec-item-head">
+            ${thumbExercicio(it)}
             <label class="exec-check">
               <input type="checkbox" class="ex-feito" ${it.feito ? 'checked' : ''} aria-label="Marcar ${esc(it.nome)} como feito" />
               <span class="exec-nome">${esc(it.nome)}</span>
@@ -318,7 +390,9 @@
 
   function atualizarResumoExecucao() {
     const feitos = execucao.itens.filter((i) => i.feito).length;
-    $('#exec-resumo').textContent = `${feitos} de ${execucao.itens.length} exercícios concluídos`;
+    const seg = Math.max(0, Math.floor((Date.now() - new Date(execucao.ts).getTime()) / 1000));
+    $('#exec-resumo').textContent =
+      `${feitos} de ${execucao.itens.length} exercícios concluídos · ${minutos(seg) || 'menos de 1 min'} de treino`;
   }
 
   function descanso(botao, segundos) {
@@ -357,11 +431,14 @@
       alert('Marque pelo menos um exercício ou informe uma carga antes de finalizar.');
       return;
     }
+    const fim = new Date();
+    const duracaoSeg = Math.max(0, Math.round((fim.getTime() - new Date(execucao.ts).getTime()) / 1000));
     await MacroDB.saveSessao({
       treinoId: execucao.treinoId,
       treinoNome: execucao.treinoNome,
       ts: execucao.ts,
-      fimTs: new Date().toISOString(),
+      fimTs: fim.toISOString(),
+      duracaoSeg,
       itens,
     });
     // a carga do dia vira a carga padrão do treino para a próxima vez
@@ -572,15 +649,32 @@
     const evoluiram = [...porExercicio.values()].filter(
       (e) => e.pontos.length > 1 && e.pontos[e.pontos.length - 1].carga > e.pontos[0].carga
     ).length;
+    // duração: execuções esquecidas abertas (> 4 h) ficam fora das contas
+    const LIMITE_DUR = 4 * 3600;
+    const comDuracao = relevantes.filter((x) => x.duracaoSeg > 0 && x.duracaoSeg <= LIMITE_DUR);
+    const somaDur = comDuracao.reduce((n, x) => n + x.duracaoSeg, 0);
+    const tempoTotal = comDuracao.length ? minutos(somaDur) : '—';
+    const tempoMedio = comDuracao.length ? minutos(somaDur / comDuracao.length) : '—';
     $('#evo-resumo').innerHTML = `
       <div class="tiles">
         <div class="tile"><div class="t-label">Execuções</div><div class="t-value">${totalSessoes}</div><div class="t-sub">no período</div></div>
+        <div class="tile"><div class="t-label">Tempo treinado</div><div class="t-value">${tempoTotal}</div><div class="t-sub">${comDuracao.length ? `média de ${tempoMedio} por treino` : 'sem tempo registrado'}</div></div>
         <div class="tile"><div class="t-label">Exercícios com carga</div><div class="t-value">${porExercicio.size}</div><div class="t-sub">registrados</div></div>
         <div class="tile"><div class="t-label">Com evolução</div><div class="t-value">${evoluiram}</div><div class="t-sub">carga maior que a primeira</div></div>
       </div>`;
 
     const wrap = $('#evo-graficos');
-    wrap.innerHTML = [...porExercicio.entries()]
+    const blocoDuracao = comDuracao.length > 1
+      ? `<div class="chart-card">
+           <div class="evo-head">
+             <h3>Duração do treino</h3>
+             <span class="evo-delta igual">último: ${minutos(comDuracao[comDuracao.length - 1].duracaoSeg)}</span>
+           </div>
+           <p class="sub">Tempo entre iniciar e finalizar cada treino · média de ${tempoMedio}</p>
+           <div class="chart-wrap small"><canvas id="evo-duracao"></canvas></div>
+         </div>`
+      : '';
+    wrap.innerHTML = blocoDuracao + [...porExercicio.entries()]
       .map(([id, e]) => {
         const ini = e.pontos[0].carga;
         const fim = e.pontos[e.pontos.length - 1].carga;
@@ -604,6 +698,47 @@
     const ink2 = cssVar('--ink-2');
     const muted = cssVar('--muted');
     const grid = cssVar('--grid');
+    const eixos = (sufixo) => ({
+      x: { grid: { display: false }, ticks: { color: muted, font: { size: 11 }, maxRotation: 0, autoSkip: true } },
+      y: {
+        grid: { color: grid, drawTicks: false },
+        border: { display: false },
+        ticks: { color: muted, font: { size: 11 }, maxTicksLimit: 5, callback: (v) => `${v} ${sufixo}` },
+      },
+    });
+
+    const cvDur = document.getElementById('evo-duracao');
+    if (cvDur) {
+      chartsEvo.push(
+        new Chart(cvDur, {
+          type: 'bar',
+          data: {
+            labels: comDuracao.map((x) => dataBr(x.ts)),
+            datasets: [{
+              label: 'Duração (min)',
+              data: comDuracao.map((x) => Math.round(x.duracaoSeg / 60)),
+              backgroundColor: cssVar('--accent'),
+              borderWidth: 0,
+              maxBarThickness: 28,
+            }],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: (ctx) => ` ${ctx.parsed.y} min`,
+                  afterLabel: (ctx) => comDuracao[ctx.dataIndex].treinoNome || '',
+                },
+              },
+            },
+            scales: eixos('min'),
+          },
+        })
+      );
+    }
     for (const [id, e] of porExercicio.entries()) {
       const cv = document.getElementById(`evo-${id}`);
       if (!cv) continue;
@@ -633,14 +768,7 @@
               legend: { display: false },
               tooltip: { callbacks: { label: (ctx) => ` ${fmt(ctx.parsed.y)} ${un}` } },
             },
-            scales: {
-              x: { grid: { display: false }, ticks: { color: muted, font: { size: 11 }, maxRotation: 0, autoSkip: true } },
-              y: {
-                grid: { color: grid, drawTicks: false },
-                border: { display: false },
-                ticks: { color: muted, font: { size: 11 }, maxTicksLimit: 5, callback: (v) => `${v} ${un}` },
-              },
-            },
+            scales: eixos(un),
           },
         })
       );
@@ -663,7 +791,7 @@
           .filter((i) => i.carga != null || i.feito)
           .map((i) => `${i.nome}${i.carga != null ? `: ${comCarga(i, i.carga)}` : ''}${i.reps ? ` (${i.reps})` : ''}`)
           .join('\n  ');
-        return `${dataBr(s.ts)}\n  ${itens || 'sem cargas registradas'}`;
+        return `${dataBr(s.ts)}${s.duracaoSeg ? ` · ${minutos(s.duracaoSeg)}` : ''}\n  ${itens || 'sem cargas registradas'}`;
       })
       .join('\n\n');
     alert(`${treino.nome} — ${lista.length} ${lista.length === 1 ? 'execução' : 'execuções'}\n\n${linhas}`);
@@ -731,7 +859,36 @@
       if (b) trocarAba(b.dataset.aba);
     });
 
+    // a carga do cartão grava direto no treino, sem abrir o editor
+    let gravando = null;
+    $('#lista-treinos').addEventListener('change', async (ev) => {
+      const campo = ev.target.closest('.card-carga');
+      if (!campo) return;
+      const card = campo.closest('.treino-card');
+      const linha = campo.closest('.ex-linha');
+      const treino = treinos.find((t) => t.id === card.dataset.id);
+      const ex = treino && (treino.exercicios || []).find((x) => x.id === linha.dataset.ex);
+      if (!ex) return;
+      const novo = campo.value === '' ? null : Number(campo.value);
+      if (novo === ex.carga) return;
+      ex.carga = novo;
+      clearTimeout(gravando);
+      campo.classList.add('salvo');
+      setTimeout(() => campo.classList.remove('salvo'), 900);
+      gravando = setTimeout(async () => {
+        ignorarRecarga = true;
+        try {
+          await MacroDB.saveTreino(treino);
+        } finally {
+          ignorarRecarga = false;
+        }
+        if (!$('#aba-evolucao').hidden) renderEvolucao();
+      }, 250);
+    });
+
     $('#lista-treinos').addEventListener('click', async (ev) => {
+      // links e campos do cartão não devem virar ação do cartão
+      if (ev.target.closest('.ex-thumb, .card-carga')) return;
       const card = ev.target.closest('.treino-card');
       if (!card) return;
       const treino = treinos.find((t) => t.id === card.dataset.id);
@@ -864,6 +1021,7 @@
 
     document.addEventListener('treinos:refresh', carregar);
     MacroDB.onChange((tipo) => {
+      if (ignorarRecarga) return;
       if (tipo === 'limpeza' || tipo === 'treino' || tipo === 'sessao') carregar();
     });
   }
