@@ -9,6 +9,9 @@
     String(t ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   const cssVar = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
   const dataBr = (iso) => new Date(iso).toLocaleDateString('pt-BR');
+  // eixo com uma data por execução: dia/mês cabe onde a data cheia não caberia
+  const dataCurta = (iso) =>
+    new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 
   const BIBLIOTECA = () => (window.EXERCICIOS || []);
   const acharExercicio = (id) => BIBLIOTECA().find((e) => e.id === id) || null;
@@ -759,29 +762,41 @@
 
   /* ---- Evolução ---- */
 
-  // Escreve o valor em cima de cada ponto (ou barra). Se dois rótulos vizinhos
-  // fossem se sobrepor, o segundo é omitido — melhor faltar um número do que
-  // sair uma sopa de dígitos numa tela estreita.
+  // Escreve o valor de cada ponto (ou barra). Quando dois rótulos vizinhos
+  // colidiriam, o segundo desce para baixo do ponto em vez de sumir: a ideia é
+  // que todo ponto mostre o seu número.
   const rotulosDePonto = (sufixo) => ({
     id: 'rotulosDePonto',
     afterDatasetsDraw(chart) {
-      const { ctx } = chart;
+      const { ctx, chartArea } = chart;
       const meta = chart.getDatasetMeta(0);
       const dados = chart.data.datasets[0].data;
+      const ALTURA = 13;
       ctx.save();
       ctx.font = '600 11px ui-sans-serif, system-ui, sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'bottom';
       ctx.fillStyle = cssVar('--ink');
-      let ocupadoAte = -Infinity;
+      const desenhados = [];
+      const bate = (r) =>
+        desenhados.some((d) => r.x1 > d.x0 - 6 && r.x0 < d.x1 + 6 && r.y1 > d.y0 - 2 && r.y0 < d.y1 + 2);
       meta.data.forEach((ponto, i) => {
         const v = dados[i];
         if (v == null) return;
         const texto = `${fmt(v)}${sufixo ? ` ${sufixo}` : ''}`;
-        const largura = ctx.measureText(texto).width;
-        if (ponto.x - largura / 2 < ocupadoAte + 4) return;
-        ocupadoAte = ponto.x + largura / 2;
-        ctx.fillText(texto, ponto.x, ponto.y - 7);
+        const meia = ctx.measureText(texto).width / 2;
+        // sem vazar pelas laterais do gráfico
+        const x = Math.min(Math.max(ponto.x, chartArea.left + meia), chartArea.right - meia);
+        // sempre acima do ponto; se colidir com um rótulo já escrito, sobe um
+        // degrau — assim todo ponto mostra o seu valor sem sobreposição
+        let y = ponto.y - 9;
+        for (let passo = 0; passo < 4; passo++) {
+          const r = { x0: x - meia, x1: x + meia, y0: y - ALTURA, y1: y };
+          if (!bate(r) && r.y0 >= chartArea.top - 20) break;
+          y -= ALTURA;
+        }
+        desenhados.push({ x0: x - meia, x1: x + meia, y0: y - ALTURA, y1: y });
+        ctx.fillText(texto, x, y);
       });
       ctx.restore();
     },
@@ -905,7 +920,7 @@
              <span class="evo-delta igual">último: ${minutos(comDuracao[comDuracao.length - 1].duracaoSeg)}</span>
            </div>
            <p class="sub">Tempo entre iniciar e finalizar cada treino · média de ${tempoMedio}</p>
-           <div class="chart-wrap small"><canvas id="evo-duracao"></canvas></div>
+           <div class="chart-wrap evo"><canvas id="evo-duracao"></canvas></div>
          </div>`
       : '';
     wrap.innerHTML = blocoDuracao + [...porExercicio.entries()]
@@ -923,7 +938,7 @@
             <span class="evo-delta ${sinal}">${rotulo}</span>
           </div>
           <p class="sub">${fmt(ini)} ${un} → ${fmt(fim)} ${un} · ${e.pontos.length} ${e.pontos.length === 1 ? 'registro' : 'registros'}</p>
-          <div class="chart-wrap small"><canvas id="evo-${esc(id)}"></canvas></div>
+          <div class="chart-wrap evo"><canvas id="evo-${esc(id)}"></canvas></div>
         </div>`;
       })
       .join('');
@@ -932,14 +947,47 @@
     const ink2 = cssVar('--ink-2');
     const muted = cssVar('--muted');
     const grid = cssVar('--grid');
-    const eixos = (sufixo) => ({
-      x: { grid: { display: false }, ticks: { color: muted, font: { size: 11 }, maxRotation: 0, autoSkip: true } },
-      y: {
-        grid: { color: grid, drawTicks: false },
-        border: { display: false },
-        ticks: { color: muted, font: { size: 11 }, maxTicksLimit: 5, callback: (v) => `${v} ${sufixo}` },
-      },
-    });
+    // Eixo X: uma marca por execução, sem pular nenhuma data.
+    // Eixo Y: uma marca em cada carga que existe de fato, com uma folga em
+    // cima e embaixo para os rótulos dos pontos não encostarem na borda.
+    const eixos = (sufixo, valores) => {
+      const unicos = valores ? [...new Set(valores)].sort((a, b) => a - b) : null;
+      const min = unicos ? unicos[0] : 0;
+      const max = unicos ? unicos[unicos.length - 1] : 0;
+      const folga = Math.max((max - min) * 0.18, max * 0.05, 0.5);
+      const nPontos = valores ? valores.length : 0;
+      return {
+        x: {
+          grid: { color: grid, drawTicks: false },
+          border: { display: false },
+          ticks: {
+            color: muted,
+            font: { size: nPontos > 14 ? 9 : 10 },
+            autoSkip: false,
+            maxRotation: nPontos > 10 ? 90 : 45,
+            minRotation: nPontos > 10 ? 90 : 45,
+          },
+        },
+        y: {
+          grid: { color: grid, drawTicks: false },
+          border: { display: false },
+          ...(unicos ? { min: min - folga, max: max + folga } : {}),
+          ticks: {
+            color: muted,
+            font: { size: 11 },
+            callback: (v) => `${fmt(v)} ${sufixo}`,
+            ...(unicos ? { autoSkip: false } : { maxTicksLimit: 5 }),
+          },
+          ...(unicos
+            ? {
+                afterBuildTicks: (eixo) => {
+                  eixo.ticks = unicos.map((v) => ({ value: v }));
+                },
+              }
+            : {}),
+        },
+      };
+    };
 
     const cvDur = document.getElementById('evo-duracao');
     if (cvDur) {
@@ -947,7 +995,7 @@
         new Chart(cvDur, {
           type: 'bar',
           data: {
-            labels: comDuracao.map((x) => dataBr(x.ts)),
+            labels: comDuracao.map((x) => dataCurta(x.ts)),
             datasets: [{
               label: 'Duração (min)',
               data: comDuracao.map((x) => Math.round(x.duracaoSeg / 60)),
@@ -963,13 +1011,14 @@
               legend: { display: false },
               tooltip: {
                 callbacks: {
+                  title: (itens) => dataBr(comDuracao[itens[0].dataIndex].ts),
                   label: (ctx) => ` ${ctx.parsed.y} min`,
                   afterLabel: (ctx) => comDuracao[ctx.dataIndex].treinoNome || '',
                 },
               },
             },
-            layout: { padding: { top: 18 } },
-            scales: eixos('min'),
+            layout: { padding: { top: 24 } },
+            scales: eixos('min', comDuracao.map((x) => Math.round(x.duracaoSeg / 60))),
           },
           plugins: [rotulosDePonto('min')],
         })
@@ -983,7 +1032,7 @@
         new Chart(cv, {
           type: 'line',
           data: {
-            labels: e.pontos.map((p) => dataBr(p.ts)),
+            labels: e.pontos.map((p) => dataCurta(p.ts)),
             datasets: [
               {
                 label: `Carga (${un})`,
@@ -991,8 +1040,9 @@
                 borderColor: cssVar('--accent'),
                 backgroundColor: cssVar('--accent'),
                 borderWidth: 2,
-                pointRadius: 3,
-                tension: 0.2,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                tension: 0, // sem suavizar: a linha vai de ponto a ponto
                 fill: false,
               },
             ],
@@ -1002,10 +1052,15 @@
             maintainAspectRatio: false,
             plugins: {
               legend: { display: false },
-              tooltip: { callbacks: { label: (ctx) => ` ${fmt(ctx.parsed.y)} ${un}` } },
+              tooltip: {
+                callbacks: {
+                  title: (itens) => dataBr(e.pontos[itens[0].dataIndex].ts),
+                  label: (ctx) => ` ${fmt(ctx.parsed.y)} ${un}`,
+                },
+              },
             },
-            layout: { padding: { top: 18 } },
-            scales: eixos(un),
+            layout: { padding: { top: 30, bottom: 4 } },
+            scales: eixos(un, e.pontos.map((p) => p.carga)),
           },
           plugins: [rotulosDePonto(un)],
         })
