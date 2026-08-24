@@ -195,7 +195,7 @@
   // As datas são as colunas; cada exercício traz a carga daquela coluna (null
   // quando não foi registrado naquele dia). Os ids das execuções são
   // determinísticos, então reimportar nunca duplica.
-  const HISTORICO_VERSAO = 1;
+  const HISTORICO_VERSAO = 2;
   const HISTORICO_MFIT = {
     'Treino 1': {
       // 01/08 aparece duas vezes no MFIT: foram duas execuções no mesmo dia
@@ -213,6 +213,39 @@
         'triceps-paralelas-no-graviton': [50, null, 50, 50, 50, 40, 40],
         'prancha-alta': [null, null, null, null, null, 60, 60],
         bicicleta: [5, null, 5, 5, 5, 6, 6],
+      },
+    },
+    'Treino 2': {
+      datas: [
+        '2026-07-31T19:00', '2026-08-04T19:00', '2026-08-08T19:00', '2026-08-12T19:00',
+        '2026-08-15T19:00', '2026-08-19T19:00', '2026-08-22T19:00',
+      ],
+      cargas: {
+        'puxada-fechada-com-barra-reta': [29, 35, 37, 37, 39, 39, 39],
+        'pulldown-barra-aberta': [14, 15, 15, 15, 18, 18, 20],
+        'rosca-direta-com-barra-h': [null, 12, 12, 12, 12, 12, 12],
+        'rosca-inversa-com-barra-w': [12.5, 12.5, 15, 15, 17, 20, 20],
+        'remada-maquina-pegada-neutra': [29, 33, 34, 36, 38, 38, 38],
+        'crucifixo-inverso-na-maquina': [23, 25, 28, 28, 31, 36, 38],
+        'rosca-de-punho-pegada-supinada': [10, 10, 10, 10, 20, 20, 20],
+        'rosca-concentrada': [6, 6, 6, 6, 8, 8, 10],
+        bicicleta: [null, null, null, null, null, 7, 7],
+      },
+    },
+    'Treino 3': {
+      datas: [
+        '2026-07-30T19:00', '2026-08-02T19:00', '2026-08-06T19:00', '2026-08-11T19:00',
+        '2026-08-14T19:00', '2026-08-17T19:00', '2026-08-21T19:00',
+      ],
+      cargas: {
+        'cadeira-extensora-unilateral': [14, 14, 14, 18, 18, 18, 18],
+        'mesa-flexora': [18, 15, 15, 17, 18, 18, 23],
+        'leg-press-45': [63, 75, 86, 100, 100, 100, 120],
+        'panturrilha-no-leg-press': [52, 55, 68, 80, 80, 80, 100],
+        'abdominal-na-maquina': [36, 36, 36, 43, 48, 48, 48],
+        'aducao-de-quadril-na-maquina-cadeira-adutora': [29, 29, 29, 34, 34, 36, 36],
+        'abducao-de-quadril-na-maquina-cadeira-abdutora': [29, 29, 36, 43, 43, 43, 50],
+        bicicleta: [5, 5, 6, 6, 6, 6, 6],
       },
     },
   };
