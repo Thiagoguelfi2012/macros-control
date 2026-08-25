@@ -512,12 +512,7 @@
                   <span class="ex-nome">${esc(e.nome)}</span>
                   <span class="ex-serie">${rotuloSerie(e)}</span>
                 </span>
-                <span class="ex-carga-campo">
-                  <input type="number" class="card-carga" min="0" step="${(e.unidadeCarga || 'kg') === 'kg' ? '0.5' : '1'}"
-                    value="${e.carga ?? ''}" placeholder="—" inputmode="decimal"
-                    aria-label="Carga de ${esc(e.nome)} em ${unCarga(e)}" />
-                  <span class="ex-un">${unCarga(e)}</span>
-                </span>
+                <span class="ex-carga-txt">${e.carga ? comCarga(e, e.carga) : '—'}</span>
               </li>`)
             .join('')}</ul>` : '<p class="sub">Sem exercícios — toque em Editar para montar.</p>'}
           <div class="treino-acoes">
@@ -1506,36 +1501,9 @@
       if (b) trocarAba(b.dataset.aba);
     });
 
-    // a carga do cartão grava direto no treino, sem abrir o editor
-    let gravando = null;
-    $('#lista-treinos').addEventListener('change', async (ev) => {
-      const campo = ev.target.closest('.card-carga');
-      if (!campo) return;
-      const card = campo.closest('.treino-card');
-      const linha = campo.closest('.ex-linha');
-      const treino = treinos.find((t) => t.id === card.dataset.id);
-      const ex = treino && (treino.exercicios || []).find((x) => x.id === linha.dataset.ex);
-      if (!ex) return;
-      const novo = campo.value === '' ? null : Number(campo.value);
-      if (novo === ex.carga) return;
-      ex.carga = novo;
-      clearTimeout(gravando);
-      campo.classList.add('salvo');
-      setTimeout(() => campo.classList.remove('salvo'), 900);
-      gravando = setTimeout(async () => {
-        ignorarRecarga = true;
-        try {
-          await MacroDB.saveTreino(treino);
-        } finally {
-          ignorarRecarga = false;
-        }
-        if (!$('#aba-evolucao').hidden) renderEvolucao();
-      }, 250);
-    });
-
     $('#lista-treinos').addEventListener('click', async (ev) => {
-      // links e campos do cartão não devem virar ação do cartão
-      if (ev.target.closest('.ex-thumb, .card-carga')) return;
+      // o link do vídeo não deve virar ação do cartão
+      if (ev.target.closest('.ex-thumb')) return;
       const card = ev.target.closest('.treino-card');
       if (!card) return;
       const treino = treinos.find((t) => t.id === card.dataset.id);

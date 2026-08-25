@@ -47,8 +47,8 @@ python3 -m http.server 8000
     naquele treino) e editor
     completo para criar, reordenar e excluir. Cada exercício da lista traz uma
     **miniatura ilustrada** (desenho do equipamento, colorido pelo grupo muscular)
-    que abre a **busca do exercício no YouTube**, e a **carga é editável ali
-    mesmo**, sem precisar abrir o editor do treino.
+    que abre a **busca do exercício no YouTube**, e a carga atual ao lado. A carga
+    se muda ao executar o treino (ou no editor, para ajustar a ficha).
   - **Execução** — ao iniciar, a tela mostra cada exercício com miniatura, alvo de
     séries e repetições, **caixa para marcar como concluído**, campo de **carga do
     dia** (já preenchido com o **último valor registrado para aquele exercício**,

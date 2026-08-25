@@ -661,16 +661,10 @@ main { max-width: 860px; margin: 0 auto; padding: 20px 16px 110px; }
 .ex-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
 .ex-nome { font-size: 13.5px; line-height: 1.3; }
 .ex-serie { font-size: 11.5px; color: var(--muted); }
-.ex-carga-campo { display: flex; align-items: center; gap: 5px; flex: none; }
-.ex-carga-campo input {
-  width: 64px; font: inherit; font-size: 14px; text-align: right;
-  color: var(--ink); background: var(--page);
-  border: 1px solid var(--baseline); border-radius: 8px; padding: 6px 8px;
-  font-variant-numeric: tabular-nums;
+.ex-carga-txt {
+  flex: none; font-size: 12.5px; color: var(--muted);
+  font-variant-numeric: tabular-nums; white-space: nowrap;
 }
-.ex-carga-campo input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
-.ex-carga-campo input.salvo { border-color: var(--good-text); background: color-mix(in srgb, var(--good-text) 10%, var(--page)); }
-.ex-un { font-size: 11.5px; color: var(--muted); width: 26px; }
 
 /* miniatura ilustrada; toque abre a busca do exercício no YouTube */
 .ex-thumb {
@@ -6056,12 +6050,7 @@ const SupabaseSync = (() => {
                   <span class="ex-nome">${esc(e.nome)}</span>
                   <span class="ex-serie">${rotuloSerie(e)}</span>
                 </span>
-                <span class="ex-carga-campo">
-                  <input type="number" class="card-carga" min="0" step="${(e.unidadeCarga || 'kg') === 'kg' ? '0.5' : '1'}"
-                    value="${e.carga ?? ''}" placeholder="—" inputmode="decimal"
-                    aria-label="Carga de ${esc(e.nome)} em ${unCarga(e)}" />
-                  <span class="ex-un">${unCarga(e)}</span>
-                </span>
+                <span class="ex-carga-txt">${e.carga ? comCarga(e, e.carga) : '—'}</span>
               </li>`)
             .join('')}</ul>` : '<p class="sub">Sem exercícios — toque em Editar para montar.</p>'}
           <div class="treino-acoes">
@@ -7050,36 +7039,9 @@ const SupabaseSync = (() => {
       if (b) trocarAba(b.dataset.aba);
     });
 
-    // a carga do cartão grava direto no treino, sem abrir o editor
-    let gravando = null;
-    $('#lista-treinos').addEventListener('change', async (ev) => {
-      const campo = ev.target.closest('.card-carga');
-      if (!campo) return;
-      const card = campo.closest('.treino-card');
-      const linha = campo.closest('.ex-linha');
-      const treino = treinos.find((t) => t.id === card.dataset.id);
-      const ex = treino && (treino.exercicios || []).find((x) => x.id === linha.dataset.ex);
-      if (!ex) return;
-      const novo = campo.value === '' ? null : Number(campo.value);
-      if (novo === ex.carga) return;
-      ex.carga = novo;
-      clearTimeout(gravando);
-      campo.classList.add('salvo');
-      setTimeout(() => campo.classList.remove('salvo'), 900);
-      gravando = setTimeout(async () => {
-        ignorarRecarga = true;
-        try {
-          await MacroDB.saveTreino(treino);
-        } finally {
-          ignorarRecarga = false;
-        }
-        if (!$('#aba-evolucao').hidden) renderEvolucao();
-      }, 250);
-    });
-
     $('#lista-treinos').addEventListener('click', async (ev) => {
-      // links e campos do cartão não devem virar ação do cartão
-      if (ev.target.closest('.ex-thumb, .card-carga')) return;
+      // o link do vídeo não deve virar ação do cartão
+      if (ev.target.closest('.ex-thumb')) return;
       const card = ev.target.closest('.treino-card');
       if (!card) return;
       const treino = treinos.find((t) => t.id === card.dataset.id);
