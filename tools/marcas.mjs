@@ -272,8 +272,6 @@ export const MARCAS = [
   { n: 'Whey Dux concentrado (dose)', kcal: 400, p: 75, c: 11, g: 6, m: [['dose (30 g)', 30]] },
   { n: 'Whey Integralmédica Nutri 100% (dose)', kcal: 397, p: 73, c: 13, g: 5.5, m: [['dose (32 g)', 32]] },
   { n: 'Creatina Growth monohidratada', kcal: 0, p: 0, c: 0, g: 0, m: [['dose (3 g)', 3], ['dose (5 g)', 5]] },
-  { n: 'Pasta de amendoim Dr. Peanut avelã', kcal: 570, p: 25, c: 20, g: 44, m: [['colher de sopa (20 g)', 20]] },
-  { n: 'Pasta de amendoim Vitapower integral', kcal: 587, p: 26, c: 17, g: 47, m: [['colher de sopa (20 g)', 20]] },
   // ---- Iogurtes: variedades e linhas completas ----
   { n: "Iogurte grego Vigor desnatado (zero)", kcal: 59, p: 6.5, c: 7.5, g: 0, m: [["pote (90 g)", 90], ["pote (100 g)", 100]] },
   { n: "Iogurte grego Vigor morango", kcal: 118, p: 4.8, c: 16.5, g: 3.8, m: [["pote (90 g)", 90]] },
@@ -611,8 +609,6 @@ export const MARCAS = [
   { n: "Creatina Growth", kcal: 0, p: 0, c: 0, g: 0, m: [["dose (3 g)", 3], ["dose (5 g)", 5]] },
   { n: "Albumina Naturovos", kcal: 373, p: 80, c: 6.7, g: 0, m: [["dose (30 g)", 30], ["colher de sopa (15 g)", 15]] },
   { n: "Hipercalórico Growth Mass", kcal: 400, p: 15, c: 75, g: 3.5, m: [["dose (100 g)", 100]] },
-  { n: "Pasta de amendoim Dr. Peanut avelã", kcal: 553, p: 23.3, c: 20, g: 43.3, m: [["colher de sopa (15 g)", 15], ["porção (30 g)", 30]] },
-  { n: "Pasta de amendoim Vitapower integral", kcal: 587, p: 26.7, c: 16.7, g: 46.7, m: [["colher de sopa (15 g)", 15], ["porção (30 g)", 30]] },
   { n: "Pasta de amendoim Power One integral", kcal: 580, p: 26, c: 17, g: 46, m: [["colher de sopa (15 g)", 15]] },
   { n: "Barra de proteína Bold original ao leite", kcal: 360, p: 30, c: 35, g: 11, m: [["unidade (60 g)", 60]] },
   { n: "Barra de proteína Integralmédica Best Whey", kcal: 380, p: 33.3, c: 40, g: 10, m: [["unidade (33 g)", 33]] },

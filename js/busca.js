@@ -34,6 +34,11 @@ const FoodSearch = (() => {
       .replace(/\bcacaushow\b/g, 'cacau show')
       .replace(/\bhersheys?\b/g, 'hersheys')
       .replace(/\bwaffer(s)?\b/g, 'wafer$1') // grafia comum com dois efes
+      .replace(/\bamendoin\b/g, 'amendoim')
+      .replace(/\bpeanut butter\b/g, 'pasta de amendoim')
+      .replace(/\bamendo ?crem(e)?\b/g, 'amendocrem')
+      .replace(/\bdr ?peanut\b/g, 'dr peanut')
+      .replace(/\bvita ?power\b/g, 'vitapower')
       .replace(/\bmc ?donalds?\b/g, 'mcdonalds')
       .replace(/\bhamburger(s)?\b/g, 'hamburguer$1')
       .replace(/\bx (burguer|burger|salada|tudo|bacon|egg)\b/g, 'x$1')

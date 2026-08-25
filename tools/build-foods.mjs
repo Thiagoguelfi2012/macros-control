@@ -15,6 +15,7 @@ import { fileURLToPath } from 'node:url';
 import { CURADOS } from './curados.mjs';
 import { MARCAS } from './marcas.mjs';
 import { CHOCOLATES } from './chocolates.mjs';
+import { PASTAS } from './pastas.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const RAW_DIR = process.argv[2] || join(ROOT, 'tools', '.cache');
@@ -1065,6 +1066,16 @@ async function main() {
     }, true)) nChocolates++;
   }
 
+  // 4c) Pastas de amendoim, castanhas e sementes
+  let nPastas = 0;
+  for (const it of PASTAS) {
+    if (push({
+      i: stableId('m', it.n), n: it.n, f: 'm',
+      kcal: round1(it.kcal), p: round1(it.p), c: round1(it.c), g: round1(it.g),
+      m: (it.m || []).map(([l, gr]) => [l, gr]),
+    }, true)) nPastas++;
+  }
+
   // 5) IBGE
   const antesIbge = foods.length;
   for (const t of loadIbge()) {
@@ -1115,11 +1126,11 @@ async function main() {
   mkdirSync(dirname(OUT), { recursive: true });
   // Ao regenerar a base com mudanças relevantes, incremente v e o
   // FOODS_VERSION correspondente em js/db.js para forçar a recarga no navegador.
-  writeFileSync(OUT, JSON.stringify({ v: 28, foods }));
+  writeFileSync(OUT, JSON.stringify({ v: 29, foods }));
 
   const bytes = readFileSync(OUT).length;
   console.log(`foods.json gerado: ${foods.length} alimentos (${(bytes / 1024 / 1024).toFixed(2)} MB)`);
-  console.log(`  TACO: ${nTaco} | TBCA: ${nTbca} | Curados: ${nCurados} | Marcas: ${nMarcas} | Chocolates: ${nChocolates} | IBGE: ${nIbge} | USDA SR28 traduzido: ${nUsda}`);
+  console.log(`  TACO: ${nTaco} | TBCA: ${nTbca} | Curados: ${nCurados} | Marcas: ${nMarcas} | Chocolates: ${nChocolates} | Pastas: ${nPastas} | IBGE: ${nIbge} | USDA SR28 traduzido: ${nUsda}`);
   const comMedidas = foods.filter((f) => f.m && f.m.length).length;
   console.log(`  Alimentos com medidas caseiras (unidades): ${comMedidas}`);
   console.log(`  Líquidos (unidade base em ml): ${nLiquidos}`);
