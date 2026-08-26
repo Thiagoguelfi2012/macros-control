@@ -858,3 +858,6 @@ main { max-width: 860px; margin: 0 auto; padding: 20px 16px 110px; }
 .el-info b { font-size: 13.5px; font-variant-numeric: tabular-nums; }
 .el-info span { font-size: 12px; color: var(--muted); }
 .act-del-sessao { flex: none; font-size: 12.5px; padding: 4px 10px; }
+
+/* aviso de base de alimentos desatualizada */
+#base-info.aviso { color: var(--bad-text); font-weight: 500; }

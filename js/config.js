@@ -72,8 +72,12 @@
 
   (async () => {
     await MacroDB.ensureFoods();
-    const { versao, itens } = MacroDB.foodsInfo();
-    $('#base-info').textContent = `Versão ${versao} · ${fmt(itens, 0)} alimentos disponíveis na busca.`;
+    const { versao, esperada, itens } = MacroDB.foodsInfo();
+    const atrasada = esperada != null && versao < esperada;
+    $('#base-info').textContent =
+      `Versão ${versao} · ${fmt(itens, 0)} alimentos disponíveis na busca.` +
+      (atrasada ? ` O app espera a versão ${esperada}: toque em “Atualizar lista de alimentos”.` : '');
+    $('#base-info').classList.toggle('aviso', atrasada);
   })();
 
   $('#btn-atualizar-base').addEventListener('click', () => {

@@ -3,9 +3,10 @@ const MacroDB = (() => {
   const DB_NAME = 'macros-db';
   const DB_VERSION = 3;
   const FOODS_URL = 'data/foods.json';
-  const FOODS_VERSION = 30; // deve acompanhar o campo v de data/foods.json
+  const FOODS_VERSION = 31; // deve acompanhar o campo v de data/foods.json
   let dbPromise = null;
   let foodsCache = null; // array em memória para busca instantânea
+  let versaoCarregada = null; // versão que de fato entrou na busca
 
   function open() {
     if (dbPromise) return dbPromise;
@@ -108,12 +109,27 @@ const MacroDB = (() => {
 
   /* ---- Alimentos ---- */
 
+  async function baixarFoods(url, modo) {
+    const res = await fetch(url, { cache: modo });
+    if (!res.ok) throw new Error('Não foi possível carregar data/foods.json');
+    return res.json();
+  }
+
+  // Recarrega a página com um parâmetro novo na URL: obriga o navegador a
+  // buscar o HTML de novo, e com ele os js/css na versão publicada.
+  function recarregarSemCache() {
+    const u = new URL(location.href);
+    u.searchParams.set('atualizado', String(Date.now()));
+    location.replace(u.toString());
+  }
+
   async function ensureFoods() {
     if (foodsCache) return foodsCache;
     let base;
     if (typeof window !== 'undefined' && window.FOODS_DATA) {
       // versão standalone (arquivo único): banco embutido na página
       base = window.FOODS_DATA.foods;
+      versaoCarregada = window.FOODS_DATA.v ?? FOODS_VERSION;
     } else {
       base = null;
       try {
@@ -121,17 +137,32 @@ const MacroDB = (() => {
         const storedVersion = Number(localStorage.getItem('foodsVersion') || 0);
         if (storedVersion === FOODS_VERSION) {
           const all = await wrap(tx(db, 'foods', 'readonly').getAll());
-          if (all.length > 0) base = all;
+          if (all.length > 0) {
+            base = all;
+            versaoCarregada = storedVersion;
+          }
         }
       } catch {
         /* IndexedDB indisponível: segue para o fetch */
       }
       if (!base) {
         // primeira visita (ou base atualizada): busca o JSON e persiste
-        const res = await fetch(`${FOODS_URL}?v=${FOODS_VERSION}`, { cache: 'no-cache' });
-        if (!res.ok) throw new Error('Não foi possível carregar data/foods.json');
-        const data = await res.json();
+        let data = await baixarFoods(`${FOODS_URL}?v=${FOODS_VERSION}`, 'no-cache');
+        // O navegador pode servir um foods.json antigo do cache mesmo com o ?v
+        // novo (CDN, service worker do sistema, modo offline). Se vier versão
+        // menor do que a esperada, busca de novo furando o cache de vez.
+        if (data.v < FOODS_VERSION) {
+          data = await baixarFoods(`${FOODS_URL}?v=${FOODS_VERSION}&r=${Date.now()}`, 'reload');
+        }
+        // Veio versão MAIOR: quem está velho é o js/db.js desta página (o HTML
+        // ficou no cache). Recarrega a página furando o cache, uma vez só.
+        if (data.v > FOODS_VERSION && !sessionStorage.getItem('recarregouPorVersao')) {
+          sessionStorage.setItem('recarregouPorVersao', '1');
+          recarregarSemCache();
+          await new Promise(() => {}); // a página vai embora
+        }
         base = data.foods;
+        versaoCarregada = data.v;
         try {
           const db = await open();
           await new Promise((resolve, reject) => {
@@ -338,7 +369,8 @@ const MacroDB = (() => {
   /* ---- Versão da base e atualização forçada ---- */
 
   const foodsInfo = () => ({
-    versao: FOODS_VERSION,
+    versao: versaoCarregada ?? FOODS_VERSION,
+    esperada: FOODS_VERSION,
     itens: foodsCache ? foodsCache.length : 0,
   });
 
@@ -346,14 +378,25 @@ const MacroDB = (() => {
   // de o navegador continuar servindo uma lista de alimentos antiga do cache.
   async function refreshFoods() {
     localStorage.removeItem('foodsVersion');
+    sessionStorage.removeItem('recarregouPorVersao');
     try {
       const db = await open();
       await wrap(tx(db, 'foods', 'readwrite').clear());
     } catch {
       /* sem IndexedDB: a base já vem do fetch a cada visita */
     }
+    // apaga também o que o navegador tiver guardado das telas e dos scripts:
+    // sem isso um HTML velho continua pedindo a versão anterior da base
+    try {
+      if (typeof caches !== 'undefined' && caches.keys) {
+        const chaves = await caches.keys();
+        await Promise.all(chaves.map((k) => caches.delete(k)));
+      }
+    } catch {
+      /* sem Cache Storage: nada a limpar */
+    }
     foodsCache = null;
-    location.reload();
+    recarregarSemCache();
   }
 
   /* ---- Limpeza local (troca de usuário no mesmo aparelho) ---- */

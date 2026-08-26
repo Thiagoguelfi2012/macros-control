@@ -228,7 +228,15 @@ node tools/build-foods.mjs
 ```
 
 Ao regenerar com mudanças, incremente o `v` gravado pelo script e o `FOODS_VERSION`
-em `js/db.js` para forçar os navegadores a recarregarem a base.
+em `js/db.js` (e rode `node tools/stamp-assets.mjs`) para forçar os navegadores a
+recarregarem a base.
+
+O app também **se recupera sozinho de cache preso**, que é o modo de falha mais
+comum em site estático: se o `foods.json` que chegou tiver versão **menor** que a
+esperada, ele refaz o download furando o cache; se tiver versão **maior** (sinal de
+que o HTML e o `js/db.js` é que ficaram velhos no cache), recarrega a página com a
+URL marcada, uma vez. O card "Lista de alimentos" em Ajustes mostra a versão que
+realmente entrou na busca e avisa em vermelho quando ela está atrás da esperada.
 
 ## Estrutura
 
