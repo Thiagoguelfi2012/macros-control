@@ -29,6 +29,13 @@ python3 -m http.server 8000
   salvar) e a refeição em montagem sobrevive ao app ir para segundo plano; data e
   hora registradas (e editáveis depois). Histórico agrupado por dia, em ordem
   descendente, com totais por dia e ações de repetir/editar/excluir por registro.
+- **Relatório para o médico**: o botão **PDF** na barra de filtros abre uma prévia
+  com duas saídas. **Baixar PDF** gera o arquivo para impressão (jsPDF, com os
+  gráficos como imagem). **Enviar HTML** gera um **arquivo HTML interativo e
+  autocontido** (~230 KB, com o Chart.js embutido) para mandar pelo WhatsApp: os
+  gráficos têm tooltip, os dias abrem e fecham, e há botões de abrir tudo e de
+  imprimir. Nos dois casos a entrega usa a folha de compartilhar do celular
+  (`navigator.share`) e cai para download direto no computador.
 - **Relatórios** (`relatorios.html`): totais de calorias/proteínas/carboidratos/
   gorduras com filtros por **janelas móveis** (1, 7, 15, 30, 90 dias e 1 ano, com
   navegação entre janelas); gráfico de calorias por dia/mês com linha do gasto

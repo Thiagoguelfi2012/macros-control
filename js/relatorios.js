@@ -1392,11 +1392,351 @@
     status.textContent = `PDF gerado: ${nome}. Se o download não aparecer, use Imprimir.`;
   }
 
+  /* ---- Relatório em HTML interativo (para mandar ao médico) ---- */
+
+  // O Chart.js precisa ir dentro do arquivo: o médico abre o HTML solto, sem
+  // internet garantida. Nas páginas ele vem de vendor/, na versão de arquivo
+  // único ele já está embutido na própria página.
+  async function fonteChartJs() {
+    const externo = [...document.scripts].find((x) => x.src && /chart\.umd/i.test(x.src));
+    if (externo) {
+      try {
+        const r = await fetch(externo.src);
+        if (r.ok) return await r.text();
+      } catch {
+        /* sem rede: cai para a busca na própria página */
+      }
+    }
+    const embutido = [...document.scripts].find((x) => !x.src && x.textContent.includes('Chart.js v'));
+    return embutido ? embutido.textContent : null;
+  }
+
+  // Dados que o relatório interativo precisa, sem nada do resto do app.
+  function dadosParaHtml(d) {
+    const buckets = agregar(d.entries, d.inicio, d.fim, d.granularidade);
+    const pad2 = (n) => String(n).padStart(2, '0');
+    const porDia = new Map();
+    for (const e of d.entries) {
+      const dt = new Date(e.ts);
+      const k = `${dt.getFullYear()}-${pad2(dt.getMonth() + 1)}-${pad2(dt.getDate())}`;
+      porDia.set(k, (porDia.get(k) || 0) + e.kcal);
+    }
+    const acumulado = [];
+    if (d.cfg.gastoDiario) {
+      let acc = 0;
+      for (const k of [...porDia.keys()].sort()) {
+        acc += porDia.get(k) - d.cfg.gastoDiario;
+        const [, m, dd] = k.split('-');
+        acumulado.push({ rotulo: `${dd}/${m}`, valor: Math.round(acc) });
+      }
+    }
+    return {
+      periodo: `${dataExtenso(d.inicio)} a ${dataExtenso(d.fimVis)} (${d.label})`,
+      emitidoEm: new Date().toLocaleString('pt-BR'),
+      dias: d.dias,
+      cfg: d.cfg,
+      tot: d.tot,
+      granularidade: d.granularidade,
+      buckets: buckets.map((b) => ({ label: b.label, p: b.p, c: b.c, g: b.g, dias: b.dias || 1 })),
+      acumulado,
+      diasDetalhe: d.diasDetalhe.map((dia) => ({
+        data: dataExtenso(dia.data),
+        tot: dia.tot,
+        refeicoes: dia.refeicoes.map((r) => ({
+          nome: r.nome,
+          hora: horaRefeicao(r),
+          tot: r.tot,
+          itens: r.itens.map((e) => ({
+            nome: e.nome, qtd: qtdStrPdf(e), kcal: e.kcal, p: e.p, c: e.c, g: e.g,
+          })),
+        })),
+      })),
+      nota: NOTA_RELATORIO,
+    };
+  }
+
+  const ESTILO_HTML = `
+  :root{--tinta:#141414;--tinta2:#4a4a48;--fraco:#8a8a84;--linha:#e3e3df;--fundo:#f7f7f5;--papel:#fff;--azul:#2a78d6;--laranja:#eb6834;--verde:#1baf7a;--bom:#046b2e;--ruim:#b02a2a}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--fundo);color:var(--tinta);font:15px/1.5 system-ui,-apple-system,'Segoe UI',sans-serif}
+  .folha{max-width:820px;margin:0 auto;padding:20px 16px 60px}
+  h1{font-size:22px;margin:0 0 4px}
+  h2{font-size:16px;margin:26px 0 10px;padding-bottom:5px;border-bottom:2px solid var(--tinta)}
+  h3{font-size:14px;margin:16px 0 6px}
+  .sub{color:var(--tinta2);font-size:13.5px;margin:0 0 4px}
+  .card{background:var(--papel);border:1px solid var(--linha);border-radius:12px;padding:14px 16px;margin-bottom:12px}
+  .fatos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 20px;font-size:13.5px}
+  .fatos div{display:flex;justify-content:space-between;gap:12px;border-bottom:1px dotted var(--linha);padding:4px 0}
+  .fatos b{font-weight:650}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{padding:6px;border-bottom:1px solid var(--linha);text-align:right}
+  th:first-child,td:first-child{text-align:left}
+  thead th{background:#f0f0ee;font-weight:650;border-bottom:1px solid #bbb}
+  .grafico{position:relative;height:280px;margin-top:8px}
+  .grafico.baixo{height:230px}
+  details{background:var(--papel);border:1px solid var(--linha);border-radius:12px;margin-bottom:10px;overflow:hidden}
+  details>summary{cursor:pointer;padding:11px 14px;font-weight:650;font-size:14px;background:#eef3f8;list-style:none;display:flex;justify-content:space-between;gap:10px;align-items:center}
+  details>summary::-webkit-details-marker{display:none}
+  details>summary::after{content:'▾';color:var(--fraco);font-weight:400}
+  details[open]>summary::after{content:'▴'}
+  .corpo{padding:4px 14px 12px}
+  .ref{margin-top:10px}
+  .ref-cab{display:flex;justify-content:space-between;gap:10px;font-weight:650;font-size:13px;background:#f4f4f1;padding:5px 8px;border-radius:6px}
+  .ref table{margin-top:2px}
+  .ref td:first-child{padding-left:12px}
+  .barras{display:flex;flex-direction:column;gap:9px;margin-top:6px}
+  .barra-rot{display:flex;justify-content:space-between;font-size:13px;gap:10px}
+  .barra{height:9px;border-radius:5px;background:#e8e8e4;overflow:hidden}
+  .barra>i{display:block;height:100%;border-radius:5px}
+  .acoes{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}
+  .acoes button{font:inherit;font-size:13px;padding:7px 13px;border:1px solid var(--linha);border-radius:8px;background:var(--papel);color:var(--tinta);cursor:pointer}
+  .acoes button:hover{background:#eef3f8}
+  .nota{margin-top:26px;font-size:11.5px;color:var(--tinta2);border-top:1px solid var(--linha);padding-top:10px}
+  .bom{color:var(--bom)}.ruim{color:var(--ruim)}
+  .grande{font-size:22px;font-weight:700}
+  @media (max-width:560px){
+    .fatos{grid-template-columns:1fr}
+    body{font-size:14px}
+    table{font-size:12px}
+    th,td{padding:5px 4px}
+    .ref td:first-child{padding-left:6px}
+    .grafico{height:240px}
+  }
+  @media print{body{background:#fff}.acoes{display:none}details{break-inside:avoid}details>summary::after{display:none}}
+  `;
+
+  function montarHtmlCompartilhavel(d, chartJs) {
+    const dados = dadosParaHtml(d);
+    const div = Math.max(1, dados.dias);
+    const { cfg, tot } = dados;
+    const kcalMacro = tot.p * 4 + tot.c * 4 + tot.g * 9;
+    const pctM = (v) => (kcalMacro > 0 ? `${fmt((v / kcalMacro) * 100, 0)}%` : '—');
+    const gasto = cfg.gastoDiario ? cfg.gastoDiario * dados.dias : null;
+    const saldo = gasto != null ? tot.kcal - gasto : null;
+    const deficit = saldo != null && saldo < 0;
+
+    const linhasDia = dados.diasDetalhe
+      .map(
+        (dia) => `
+      <details>
+        <summary><span>${esc(dia.data)}</span><span>${fmt(dia.tot.kcal, 0)} kcal</span></summary>
+        <div class="corpo">
+          <p class="sub">P ${fmt(dia.tot.p, 0)} g · C ${fmt(dia.tot.c, 0)} g · G ${fmt(dia.tot.g, 0)} g</p>
+          ${dia.refeicoes
+            .map(
+              (r) => `
+            <div class="ref">
+              <div class="ref-cab"><span>${esc(r.nome)} · ${esc(r.hora)}</span><span>${fmt(r.tot.kcal, 0)} kcal</span></div>
+              <table>
+                <thead><tr><th>Alimento</th><th>Quantidade</th><th>kcal</th><th>P</th><th>C</th><th>G</th></tr></thead>
+                <tbody>${r.itens
+                  .map(
+                    (i) => `<tr><td>${esc(i.nome)}</td><td style="text-align:left">${esc(i.qtd)}</td>
+                    <td>${fmt(i.kcal, 0)}</td><td>${fmt(i.p)}</td><td>${fmt(i.c)}</td><td>${fmt(i.g)}</td></tr>`
+                  )
+                  .join('')}</tbody>
+              </table>
+            </div>`
+            )
+            .join('')}
+        </div>
+      </details>`
+      )
+      .join('');
+
+    const alvos = [
+      ['Proteínas', tot.p, cfg.metaP, 'var(--azul)'],
+      ['Carboidratos', tot.c, cfg.metaC, 'var(--laranja)'],
+      ['Gorduras', tot.g, cfg.metaG, 'var(--verde)'],
+    ].filter(([, , alvo]) => alvo);
+
+    return `<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Relatório alimentar — ${esc(dados.periodo)}</title>
+<style>${ESTILO_HTML}</style></head>
+<body><div class="folha">
+<h1>Relatório alimentar</h1>
+<p class="sub">Período: ${esc(dados.periodo)}</p>
+<p class="sub">Dias com registro: ${dados.dias} · Emitido em ${esc(dados.emitidoEm)}</p>
+
+<div class="acoes">
+  <button onclick="abrirTudo(true)">Abrir todos os dias</button>
+  <button onclick="abrirTudo(false)">Fechar todos</button>
+  <button onclick="window.print()">Imprimir / salvar em PDF</button>
+</div>
+
+<h2>Gasto energético e metas configuradas</h2>
+<div class="card"><div class="fatos">
+  <div><span>Gasto basal (TMB)</span><b>${cfg.gastoBasal ? fmt(cfg.gastoBasal, 0) + ' kcal/dia' : 'não informado'}</b></div>
+  <div><span>Gasto médio diário (TDEE)</span><b>${cfg.gastoDiario ? fmt(cfg.gastoDiario, 0) + ' kcal/dia' : 'não informado'}</b></div>
+  <div><span>Meta de calorias</span><b>${cfg.metaKcal ? fmt(cfg.metaKcal, 0) + ' kcal/dia' : 'não definida'}</b></div>
+  <div><span>Meta de proteínas</span><b>${cfg.metaP ? fmt(cfg.metaP, 0) + ' g/dia' : 'não definida'}</b></div>
+  <div><span>Meta de carboidratos</span><b>${cfg.metaC ? fmt(cfg.metaC, 0) + ' g/dia' : 'não definida'}</b></div>
+  <div><span>Meta de gorduras</span><b>${cfg.metaG ? fmt(cfg.metaG, 0) + ' g/dia' : 'não definida'}</b></div>
+</div></div>
+
+<h2>Consumo no período</h2>
+<div class="card"><table>
+  <thead><tr><th>Nutriente</th><th>Total</th><th>Média/dia</th><th>% das kcal</th><th>Meta/dia</th></tr></thead>
+  <tbody>
+    <tr><td>Calorias</td><td>${fmt(tot.kcal, 0)} kcal</td><td>${fmt(tot.kcal / div, 0)} kcal</td><td>—</td><td>${cfg.metaKcal ? fmt(cfg.metaKcal, 0) : '—'}</td></tr>
+    <tr><td>Proteínas</td><td>${fmt(tot.p, 0)} g</td><td>${fmt(tot.p / div, 0)} g</td><td>${pctM(tot.p * 4)}</td><td>${cfg.metaP ? fmt(cfg.metaP, 0) : '—'}</td></tr>
+    <tr><td>Carboidratos</td><td>${fmt(tot.c, 0)} g</td><td>${fmt(tot.c / div, 0)} g</td><td>${pctM(tot.c * 4)}</td><td>${cfg.metaC ? fmt(cfg.metaC, 0) : '—'}</td></tr>
+    <tr><td>Gorduras</td><td>${fmt(tot.g, 0)} g</td><td>${fmt(tot.g / div, 0)} g</td><td>${pctM(tot.g * 9)}</td><td>${cfg.metaG ? fmt(cfg.metaG, 0) : '—'}</td></tr>
+  </tbody>
+</table></div>
+
+${alvos.length ? `<h2>Dieta alvo × consumo</h2><div class="card"><div class="barras">
+  ${alvos.map(([nome, valor, alvo, cor]) => {
+    const alvoPeriodo = alvo * dados.dias;
+    const pct = alvoPeriodo > 0 ? (valor / alvoPeriodo) * 100 : 0;
+    return `<div>
+      <div class="barra-rot"><span>${nome}</span><span>${fmt(valor, 0)} / ${fmt(alvoPeriodo, 0)} g · ${fmt(pct, 0)}%</span></div>
+      <div class="barra"><i style="width:${Math.min(100, pct).toFixed(1)}%;background:${cor}"></i></div>
+    </div>`;
+  }).join('')}
+</div></div>` : ''}
+
+${saldo != null ? `<h2>Balanço energético</h2><div class="card"><div class="fatos">
+  <div><span>Consumo total</span><b>${fmt(tot.kcal, 0)} kcal</b></div>
+  <div><span>Gasto estimado (${dados.dias} ${dados.dias === 1 ? 'dia' : 'dias'})</span><b>${fmt(gasto, 0)} kcal</b></div>
+  <div><span>${deficit ? 'Déficit' : 'Superávit'} no período</span><b class="${deficit ? 'bom' : 'ruim'}">${fmt(Math.abs(saldo), 0)} kcal</b></div>
+  <div><span>Equivalente em peso</span><b>${deficit ? '−' : '+'}${fmt(Math.abs(saldo) / 7700, 2)} kg</b></div>
+</div><p class="sub" style="margin-top:8px">Equivalência estimada por 7.700 kcal ≈ 1 kg de gordura corporal.</p></div>` : ''}
+
+<h2>Gráficos do período</h2>
+<div class="card">
+  <h3>Calorias por ${dados.granularidade === 'mes' ? 'mês' : dados.granularidade === 'semana' ? 'semana' : dados.granularidade === 'hora' ? 'hora' : 'dia'}, por macronutriente</h3>
+  <p class="sub">Toque em uma barra para ver os valores. As linhas tracejadas marcam onde o topo de cada faixa ficaria seguindo a dieta alvo.</p>
+  <div class="grafico"><canvas id="g-kcal"></canvas></div>
+</div>
+${dados.acumulado.length > 1 ? `<div class="card">
+  <h3>Déficit calórico acumulado</h3>
+  <p class="sub">Saldo (consumo − gasto) somado dia a dia, contando só os dias com registro.</p>
+  <div class="grafico baixo"><canvas id="g-acum"></canvas></div>
+</div>` : ''}
+<div class="card">
+  <h3>Distribuição dos macronutrientes</h3>
+  <p class="sub">Anel externo: realizado. Anel interno: meta do período, quando definida.</p>
+  <div class="grafico baixo"><canvas id="g-macros"></canvas></div>
+</div>
+
+<h2>Resumo por dia</h2>
+<div class="card"><table>
+  <thead><tr><th>Dia</th><th>Calorias</th><th>Proteínas</th><th>Carboidratos</th><th>Gorduras</th>${cfg.gastoDiario ? '<th>Saldo</th>' : ''}</tr></thead>
+  <tbody>${dados.diasDetalhe
+    .map((dia) => `<tr><td>${esc(dia.data)}</td><td>${fmt(dia.tot.kcal, 0)}</td><td>${fmt(dia.tot.p, 0)} g</td><td>${fmt(dia.tot.c, 0)} g</td><td>${fmt(dia.tot.g, 0)} g</td>${
+      cfg.gastoDiario ? `<td class="${dia.tot.kcal - cfg.gastoDiario < 0 ? 'bom' : 'ruim'}">${fmt(dia.tot.kcal - cfg.gastoDiario, 0)}</td>` : ''
+    }</tr>`)
+    .join('')}</tbody>
+</table></div>
+
+<h2>Refeições do período</h2>
+<p class="sub">Toque em um dia para abrir as refeições e os alimentos.</p>
+${linhasDia || '<div class="card">Nenhum alimento registrado neste período.</div>'}
+
+<p class="nota">${esc(dados.nota)}</p>
+</div>
+
+<script>window.RELATORIO = ${JSON.stringify(dados).replace(/</g, '\\u003c')};<\/script>
+${chartJs ? `<script>${chartJs}<\/script>` : ''}
+<script>
+function abrirTudo(abrir){document.querySelectorAll('details').forEach(function(d){d.open=abrir;});}
+(function(){
+  var R = window.RELATORIO;
+  if (typeof Chart === 'undefined') return;
+  var fmtN = function(v, casas){ return Number(v).toLocaleString('pt-BR', {maximumFractionDigits: casas == null ? 1 : casas}); };
+  var cores = {p:'#2a78d6', c:'#eb6834', g:'#1baf7a', linha:'#8a8a84'};
+  var comum = {responsive:true, maintainAspectRatio:false, interaction:{mode:'index', intersect:false}};
+  var porBalde = function(v){ return R.buckets.map(function(b){ return v * (b.dias || 1); }); };
+  var ds = [
+    {label:'Proteínas', data:R.buckets.map(function(b){return Math.round(b.p*4);}), backgroundColor:cores.p, stack:'kcal'},
+    {label:'Carboidratos', data:R.buckets.map(function(b){return Math.round(b.c*4);}), backgroundColor:cores.c, stack:'kcal'},
+    {label:'Gorduras', data:R.buckets.map(function(b){return Math.round(b.g*9);}), backgroundColor:cores.g, stack:'kcal'}
+  ];
+  var linhas = R.granularidade !== 'hora';
+  if (linhas && R.cfg.gastoDiario) ds.push({type:'line', label:'Gasto estimado', data:porBalde(R.cfg.gastoDiario), borderColor:cores.linha, borderDash:[6,4], borderWidth:2, pointRadius:0, fill:false, stack:'l1'});
+  if (linhas && R.cfg.metaP && R.cfg.metaC && R.cfg.metaG) {
+    var kp = R.cfg.metaP*4, kc = R.cfg.metaC*4, kg = R.cfg.metaG*9;
+    ds.push({type:'line', label:'Meta: topo das proteínas', data:porBalde(kp), borderColor:cores.p, borderDash:[5,4], borderWidth:2, pointRadius:0, fill:false, stack:'l2'});
+    ds.push({type:'line', label:'Meta: topo dos carboidratos', data:porBalde(kp+kc), borderColor:cores.c, borderDash:[5,4], borderWidth:2, pointRadius:0, fill:false, stack:'l3'});
+    ds.push({type:'line', label:'Meta: topo das gorduras', data:porBalde(kp+kc+kg), borderColor:cores.g, borderDash:[5,4], borderWidth:2, pointRadius:0, fill:false, stack:'l4'});
+  }
+  new Chart(document.getElementById('g-kcal'), {
+    type:'bar',
+    data:{labels:R.buckets.map(function(b){return b.label;}), datasets:ds},
+    options:Object.assign({}, comum, {
+      plugins:{legend:{labels:{boxWidth:14, font:{size:11}}}, tooltip:{callbacks:{label:function(ctx){return ' ' + ctx.dataset.label + ': ' + fmtN(ctx.parsed.y, 0) + ' kcal';}}}},
+      scales:{x:{stacked:true, grid:{display:false}}, y:{stacked:true, beginAtZero:true, title:{display:true, text:'kcal'}}}
+    })
+  });
+  var cvA = document.getElementById('g-acum');
+  if (cvA && R.acumulado.length > 1) {
+    var ult = R.acumulado[R.acumulado.length-1].valor;
+    new Chart(cvA, {
+      type:'line',
+      data:{labels:R.acumulado.map(function(x){return x.rotulo;}), datasets:[{label:'Saldo acumulado (kcal)', data:R.acumulado.map(function(x){return x.valor;}), borderColor: ult <= 0 ? '#046b2e' : '#b02a2a', borderWidth:2, pointRadius:3, tension:0.15, fill:false}]},
+      options:Object.assign({}, comum, {plugins:{legend:{display:false}, tooltip:{callbacks:{label:function(ctx){return ' ' + fmtN(ctx.parsed.y, 0) + ' kcal';}}}}, scales:{x:{grid:{display:false}}, y:{ticks:{callback:function(v){return fmtN(v,0) + ' kcal';}}}}})
+    });
+  }
+  var dsM = [{label:'Realizado', data:[R.tot.p*4, R.tot.c*4, R.tot.g*9], backgroundColor:[cores.p, cores.c, cores.g], borderColor:'#fff', borderWidth:2}];
+  if (R.cfg.metaP || R.cfg.metaC || R.cfg.metaG) {
+    var dm = Math.max(1, R.dias);
+    dsM.push({label:'Meta', data:[(R.cfg.metaP||0)*4*dm, (R.cfg.metaC||0)*4*dm, (R.cfg.metaG||0)*9*dm], backgroundColor:[cores.p+'73', cores.c+'73', cores.g+'73'], borderColor:'#fff', borderWidth:2});
+  }
+  new Chart(document.getElementById('g-macros'), {
+    type:'doughnut', data:{labels:['Proteínas','Carboidratos','Gorduras'], datasets:dsM},
+    options:{responsive:true, maintainAspectRatio:false, cutout:'42%', plugins:{legend:{position:'bottom'}, tooltip:{callbacks:{label:function(ctx){
+      var t = ctx.dataset.data.reduce(function(a,b){return a+b;}, 0);
+      return ' ' + ctx.dataset.label + ' — ' + ctx.label + ': ' + fmtN(ctx.parsed, 0) + ' kcal (' + fmtN(t ? ctx.parsed/t*100 : 0, 0) + '%)';
+    }}}}}
+  });
+})();
+<\/script>
+</body></html>`;
+  }
+
+  async function baixarHtml() {
+    const status = $('#rp-status');
+    status.textContent = 'Gerando relatório em HTML…';
+    const d = await dadosRelatorio();
+    const chartJs = await fonteChartJs();
+    const html = montarHtmlCompartilhavel(d, chartJs);
+    const nome = `relatorio-alimentar-${d.fimVis.toISOString().slice(0, 10)}.html`;
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const file = new File([blob], nome, { type: 'text/html' });
+    const tamanho = `${(blob.size / 1024).toFixed(0)} KB`;
+
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: nome });
+        status.textContent = `Relatório em HTML enviado (${tamanho}).`;
+        return;
+      } catch (e) {
+        if (e.name === 'AbortError') {
+          status.textContent = 'Envio cancelado.';
+          return;
+        }
+      }
+    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = nome;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+    status.textContent = `HTML gerado: ${nome} (${tamanho}).`;
+  }
+
   async function abrirRelatorio() {
     const dados = await dadosRelatorio();
     $('#rp-conteudo').innerHTML = montarRelatorioHtml(dados, gerarGraficos(dados));
     $('#relatorio-print').hidden = false;
-    $('#rp-status').textContent = 'Confira a prévia abaixo e toque em “Baixar PDF”.';
+    $('#rp-status').textContent =
+      'Confira a prévia abaixo. “Baixar PDF” para impressão, “Enviar HTML” para mandar um relatório interativo ao médico.';
     document.body.style.overflow = 'hidden';
     $('#relatorio-print').scrollTop = 0;
   }
@@ -1421,6 +1761,7 @@
     $('#rp-fechar').addEventListener('click', fecharRelatorio);
     $('#rp-imprimir').addEventListener('click', () => window.print());
     $('#rp-baixar').addEventListener('click', () => baixarPdf());
+    $('#rp-baixar-html').addEventListener('click', () => baixarHtml());
     document.addEventListener('keydown', (ev) => {
       if (ev.key === 'Escape' && !$('#relatorio-print').hidden) fecharRelatorio();
     });
