@@ -35,6 +35,9 @@ const FoodSearch = (() => {
       .replace(/\bhersheys?\b/g, 'hersheys')
       .replace(/\bwaffer(s)?\b/g, 'wafer$1') // grafia comum com dois efes
       .replace(/\bamendoin\b/g, 'amendoim')
+      // as duas grafias convivem no mercado e nas tabelas
+      .replace(/\besfirra(s)?\b/g, 'esfiha$1')
+      .replace(/\bnutel+a\b/g, 'nutella') // "nutela" com um L só é o mais digitado
       .replace(/\bpeanut butter\b/g, 'pasta de amendoim')
       .replace(/\bamendo ?crem(e)?\b/g, 'amendocrem')
       .replace(/\bdr ?peanut\b/g, 'dr peanut')

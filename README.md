@@ -202,7 +202,7 @@ externas — use o app no endereço próprio (GitHub Pages) ou no arquivo standa
 - Biblioteca de exercícios: `js/exercicios.js`, gerado por
   `tools/build-exercicios.mjs` a partir de uma lista curada — não depende de rede.
 - Configurações (TMB/TDEE e dieta alvo): `localStorage`.
-- Banco de alimentos: `data/foods.json` (~2,3 MB, **17.890 itens**, ~10.900 com
+- Banco de alimentos: `data/foods.json` (~2,3 MB, **17.919 itens**, ~10.900 com
   medidas caseiras e ~890 líquidos medidos em ml/L), carregado no IndexedDB na
   primeira visita. Valores por 100 g (ou 100 ml). Fontes, na ordem de prioridade da
   busca:
@@ -214,7 +214,7 @@ externas — use o app no endereço próprio (GitHub Pages) ou no arquivo standa
   | **Marcas** (`tools/marcas.mjs`) | 593 | produtos de marcas brasileiras com valores de rótulo (iogurtes, leites, queijos, congelados, biscoitos, chocolates, bebidas, suplementos…) |
   | **Chocolates** (`tools/chocolates.mjs`) | 159 | catálogo de chocolates e bombons: Cacau Show (Lacreme, Zero, Mil Folhas, trufas, tabletes, bombons, Lanut), Kopenhagen, Brasil Cacau, Lacta, Garoto, Nestlé, Hershey's, Ferrero/Kinder, Lindt, Arcor, Neugebauer, Havanna e os bean-to-bar brasileiros (Dengo, Amma, Luisa Abram, Nugali, Baianí, Mendoá) |
   | **Pastas** (`tools/pastas.mjs`) | 70 | pastas de amendoim, castanhas e sementes: Dr. Peanut e Vitapower (todos os sabores), Amendocrem, Reese's, Skippy, Jif, as integrais de mercado natural (Mandubim, Pura Vida, Vitao, Jasmine, Mãe Terra), as de marcas de suplemento e as de castanha de caju, amêndoa, pistache, gergelim (tahine) e coco |
-  | **Curados** (`tools/curados.mjs`) | 486 | pratos de vida real ausentes das tabelas: temaki e sushi, esfihas e salgados de festa, docinhos, fast food, frutos do mar, churrasco, bolos de confeitaria e a mesa de restaurante chinês (banana caramelizada, agridoces, chop suey, yakisoba, bifum, guioza, wonton) |
+  | **Curados** (`tools/curados.mjs`) | 515 | pratos de vida real ausentes das tabelas: temaki e sushi, esfihas e salgados de festa, docinhos, fast food, frutos do mar, churrasco, bolos de confeitaria, esfihas doces de esfiharia (chocolate, Nutella, Sonho de Valsa, Ouro Branco, morango com banana, brigadeiro, Romeu e Julieta…) e a mesa de restaurante chinês (banana caramelizada, agridoces, chop suey, yakisoba, bifum, guioza, wonton) |
   | **IBGE/POF** | 1.873 | alimentos e preparações, PT nativo |
   | **USDA SR28** | 8.717 | complemento, nomes traduzidos por glossário EN→PT |
 
