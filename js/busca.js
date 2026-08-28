@@ -38,6 +38,8 @@ const FoodSearch = (() => {
       // as duas grafias convivem no mercado e nas tabelas
       .replace(/\besfirra(s)?\b/g, 'esfiha$1')
       .replace(/\bnutel+a\b/g, 'nutella') // "nutela" com um L só é o mais digitado
+      .replace(/\bbavarian ?nuts?\b/g, 'bavarian nuts')
+      .replace(/\bbavaria\b/g, 'bavarian')
       .replace(/\bpeanut butter\b/g, 'pasta de amendoim')
       .replace(/\bamendo ?crem(e)?\b/g, 'amendocrem')
       .replace(/\bdr ?peanut\b/g, 'dr peanut')
