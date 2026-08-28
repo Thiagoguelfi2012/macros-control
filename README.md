@@ -29,6 +29,10 @@ python3 -m http.server 8000
   salvar) e a refeição em montagem sobrevive ao app ir para segundo plano; data e
   hora registradas (e editáveis depois). Histórico agrupado por dia, em ordem
   descendente, com totais por dia e ações de repetir/editar/excluir por registro.
+  Refeições com mais de um item viram um **subcard** com nome e horário; tocar no
+  cabeçalho (ou no ícone de lápis) abre a **refeição inteira para editar** — os
+  itens voltam para a cesta do modal, onde dá para trocar quantidades, remover,
+  acrescentar alimentos e mudar o horário de todos de uma vez.
 - **Relatório para o médico**: o botão **PDF** na barra de filtros abre uma prévia
   com duas saídas. **Baixar PDF** gera o arquivo para impressão (jsPDF, com os
   gráficos como imagem). **Enviar HTML** gera um **arquivo HTML interativo e

@@ -39,7 +39,11 @@
 
   function abrirModal(entry = null) {
     editandoId = entry ? entry.id : null;
-    $('#modal-titulo').textContent = entry ? 'Editar registro' : 'Adicionar alimentos';
+    $('#modal-titulo').textContent = entry
+      ? 'Editar registro'
+      : editandoRefeicao
+        ? 'Editar refeição'
+        : 'Adicionar alimentos';
     backdrop.classList.add('open');
     $('#impacto').hidden = true;
     $('#btn-incluir').hidden = true;
@@ -103,6 +107,38 @@
     backdrop.classList.remove('open');
   }
 
+  // Abre a refeição inteira no modal: os itens viram a cesta e, ao salvar, os
+  // registros antigos são substituídos pelos novos.
+  function abrirModalRefeicao(itensRef) {
+    if (cesta.length && !editandoRefeicao) {
+      const ok = confirm(
+        'Você tem uma refeição em montagem. Editar esta refeição vai substituir o que está montado. Continuar?'
+      );
+      if (!ok) return;
+    }
+    editandoId = null;
+    editandoRefeicao = { ids: itensRef.map((e) => e.id) };
+    cesta = itensRef.map(({ id, ts, ...item }) => item);
+    inpDataHora.value = toLocalInput(new Date(itensRef[0].ts));
+    limparSelecao();
+    fallbackFood = null;
+    $('#modal-titulo').textContent = 'Editar refeição';
+    backdrop.classList.add('open');
+    $('#impacto').hidden = true;
+    $('#btn-incluir').hidden = true;
+    renderCesta();
+    salvarCesta();
+    atualizarTotaisDia();
+  }
+
+  function sairDaEdicaoDeRefeicao() {
+    if (!editandoRefeicao) return;
+    editandoRefeicao = null;
+    cesta = [];
+    salvarCesta();
+    renderCesta();
+  }
+
   async function onFoodChange(foodId) {
     // o alimento sintetizado do snapshot tem prioridade: o id pode apontar
     // para outro alimento (ids antigos posicionais) ou não existir mais
@@ -162,6 +198,8 @@
   /* ---- Refeição: vários alimentos de uma vez ---- */
 
   let cesta = []; // itens já "incluídos na refeição", salvos todos juntos
+  // refeição inteira sendo editada: guarda os ids que serão substituídos ao salvar
+  let editandoRefeicao = null;
 
   // Celular em segundo plano descarta a página e a recarrega na volta: a
   // refeição em montagem é persistida e restaurada (expira em 12 h).
@@ -169,7 +207,11 @@
 
   function salvarCesta() {
     try {
-      if (cesta.length) localStorage.setItem(LS_CESTA, JSON.stringify({ t: Date.now(), itens: cesta }));
+      if (cesta.length)
+        localStorage.setItem(
+          LS_CESTA,
+          JSON.stringify({ t: Date.now(), itens: cesta, edicao: editandoRefeicao, quando: inpDataHora.value })
+        );
       else localStorage.removeItem(LS_CESTA);
     } catch {
       /* sem persistência da cesta */
@@ -181,6 +223,10 @@
       const salvo = JSON.parse(localStorage.getItem(LS_CESTA) || 'null');
       if (salvo && Array.isArray(salvo.itens) && Date.now() - salvo.t < 12 * 3600000) {
         cesta = salvo.itens;
+        // edição de refeição também sobrevive ao app ir para segundo plano:
+        // sem isso a volta viraria uma refeição nova, duplicando a original
+        editandoRefeicao = salvo.edicao || null;
+        if (editandoRefeicao && salvo.quando) inpDataHora.value = salvo.quando;
       } else {
         localStorage.removeItem(LS_CESTA);
       }
@@ -228,7 +274,8 @@
 
   function atualizarBotaoSalvar() {
     const n = ativos().length + (foodSelecionado && editandoId == null ? 1 : 0);
-    $('#btn-salvar').textContent = editandoId != null ? 'Salvar' : n > 1 ? `Salvar (${n} itens)` : 'Salvar';
+    $('#btn-salvar').textContent =
+      editandoId != null ? 'Salvar' : editandoRefeicao ? `Salvar refeição (${n} ${n === 1 ? 'item' : 'itens'})` : n > 1 ? `Salvar (${n} itens)` : 'Salvar';
   }
 
   function renderCesta() {
@@ -238,6 +285,8 @@
       return;
     }
     wrap.hidden = false;
+    const titulo = wrap.querySelector('.imp-title');
+    if (titulo) titulo.textContent = editandoRefeicao ? 'Itens desta refeição' : 'Refeição atual';
     const lista = $('#cesta-itens');
     lista.innerHTML = '';
     cesta.forEach((it, idx) => {
@@ -295,6 +344,7 @@
     totaisDia = entries.reduce(
       (acc, e) => {
         if (e.id === editandoId) return acc;
+        if (editandoRefeicao && editandoRefeicao.ids.includes(e.id)) return acc;
         const d = new Date(e.ts);
         if (`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` !== key) return acc;
         return { kcal: acc.kcal + e.kcal, p: acc.p + e.p, c: acc.c + e.c, g: acc.g + e.g };
@@ -394,6 +444,21 @@
     const itens = ativos().map(({ off, ...item }) => item);
     const atual = itemAtual();
     if (atual) itens.push(atual);
+    // edição de refeição: os registros antigos saem e entram os desta tela
+    if (editandoRefeicao) {
+      if (!itens.length) {
+        if (!confirm('Nenhum item ativo. Excluir a refeição inteira?')) return;
+      }
+      for (const id of editandoRefeicao.ids) await MacroDB.deleteEntry(id);
+      for (const item of itens) await MacroDB.addEntry({ ts, ...item });
+      editandoRefeicao = null;
+      cesta = [];
+      salvarCesta();
+      renderCesta();
+      fecharModal();
+      render();
+      return;
+    }
     if (!itens.length) {
       tomSelect.focus();
       return;
@@ -563,6 +628,8 @@
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 12S5 5.5 12 5.5 22.5 12 22.5 12 19 18.5 12 18.5 1.5 12 1.5 12z"/><circle cx="12" cy="12" r="3.2"/></svg>';
   const SVG_OFF =
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.9 5.8A9.7 9.7 0 0 1 12 5.5c7 0 10.5 6.5 10.5 6.5a17.6 17.6 0 0 1-3.4 4.2M6.3 7.3A17.4 17.4 0 0 0 1.5 12S5 18.5 12 18.5c1.8 0 3.4-.4 4.7-1.1"/><path d="M3 3l18 18"/></svg>';
+  const SVG_EDIT =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
   const SVG_REPEAT =
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v5h5"/></svg>';
 
@@ -788,16 +855,30 @@
         const bloco = document.createElement('div');
         bloco.className = 'meal-card';
         bloco.innerHTML = `
-          <div class="meal-head">
+          <div class="meal-head" role="button" tabindex="0" title="Editar esta refeição">
             <span class="meal-icone" aria-hidden="true">${icone}</span>
             <span class="meal-nome-wrap">
               <span class="meal-nome">${nomeRef}</span>
               <span class="meal-hora">${hora}</span>
             </span>
             <span class="meal-kcal"><b>${fmt(totRef.kcal, 0)}</b> kcal</span>
-            <button class="icon-btn act-repeat-ref" title="Registrar a refeição de novo agora" aria-label="Repetir refeição">${SVG_REPEAT}</button>
+            <span class="meal-acoes">
+              <button class="icon-btn act-editar-ref" title="Editar esta refeição" aria-label="Editar ${nomeRef}">${SVG_EDIT}</button>
+              <button class="icon-btn act-repeat-ref" title="Registrar a refeição de novo agora" aria-label="Repetir refeição">${SVG_REPEAT}</button>
+            </span>
             <span class="meal-sub">${itensRef.length} itens · P ${fmt(totRef.p)} · C ${fmt(totRef.c)} · G ${fmt(totRef.g)} g</span>
           </div>`;
+        // tocar no cabeçalho abre a refeição inteira para editar
+        const cabeca = bloco.querySelector('.meal-head');
+        cabeca.addEventListener('click', (ev) => {
+          if (ev.target.closest('.act-repeat-ref')) return;
+          abrirModalRefeicao(itensRef);
+        });
+        cabeca.addEventListener('keydown', (ev) => {
+          if (ev.key !== 'Enter' && ev.key !== ' ') return;
+          ev.preventDefault();
+          abrirModalRefeicao(itensRef);
+        });
         bloco.querySelector('.act-repeat-ref').addEventListener('click', async () => {
           const agora = new Date().toISOString();
           for (const e of itensRef) {
@@ -862,14 +943,19 @@
     });
 
     $('#btn-adicionar').addEventListener('click', () => abrirModal());
-    $('#btn-cancelar').addEventListener('click', fecharModal);
+    $('#btn-cancelar').addEventListener('click', () => {
+      sairDaEdicaoDeRefeicao();
+      fecharModal();
+    });
     $('#btn-salvar').addEventListener('click', salvar);
     $('#btn-incluir').addEventListener('click', incluirNaRefeicao);
     $('#btn-abrir-cadastro').addEventListener('click', abrirCadastro);
     $('#btn-cad-cancelar').addEventListener('click', () => cadBackdrop.classList.remove('open'));
     $('#btn-cad-salvar').addEventListener('click', salvarCadastro);
     backdrop.addEventListener('click', (ev) => {
-      if (ev.target === backdrop) fecharModal();
+      if (ev.target !== backdrop) return;
+      sairDaEdicaoDeRefeicao();
+      fecharModal();
     });
     cadBackdrop.addEventListener('click', (ev) => {
       if (ev.target === cadBackdrop) cadBackdrop.classList.remove('open');
@@ -877,7 +963,10 @@
     document.addEventListener('keydown', (ev) => {
       if (ev.key === 'Escape') {
         if (cadBackdrop.classList.contains('open')) cadBackdrop.classList.remove('open');
-        else if (backdrop.classList.contains('open')) fecharModal();
+        else if (backdrop.classList.contains('open')) {
+          sairDaEdicaoDeRefeicao();
+          fecharModal();
+        }
       }
     });
     inpQtd.addEventListener('input', atualizarPreview);

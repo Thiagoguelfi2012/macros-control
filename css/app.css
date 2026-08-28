@@ -154,9 +154,14 @@ body {
 .meal-head .meal-kcal { grid-area: kcal; font-size: 13.5px; font-variant-numeric: tabular-nums; color: var(--ink-2); }
 .meal-head .meal-kcal b { color: var(--ink); font-weight: 700; }
 .meal-head .meal-sub { grid-area: sub; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
-.meal-head .act-repeat-ref { grid-area: rep; padding: 4px; color: var(--muted); }
-.meal-head .act-repeat-ref svg { width: 16px; height: 16px; }
-.meal-head .act-repeat-ref:hover { color: var(--accent); }
+.meal-head .meal-acoes { grid-area: rep; display: flex; align-items: center; gap: 2px; }
+.meal-head .icon-btn { padding: 4px; color: var(--muted); }
+.meal-head .icon-btn svg { width: 16px; height: 16px; }
+.meal-head .icon-btn:hover { color: var(--accent); }
+/* o cabeçalho inteiro abre a refeição para edição */
+.meal-head[role='button'] { cursor: pointer; }
+.meal-head[role='button']:hover { background: var(--wash); }
+.meal-head[role='button']:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 /* nome + horário na mesma linha */
 .meal-nome-wrap { grid-area: nome; display: flex; align-items: baseline; gap: 7px; min-width: 0; }
 
