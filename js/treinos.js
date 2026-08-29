@@ -548,6 +548,33 @@
   }
   const ultimaCarga = (exercicioId, exceto) => ultimoValor(exercicioId, 'carga', exceto);
 
+  // Últimas execuções daquele exercício, da mais recente para a mais antiga.
+  // É com isso que a tela mostra a evolução de repetições, não só de carga.
+  function historicoExercicio(exercicioId, exceto, quantos = 3) {
+    const lista = finalizadas();
+    const saida = [];
+    for (let i = lista.length - 1; i >= 0 && saida.length < quantos; i--) {
+      const s = lista[i];
+      if (exceto && s.id === exceto) continue;
+      const it = (s.itens || []).find((x) => x.exercicioId === exercicioId && x.feito !== false);
+      if (it && (it.carga != null || it.reps || it.tempoMin != null || it.bpm != null)) {
+        saida.push({ ts: s.ts, ...it });
+      }
+    }
+    return saida;
+  }
+
+  // "25 kg · 12/11/10 · 20 min · 142 bpm" — só o que aquele registro tem
+  const resumoRegistro = (it, reg) =>
+    [
+      reg.carga != null ? comCarga(it, reg.carga) : '',
+      reg.reps ? `${reg.reps} reps` : '',
+      reg.tempoMin != null ? `${fmt(reg.tempoMin)} min` : '',
+      reg.bpm != null ? `${fmt(reg.bpm)} bpm` : '',
+    ]
+      .filter(Boolean)
+      .join(' · ');
+
   // Quantos registros seguidos com a mesma carga. Três ou mais é o sinal de
   // que aquele exercício parou de progredir e merece um empurrão.
   function cargaParada(exercicioId, exceto) {
@@ -684,6 +711,9 @@
     wrap.innerHTML = execucao.itens
       .map((it, i) => {
         const anterior = ultimaCarga(it.exercicioId, execucao.id);
+        const historico = historicoExercicio(it.exercicioId, execucao.id);
+        const ultimo = historico[0];
+        const antesDele = historico.slice(1).filter((r) => r.reps);
         const un = it.unidadeRep && it.unidadeRep !== 'rep' ? UNIDADES[it.unidadeRep] : '';
         return `
         <div class="exec-item${it.feito ? ' feito' : ''}" data-i="${i}">
@@ -712,11 +742,19 @@
               ? '' /* o campo de tempo já cobre a série medida em minutos/segundos */
               : `<div class="field">
               <label>${un === 'seg' ? 'Tempo feito' : un === 'min' ? 'Minutos feitos' : 'Repetições feitas'}</label>
-              <input type="text" class="ex-reps" value="${esc(it.reps)}" placeholder="${un ? `ex.: ${it.repMax}` : 'ex.: 12/10/8'}" />
+              <input type="text" class="ex-reps" value="${esc(it.reps)}"
+                placeholder="${ultimo && ultimo.reps ? esc(ultimo.reps) : un ? `ex.: ${it.repMax}` : 'ex.: 12/10/8'}" />
             </div>`}
             ${it.intervalo ? `<button class="btn ex-descanso" type="button" data-seg="${it.intervalo}">Descanso ${it.intervalo}s</button>` : ''}
           </div>
-          ${anterior != null ? `<p class="exec-anterior">Última vez: ${comCarga(it, anterior)}</p>` : ''}
+          ${ultimo
+            ? `<p class="exec-anterior">
+                Última vez: <b>${esc(resumoRegistro(it, ultimo))}</b>
+                ${antesDele.length ? `<span class="exec-antes">antes: ${esc(antesDele.map((r) => r.reps).join(' · '))}</span>` : ''}
+              </p>`
+            : anterior != null
+              ? `<p class="exec-anterior">Última vez: ${comCarga(it, anterior)}</p>`
+              : ''}
           ${(() => {
             const parada = it.carga != null ? cargaParada(it.exercicioId, execucao.id) : null;
             if (!parada) return '';

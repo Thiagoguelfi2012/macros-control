@@ -64,7 +64,11 @@ python3 -m http.server 8000
     séries e repetições, **caixa para marcar como concluído**, campo de **carga do
     dia** (já preenchido com o **último valor registrado para aquele exercício**,
     em qualquer treino), repetições feitas e um cronômetro de **descanso** com o
-    intervalo do exercício, e um **insight de progressão** quando a carga daquele
+    intervalo do exercício. Abaixo dos campos vem o **último registro daquele
+    exercício** — carga, repetições feitas e, no cardio, tempo e BPM —, com as
+    repetições das vezes anteriores em uma segunda linha, para acompanhar a
+    evolução em repetição e não só em carga; o campo de repetições usa a última
+    marca como placeholder. Há ainda um **insight de progressão** quando a carga daquele
     exercício não muda há três registros ou mais, com sugestão do próximo degrau
     plausível (+1, +2, +2,5 ou +5 kg conforme a faixa) e um botão para aceitar.
     **Marcar a caixa é o que cria o registro**: o ponto no gráfico nasce ali, não

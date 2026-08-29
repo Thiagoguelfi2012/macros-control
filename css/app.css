@@ -764,7 +764,9 @@ main { max-width: 860px; margin: 0 auto; padding: 20px 16px 110px; }
 .exec-campos .ex-descanso { flex: none; white-space: nowrap; }
 .exec-campos .ex-descanso.descansando { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 .exec-sem-carga { font-size: 13px; color: var(--muted); flex: 1 1 120px; padding-bottom: 9px; }
-.exec-anterior { margin: 8px 0 0; font-size: 12px; color: var(--muted); }
+.exec-anterior { margin: 8px 0 0; font-size: 12px; color: var(--muted); line-height: 1.45; }
+.exec-anterior b { color: var(--ink-2); font-weight: 600; font-variant-numeric: tabular-nums; }
+.exec-anterior .exec-antes { display: block; font-size: 11.5px; }
 .exec-dica {
   margin-top: 8px; padding: 8px 10px; border-radius: 9px;
   background: var(--wash); border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
