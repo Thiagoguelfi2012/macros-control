@@ -1230,37 +1230,6 @@
         <p class="freq-legenda">Dias com treino por semana (segunda a domingo)</p>` : ''}
       </div>`;
 
-    // lista das execuções, com a opção de apagar um treino registrado por engano
-    const emOrdem = relevantes.slice().reverse();
-    $('#evo-execucoes').innerHTML = `
-      <div class="chart-card">
-        <h3>Execuções do período</h3>
-        <p class="sub">${emOrdem.length} ${emOrdem.length === 1 ? 'treino registrado' : 'treinos registrados'} · dá para excluir um que tenha entrado sem querer</p>
-        <ul class="exec-lista">
-          ${emOrdem.slice(0, 40).map((x) => {
-            const feitos = (x.itens || []).filter((i) => i.feito).length;
-            const cargas = (x.itens || []).filter((i) => i.carga != null).length;
-            const dur = minutos(x.duracaoSeg);
-            const detalhes = [
-              feitos ? `${feitos} ${feitos === 1 ? 'exercício' : 'exercícios'}` : 'nenhum exercício marcado',
-              cargas ? `${cargas} com carga` : '',
-              dur,
-              x.origem ? `importado do ${esc(x.origem)}` : '',
-            ].filter(Boolean).join(' · ');
-            return `
-            <li class="exec-linha">
-              <div class="el-info">
-                <b>${dataBr(x.ts)}</b>
-                <span>${esc(x.treinoNome || 'Treino')} · ${detalhes}</span>
-              </div>
-              <button class="btn btn-ghost btn-danger-text act-del-sessao" type="button"
-                data-id="${esc(x.id)}" aria-label="Excluir treino de ${dataBr(x.ts)}">Excluir</button>
-            </li>`;
-          }).join('')}
-        </ul>
-        ${emOrdem.length > 40 ? `<p class="sub">Mostrando as 40 mais recentes de ${emOrdem.length}.</p>` : ''}
-      </div>`;
-
     const wrap = $('#evo-graficos');
     const blocoDuracao = comDuracao.length > 1
       ? `<div class="chart-card">
@@ -1309,6 +1278,42 @@
         </div>`;
       })
       .join('');
+
+    // lista das execuções, com a opção de apagar um treino registrado por engano
+    const emOrdem = relevantes.slice().reverse();
+    $('#evo-execucoes').innerHTML = `
+      <div class="chart-card">
+        <h3>Execuções do período</h3>
+        <p class="sub">${emOrdem.length} ${emOrdem.length === 1 ? 'treino registrado' : 'treinos registrados'} · corrija a duração quando esquecer de finalizar, ou exclua um que tenha entrado sem querer</p>
+        <ul class="exec-lista">
+          ${emOrdem.slice(0, 40).map((x) => {
+            const feitos = (x.itens || []).filter((i) => i.feito).length;
+            const cargas = (x.itens || []).filter((i) => i.carga != null).length;
+            const detalhes = [
+              feitos ? `${feitos} ${feitos === 1 ? 'exercício' : 'exercícios'}` : 'nenhum exercício marcado',
+              cargas ? `${cargas} com carga` : '',
+              x.origem ? `importado do ${esc(x.origem)}` : '',
+            ].filter(Boolean).join(' · ');
+            const min = x.duracaoSeg ? Math.round(x.duracaoSeg / 60) : '';
+            return `
+            <li class="exec-linha">
+              <div class="el-info">
+                <b>${dataBr(x.ts)}</b>
+                <span>${esc(x.treinoNome || 'Treino')} · ${detalhes}</span>
+              </div>
+              <span class="el-tempo">
+                <input type="number" class="act-dur-sessao" min="0" max="600" step="1"
+                  value="${min}" placeholder="—" inputmode="numeric" data-id="${esc(x.id)}"
+                  aria-label="Duração em minutos do treino de ${dataBr(x.ts)}" />
+                <span>min</span>
+              </span>
+              <button class="btn btn-ghost btn-danger-text act-del-sessao" type="button"
+                data-id="${esc(x.id)}" aria-label="Excluir treino de ${dataBr(x.ts)}">Excluir</button>
+            </li>`;
+          }).join('')}
+        </ul>
+        ${emOrdem.length > 40 ? `<p class="sub">Mostrando as 40 mais recentes de ${emOrdem.length}.</p>` : ''}
+      </div>`;
 
     if (typeof Chart === 'undefined') return;
     const ink2 = cssVar('--ink-2');
@@ -1665,6 +1670,28 @@
     }
 
     /* evolução */
+    $('#evo-execucoes').addEventListener('change', async (ev) => {
+      const campo = ev.target.closest('.act-dur-sessao');
+      if (!campo) return;
+      const sessao = sessoes.find((x) => x.id === campo.dataset.id);
+      if (!sessao) return;
+      const min = campo.value === '' ? null : Math.max(0, Math.round(Number(campo.value)));
+      const novo = min == null ? undefined : min * 60;
+      if ((sessao.duracaoSeg || undefined) === novo) return;
+      const { duracaoSeg, ...resto } = sessao;
+      const atualizada = novo === undefined ? resto : { ...resto, duracaoSeg: novo };
+      ignorarRecarga = true;
+      try {
+        await MacroDB.saveSessao(atualizada);
+      } finally {
+        ignorarRecarga = false;
+      }
+      const i = sessoes.findIndex((x) => x.id === sessao.id);
+      if (i >= 0) sessoes[i] = atualizada;
+      renderLista();
+      renderEvolucao();
+    });
+
     $('#evo-execucoes').addEventListener('click', async (ev) => {
       const b = ev.target.closest('.act-del-sessao');
       if (!b) return;

@@ -90,14 +90,16 @@ python3 -m http.server 8000
     rascunho abandonado (app fechado sem finalizar nem descartar) é removido na
     próxima abertura — só treino finalizado vira registro.
   - **Evolução** — card de **frequência** (dias com treino no período, média por
-    semana e uma barra por semana), a **lista das execuções** do período com
-    data, treino, quantos exercícios e quanto durou, cada uma com um botão para
-    **excluir** um treino que tenha entrado por engano, **duração dos treinos** em barras (com tempo
+    semana e uma barra por semana), **duração dos treinos** em barras (com tempo
     total e média) e um gráfico de linha por exercício com a **progressão de
     carga** ao longo das execuções, com o **valor escrito em cada ponto**, uma
     marca no eixo X por execução e no eixo Y por carga registrada. Filtros por
     treino e por período (7, 15, 30, 90, 180 dias, 1 ano ou tudo); execuções
-    deixadas abertas por mais de 4 h ficam fora das contas de tempo.
+    com mais de 4 h ficam fora das contas de tempo. No fim da aba, depois de
+    todos os gráficos, vem a **lista das execuções** do período — data, treino e
+    quantos exercícios —, cada uma com a **duração editável** (para corrigir o
+    treino que ficou aberto porque você esqueceu de finalizar) e um botão para
+    **excluir** um registro que tenha entrado por engano.
   - **Exercícios** — biblioteca com **166 exercícios** de uma academia padrão
     (Smart Fit): aparelhos, polias, Smith, halteres/barras e peso corporal,
     agrupados por músculo e filtráveis por grupo e equipamento. É de onde saem os
