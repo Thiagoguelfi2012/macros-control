@@ -365,6 +365,51 @@
     return -Math.round((atual - primeira) / (7 * 86400000));
   }
 
+  const treinoAtivo = (t) => t.ativo !== false;
+
+  // Próximo treino da rotação: entre os ativos e com exercícios, o que está
+  // há mais tempo sem ser executado (nunca executado vem primeiro). Empate
+  // resolve pela ordem do treino na lista.
+  function proximoTreino() {
+    const candidatos = treinos.filter((t) => treinoAtivo(t) && (t.exercicios || []).length);
+    if (!candidatos.length) return null;
+    const ultimaDe = (t) => {
+      const lista = sessoesDe(t.id);
+      return lista.length ? new Date(lista[lista.length - 1].ts).getTime() : -Infinity;
+    };
+    return candidatos
+      .map((t) => ({ t, quando: ultimaDe(t) }))
+      .sort((a, b) => a.quando - b.quando || (a.t.ordem ?? 0) - (b.t.ordem ?? 0))[0];
+  }
+
+  const desdeQuando = (ms) => {
+    if (ms === -Infinity) return 'nunca executado';
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const d = new Date(ms);
+    d.setHours(0, 0, 0, 0);
+    const dias = Math.round((hoje - d) / 86400000);
+    if (dias <= 0) return 'executado hoje';
+    if (dias === 1) return 'último ontem';
+    return `último há ${dias} dias`;
+  };
+
+  function blocoProximoTreino() {
+    if (execucao) return ''; // a faixa de retomar já ocupa esse papel
+    const escolhido = proximoTreino();
+    if (!escolhido) return '';
+    const { t, quando } = escolhido;
+    return `
+      <div class="proximo-treino">
+        <div class="pt-info">
+          <span class="pt-rotulo">Treino de hoje</span>
+          <b>${esc(t.nome)}${t.foco ? ` · ${esc(t.foco)}` : ''}</b>
+          <span class="pt-sub">${desdeQuando(quando)}</span>
+        </div>
+        <button class="btn btn-primary" id="pt-iniciar" type="button" data-id="${esc(t.id)}">Iniciar treino de hoje</button>
+      </div>`;
+  }
+
   function renderFreqSemana() {
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
@@ -446,6 +491,7 @@
             : ''}
         </p>
         <p class="semana-dica">Arraste para o lado para ver outras semanas</p>
+        ${blocoProximoTreino()}
       </div>`;
   }
 
@@ -493,11 +539,12 @@
       .map((t) => {
         const qtd = (t.exercicios || []).length;
         const grupos = [...new Set((t.exercicios || []).map((e) => e.grupo).filter(Boolean))];
+        const inativo = !treinoAtivo(t);
         return `
-        <div class="treino-card" data-id="${t.id}">
+        <div class="treino-card${inativo ? ' inativo' : ''}" data-id="${t.id}">
           <div class="treino-head">
             <div>
-              <h3>${esc(t.nome)}</h3>
+              <h3>${esc(t.nome)}${inativo ? '<span class="tag-inativo">fora da rotação</span>' : ''}</h3>
               ${t.foco ? `<p class="treino-foco">${esc(t.foco)}</p>` : ''}
             </div>
             <button class="btn btn-ghost act-editar" title="Editar treino" aria-label="Editar ${esc(t.nome)}">Editar</button>
@@ -892,6 +939,7 @@
     $('#mt-titulo').textContent = treino ? 'Editar treino' : 'Novo treino';
     $('#mt-nome').value = emEdicao.nome || '';
     $('#mt-foco').value = emEdicao.foco || '';
+    $('#mt-ativo').checked = emEdicao.ativo !== false;
     $('#mt-excluir').hidden = !treino;
     renderEditor();
     $('#modal-treino').classList.add('open');
@@ -979,6 +1027,7 @@
     });
     emEdicao.nome = $('#mt-nome').value.trim();
     emEdicao.foco = $('#mt-foco').value.trim();
+    emEdicao.ativo = $('#mt-ativo').checked;
   }
 
   /* ---- Escolher exercício ---- */
@@ -1559,7 +1608,14 @@
     // navegação entre semanas: botões e arrasto lateral no cartão
     $('#freq-semana').addEventListener('click', (ev) => {
       const b = ev.target.closest('.sem-nav');
-      if (b && !b.disabled) andarSemana(Number(b.dataset.passo));
+      if (b && !b.disabled) {
+        andarSemana(Number(b.dataset.passo));
+        return;
+      }
+      const iniciar = ev.target.closest('#pt-iniciar');
+      if (!iniciar) return;
+      const treino = treinos.find((t) => t.id === iniciar.dataset.id);
+      if (treino) iniciarTreino(treino);
     });
     let toque = null;
     $('#freq-semana').addEventListener(

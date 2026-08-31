@@ -52,7 +52,12 @@ python3 -m http.server 8000
     quando houve mais de um), o dia de hoje destacado e a média das semanas
     anteriores logo abaixo. Dá para **andar pelas semanas passadas** arrastando
     o cartão para o lado (ou pelas setas ‹ ›), até a semana do primeiro
-    registro — o histórico importado entra nessa conta. Em seguida, cartões com os treinos montados (nome, foco,
+    registro — o histórico importado entra nessa conta. No mesmo cartão vem o
+    **treino de hoje**: o app escolhe sozinho o treino **ativo que está há mais
+    tempo sem ser executado** (nunca executado vem primeiro) e oferece o botão
+    para começar. Um treino pode ser tirado da rotação pelo editor (caixa "ativo
+    na rotação"): ele continua na lista, marcado como **fora da rotação**, e
+    ainda pode ser iniciado à mão — só não é sugerido. Em seguida, cartões com os treinos montados (nome, foco,
     quantas vezes foi executado, quando e por quanto tempo), botões de
     **Iniciar treino** e **Evolução** (que abre a aba de evolução já filtrada
     naquele treino) e editor

@@ -876,3 +876,23 @@ main { max-width: 860px; margin: 0 auto; padding: 20px 16px 110px; }
 
 /* aviso de base de alimentos desatualizada */
 #base-info.aviso { color: var(--bad-text); font-weight: 500; }
+
+/* ---- Próximo treino da rotação ---- */
+.proximo-treino {
+  margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--grid);
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+}
+.pt-info { flex: 1 1 150px; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.pt-rotulo { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.pt-info b { font-size: 15px; }
+.pt-sub { font-size: 12px; color: var(--muted); }
+.proximo-treino .btn { flex: none; }
+
+/* ---- Treino fora da rotação ---- */
+.treino-card.inativo { opacity: 0.72; }
+.treino-card.inativo .act-iniciar { background: var(--surface); color: var(--ink-2); border-color: var(--border); }
+.tag-inativo {
+  margin-left: 8px; font-size: 11px; font-weight: 500; vertical-align: middle;
+  color: var(--muted); background: var(--page); border: 1px solid var(--border);
+  border-radius: 999px; padding: 2px 8px;
+}
