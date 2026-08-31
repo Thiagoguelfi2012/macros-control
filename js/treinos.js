@@ -406,7 +406,8 @@
           <b>${esc(t.nome)}${t.foco ? ` · ${esc(t.foco)}` : ''}</b>
           <span class="pt-sub">${desdeQuando(quando)}</span>
         </div>
-        <button class="btn btn-primary" id="pt-iniciar" type="button" data-id="${esc(t.id)}">Iniciar treino de hoje</button>
+        <button class="btn btn-primary" id="pt-iniciar" type="button" data-id="${esc(t.id)}"
+          aria-label="Iniciar ${esc(t.nome)}">Iniciar</button>
       </div>`;
   }
 
