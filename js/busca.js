@@ -37,6 +37,9 @@ const FoodSearch = (() => {
       .replace(/\bamendoin\b/g, 'amendoim')
       // as duas grafias convivem no mercado e nas tabelas
       .replace(/\besfirra(s)?\b/g, 'esfiha$1')
+      .replace(/\bair ?fry(er)?\b/g, 'airfryer')
+      .replace(/\bfritadeira (eletrica|sem oleo|a ar)\b/g, 'airfryer')
+      .replace(/\bbatata (smile|smiles)\b/g, 'batata sorriso')
       .replace(/\bnutel+a\b/g, 'nutella') // "nutela" com um L só é o mais digitado
       .replace(/\bbavarian ?nuts?\b/g, 'bavarian nuts')
       .replace(/\bbavaria\b/g, 'bavarian')
