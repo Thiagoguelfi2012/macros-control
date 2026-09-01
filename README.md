@@ -22,7 +22,7 @@ python3 -m http.server 8000
 ## Funcionalidades
 
 - **Diário** (`index.html`): botão "+ Adicionar" abre um modal com busca estilo
-  select2 (Tom Select) sobre **~17.800 alimentos** (TACO, **TBCA**, IBGE, USDA,
+  select2 (Tom Select) sobre **~18.000 alimentos** (TACO, **TBCA**, IBGE, USDA,
   marcas brasileiras e pratos curados); quantidade em **gramas, mililitros ou
   medidas caseiras** (unidade, fatia, xícara, concha, lata, dose…) com prévia dos
   macros; monta refeição com vários itens de uma vez (com impacto na meta antes de
@@ -217,7 +217,7 @@ externas — use o app no endereço próprio (GitHub Pages) ou no arquivo standa
 - Biblioteca de exercícios: `js/exercicios.js`, gerado por
   `tools/build-exercicios.mjs` a partir de uma lista curada — não depende de rede.
 - Configurações (TMB/TDEE e dieta alvo): `localStorage`.
-- Banco de alimentos: `data/foods.json` (~2,3 MB, **17.997 itens**, ~10.900 com
+- Banco de alimentos: `data/foods.json` (~2,3 MB, **18.055 itens**, ~10.900 com
   medidas caseiras e ~890 líquidos medidos em ml/L), carregado no IndexedDB na
   primeira visita. Valores por 100 g (ou 100 ml). Fontes, na ordem de prioridade da
   busca:
@@ -226,9 +226,10 @@ externas — use o app no endereço próprio (GitHub Pages) ou no arquivo standa
   | --- | ---: | --- |
   | **TACO** (UNICAMP) | 590 | alimentos brasileiros in natura e preparados, PT nativo |
   | **TBCA** (USP/BRASILFOODS) | 5.340 | a maior fonte em PT: além dos alimentos, muita **preparação e prato pronto** — sushi, feijoada, pizzas, lasanhas, salgados, bolos, saladas, com variações "com/sem sal", "com/sem óleo", frito/assado/cozido |
-  | **Marcas** (`tools/marcas.mjs`) | 593 | produtos de marcas brasileiras com valores de rótulo (iogurtes, leites, queijos, congelados, biscoitos, chocolates, bebidas, suplementos…) |
+  | **Marcas** (`tools/marcas.mjs`) | 657 | produtos de marcas brasileiras com valores de rótulo (iogurtes, leites, queijos, congelados, biscoitos, chocolates, bebidas, suplementos…) |
   | **Chocolates** (`tools/chocolates.mjs`) | 159 | catálogo de chocolates e bombons: Cacau Show (Lacreme, Zero, Mil Folhas, trufas, tabletes, bombons, Lanut), Kopenhagen, Brasil Cacau, Lacta, Garoto, Nestlé, Hershey's, Ferrero/Kinder, Lindt, Arcor, Neugebauer, Havanna e os bean-to-bar brasileiros (Dengo, Amma, Luisa Abram, Nugali, Baianí, Mendoá) |
   | **Pastas** (`tools/pastas.mjs`) | 70 | pastas de amendoim, castanhas e sementes: Dr. Peanut e Vitapower (todos os sabores), Amendocrem, Reese's, Skippy, Jif, as integrais de mercado natural (Mandubim, Pura Vida, Vitao, Jasmine, Mãe Terra), as de marcas de suplemento e as de castanha de caju, amêndoa, pistache, gergelim (tahine) e coco |
+  | **Sorvetes** (`tools/sorvetes.mjs`) | 58 | picolés, sorvetes e gelaterias: a linha licenciada de picolé (Prestígio, Sonho de Valsa, Ouro Branco, Diamante Negro, Bis, Laka, Oreo, Nescau, Kit Kat, Moça, Alpino, Brigadeiro, Serenata, Chokito), Kibon (Magnum, Cornetto, Sandubon, Fruttare), os potes de Kibon/Nestlé/Moça e os light, La Frutta, os premium (Häagen-Dazs, Ben & Jerry's, Diletto, paleta mexicana) e as redes de sorveteria (Chiquinho: casquinha, sundae, especial, milk shake, açaí com adicionais) |
   | **Curados** (`tools/curados.mjs`) | 593 | pratos de vida real ausentes das tabelas: temaki e sushi, esfihas e salgados de festa, docinhos, fast food, frutos do mar, churrasco, bolos de confeitaria, batatas congeladas e o preparo **na airfryer** (sorriso/carinha, palito, noisette, rústica, gomos), granolas de marca (linha Vitalin Granola Whey e as tradicionais), castanhas caramelizadas de quiosque (Bavarian Nuts), esfihas doces de esfiharia (chocolate, Nutella, Sonho de Valsa, Ouro Branco, morango com banana, brigadeiro, Romeu e Julieta…) e a mesa de restaurante chinês (banana caramelizada, agridoces, chop suey, yakisoba, bifum, guioza, wonton) |
   | **IBGE/POF** | 1.873 | alimentos e preparações, PT nativo |
   | **USDA SR28** | 8.717 | complemento, nomes traduzidos por glossário EN→PT |
@@ -277,13 +278,14 @@ js/exercicios.js               biblioteca de exercícios da academia (gerado)
 js/config.js                   tela Ajustes (gasto, dieta alvo, backup, conta)
 js/sync.js                     conta (Supabase Auth) + sincronização do backup
 js/refresh.js                  pull-to-refresh
-data/foods.json                banco de ~17.800 alimentos gerado
+data/foods.json                banco de ~18.000 alimentos gerado
 vendor/                        Tom Select e Chart.js vendorizados (offline)
 tools/build-foods.mjs          gerador do banco de alimentos
 tools/curados.mjs              camada curada (pratos de vida real)
 tools/marcas.mjs               camada de marcas brasileiras (valores de rótulo)
 tools/chocolates.mjs           camada de chocolates e bombons (massa, gourmet, bean-to-bar)
 tools/pastas.mjs               camada de pastas de amendoim, castanhas e sementes
+tools/sorvetes.mjs             camada de sorvetes, picolés e gelaterias
 tools/build-exercicios.mjs     gerador da biblioteca de exercícios
 tools/build-standalone.mjs     gera controle-de-macros.html (arquivo único)
 ```
