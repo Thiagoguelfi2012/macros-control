@@ -8,6 +8,9 @@
   const inpDataHora = $('#inp-datahora');
   const preview = $('#preview');
 
+  const esc = (t) =>
+    String(t ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+
   let tomSelect = null;
   let foodSelecionado = null;
   let editandoId = null; // id do registro em edição (null = novo)
@@ -619,6 +622,91 @@
     }, 80);
   }
 
+  /* ---- Sugestão e código de barras ---- */
+
+  // Coloca um alimento no modal já com a porção escolhida — é por aqui que
+  // entram tanto a sugestão quanto o produto lido no código de barras
+  async function usarAlimento(food, qtd, medida) {
+    fallbackFood = null;
+    tomSelect.addOption({ ...food });
+    tomSelect.setValue(food.i, true);
+    await onFoodChange(food.i);
+    tomSelect.blur();
+    if (qtd != null) {
+      const opts = [...selMedida.options].map((o) => o.value);
+      selMedida.value = medida && opts.includes(medida) ? medida : 'g';
+      inpQtd.value = selMedida.value === 'g' && medida && medida !== 'g' ? Math.round(qtd) : qtd;
+      atualizarPreview();
+    }
+  }
+
+  function fecharSugestoes() {
+    const box = $('#sug-box');
+    box.hidden = true;
+    box.innerHTML = '';
+  }
+
+  async function renderSugestoes() {
+    const box = $('#sug-box');
+    box.hidden = false;
+    box.innerHTML = '<p class="sug-carregando">Escolhendo…</p>';
+    const quando = inpDataHora.value ? new Date(inpDataHora.value) : new Date();
+    let dados;
+    try {
+      dados = await Sugestao.sugerir(quando, { n: 3 });
+    } catch {
+      box.innerHTML = '<p class="sug-carregando">Não consegui montar uma sugestão agora.</p>';
+      return;
+    }
+    const { ctx, sugestoes } = dados;
+    if (!sugestoes.length) {
+      box.innerHTML = '<p class="sug-carregando">Sem sugestões para este horário.</p>';
+      return;
+    }
+    const r = ctx.restante;
+    const resumo = ctx.metas.kcal
+      ? `${ctx.ref.nome} · ${r.kcal > 0 ? `faltam ${fmt(r.kcal, 0)} kcal hoje` : `${fmt(-r.kcal, 0)} kcal acima da meta`}${
+          ctx.metas.p ? ` · proteína ${r.p > 0 ? `faltam ${fmt(r.p, 0)} g` : 'no limite'}` : ''
+        }`
+      : `${ctx.ref.nome} · defina a dieta alvo em Ajustes para sugestões mais certeiras`;
+    box.innerHTML = `
+      <div class="sug-head">
+        <div>
+          <b>Sugestão para agora</b>
+          <span class="sug-sub">${esc(resumo)}</span>
+        </div>
+        <div class="sug-acoes">
+          <button class="btn btn-mini" id="btn-sug-outra" type="button">Trocar</button>
+          <button class="btn btn-mini" id="btn-sug-fechar" type="button">Fechar</button>
+        </div>
+      </div>
+      ${ctx.apertado ? '<p class="sug-alerta">Modo saciedade: priorizando o que enche mais estourando o mínimo.</p>' : ''}
+      <div class="sug-lista">
+        ${sugestoes
+          .map(
+            (x, i) => `
+          <div class="sug-card">
+            <div class="sug-info">
+              <b>${esc(x.food.n)}</b>
+              <span class="sug-porcao">${fmt(x.qtd, 2)} ${esc(x.medida === 'g' ? (x.food.l ? 'ml' : 'g') : x.medida)} · ${fmt(x.kcal, 0)} kcal · P ${fmt(x.p)} · C ${fmt(x.c)} · G ${fmt(x.g)}</span>
+              <span class="sug-motivo">${esc(x.motivo)}</span>
+            </div>
+            <button class="btn btn-mini btn-primary sug-usar" type="button" data-i="${i}">Usar</button>
+          </div>`
+          )
+          .join('')}
+      </div>`;
+    $('#btn-sug-outra').onclick = renderSugestoes;
+    $('#btn-sug-fechar').onclick = fecharSugestoes;
+    box.querySelectorAll('.sug-usar').forEach((b) => {
+      b.onclick = async () => {
+        const x = sugestoes[Number(b.dataset.i)];
+        fecharSugestoes();
+        await usarAlimento(x.food, x.qtd, x.medida);
+      };
+    });
+  }
+
   /* ---- Histórico ---- */
 
   const SVG_DEL =
@@ -950,6 +1038,13 @@
     $('#btn-salvar').addEventListener('click', salvar);
     $('#btn-incluir').addEventListener('click', incluirNaRefeicao);
     $('#btn-abrir-cadastro').addEventListener('click', abrirCadastro);
+    $('#btn-sugestao').addEventListener('click', () => {
+      if ($('#sug-box').hidden) renderSugestoes();
+      else fecharSugestoes();
+    });
+    $('#btn-barras').addEventListener('click', () => {
+      Barras.abrir({ aoEscolher: (food) => usarAlimento(food, null, null) });
+    });
     $('#btn-cad-cancelar').addEventListener('click', () => cadBackdrop.classList.remove('open'));
     $('#btn-cad-salvar').addEventListener('click', salvarCadastro);
     backdrop.addEventListener('click', (ev) => {

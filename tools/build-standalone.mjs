@@ -111,6 +111,12 @@ ${read('js/busca.js')}
 ${read('js/sync.js')}
 </script>
 <script>
+${read('js/sugestao.js')}
+</script>
+<script>
+${read('js/barras.js')}
+</script>
+<script>
 ${read('js/diario.js')}
 </script>
 <script>

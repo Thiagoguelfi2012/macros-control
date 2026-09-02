@@ -909,6 +909,147 @@ main { max-width: 860px; margin: 0 auto; padding: 20px 16px 110px; }
   border-radius: 999px; padding: 2px 8px;
 }
 
+/* ---- Sugestão e leitor de código de barras ---- */
+
+.alim-acoes {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.btn-mini {
+  padding: 8px 12px;
+  font-size: 13px;
+  border-radius: 10px;
+}
+.sug-box {
+  margin: 4px 0 14px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--wash);
+}
+.sug-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.sug-head b {
+  display: block;
+  font-size: 14px;
+}
+.sug-sub {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 2px;
+}
+.sug-acoes {
+  display: flex;
+  gap: 6px;
+  flex: none;
+}
+.sug-alerta {
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--s2) 14%, transparent);
+  color: var(--ink-2);
+  font-size: 12px;
+}
+.sug-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sug-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.sug-info {
+  min-width: 0;
+  flex: 1;
+}
+.sug-info b {
+  display: block;
+  font-size: 13.5px;
+  line-height: 1.25;
+}
+.sug-porcao,
+.sug-motivo {
+  display: block;
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.sug-motivo {
+  color: var(--accent);
+}
+.sug-card .btn-mini {
+  flex: none;
+}
+.sug-carregando {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.scan-palco {
+  position: relative;
+  margin-bottom: 10px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #000;
+  aspect-ratio: 4 / 3;
+}
+.scan-palco video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.scan-mira {
+  position: absolute;
+  inset: 22% 10%;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  border-radius: 10px;
+  box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.28);
+}
+.scan-status {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.scan-status.aviso {
+  color: var(--danger);
+}
+.scan-status.ok {
+  color: var(--good-text);
+}
+.scan-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 12px;
+}
+.scan-macros {
+  font-size: 12.5px;
+  color: var(--ink-2);
+}
+.scan-nota {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
 </style>
 </head>
 <body>
@@ -947,8 +1088,14 @@ main { max-width: 860px; margin: 0 auto; padding: 20px 16px 110px; }
       <div class="field">
         <label for="sel-alimento">Alimento</label>
         <select id="sel-alimento" placeholder="Digite para pesquisar… ex.: arroz, frango, banana"></select>
+        <div class="alim-acoes">
+          <button class="btn btn-mini" id="btn-sugestao" type="button">✨ Sugestão</button>
+          <button class="btn btn-mini" id="btn-barras" type="button">📷 Código de barras</button>
+        </div>
         <button class="btn-link" id="btn-abrir-cadastro" type="button">Não encontrou? Cadastre um alimento próprio</button>
       </div>
+
+      <div class="sug-box" id="sug-box" hidden></div>
 
       <div class="field-row">
         <div class="field">
@@ -992,6 +1139,28 @@ main { max-width: 860px; margin: 0 auto; padding: 20px 16px 110px; }
       <div class="modal-actions">
         <button class="btn" id="btn-cancelar">Cancelar</button>
         <button class="btn btn-primary" id="btn-salvar">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="modal-barras">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="barras-titulo">
+      <h2 id="barras-titulo">Código de barras</h2>
+      <div class="scan-palco" id="scan-palco" hidden>
+        <video id="scan-video" playsinline muted autoplay></video>
+        <div class="scan-mira"></div>
+      </div>
+      <p class="scan-status" id="scan-status">Aponte a câmera para o código de barras da embalagem.</p>
+      <div class="field">
+        <label for="scan-codigo">Ou digite os números do código</label>
+        <div class="field-row">
+          <input type="text" id="scan-codigo" inputmode="numeric" autocomplete="off" placeholder="ex.: 7891000315507" />
+          <button class="btn" id="btn-scan-buscar" type="button">Buscar</button>
+        </div>
+      </div>
+      <div id="scan-achado" hidden></div>
+      <div class="modal-actions">
+        <button class="btn" id="btn-scan-fechar" type="button">Fechar</button>
       </div>
     </div>
   </div>
@@ -3280,6 +3449,675 @@ const SupabaseSync = (() => {
 
 </script>
 <script>
+/* Sugestão de refeição: o que comer agora, olhando a hora, a dieta alvo, o que
+   já foi consumido no dia e o histórico da própria pessoa.
+
+   A ideia não é acertar "a" comida certa, e sim oferecer três opções plausíveis
+   e diferentes a cada toque: o placar ordena, mas a escolha final é sorteada
+   entre os melhores colocados. Quando o dia já estourou (ou está por estourar),
+   o critério troca: passa a valer o que dá mais saciedade por caloria. */
+const Sugestao = (() => {
+  const REFEICOES = [
+    { chave: 'madrugada', nome: 'Madrugada', art: 'na', ate: 5, peso: 0.05 },
+    { chave: 'cafe', nome: 'Café da manhã', art: 'no', ate: 10.5, peso: 0.2 },
+    { chave: 'lanche-manha', nome: 'Lanche da manhã', art: 'no', ate: 12, peso: 0.07 },
+    { chave: 'almoco', nome: 'Almoço', art: 'no', ate: 15, peso: 0.3 },
+    { chave: 'lanche-tarde', nome: 'Lanche da tarde', art: 'no', ate: 18.5, peso: 0.12 },
+    { chave: 'jantar', nome: 'Jantar', art: 'no', ate: 22, peso: 0.24 },
+    { chave: 'ceia', nome: 'Ceia', art: 'na', ate: 24, peso: 0.07 },
+  ];
+
+  const refeicaoDe = (data) => {
+    const h = data.getHours() + data.getMinutes() / 60;
+    return REFEICOES.find((r) => h < r.ate) || REFEICOES[REFEICOES.length - 1];
+  };
+
+  // Catálogo por refeição: [termo de busca, quantidade, medida].
+  // A medida é um pedaço do rótulo da medida caseira ("unidade", "fatia"…) ou
+  // null para gramas. `fibra` marca o que segura a fome por volume e fibra —
+  // entra no cálculo de saciedade, que as tabelas não trazem.
+  const F = (b, q, med, fibra) => ({ b, q, med, fibra: !!fibra });
+  const CATALOGO = {
+    cafe: [
+      F('Ovo de galinha cozido', 2, 'unidade'),
+      F('Ovo, galinha, mexido, com margarina, sem sal', 2, 'unidade'),
+      F('Pão, trigo, francês', 1, 'unidade'),
+      F('Pão de forma integral', 2, 'fatia', 1),
+      F('Tapioca goma hidratada', 60, null),
+      F('Aveia em flocos', 40, null, 1),
+      F('Iogurte natural integral', 170, null),
+      F('Iogurte grego Danone tradicional', 1, 'pote'),
+      F('Queijo minas frescal', 50, null),
+      F('Requeijão cremoso', 30, null),
+      F('Mamão, Papaia, cru', 180, null, 1),
+      F('Banana prata', 1, 'unidade', 1),
+      F('Café com leite', 200, null),
+      F('Leite desnatado', 200, null),
+      F('Whey protein concentrado', 30, null),
+      F('Cuscuz de milho cozido', 120, null, 1),
+      F('Crepioca', 1, 'unidade'),
+      F('Pão de queijo Forno de Minas (congelado, assado)', 2, 'unidade'),
+      F('Abacate', 100, null, 1),
+      F('Granola tradicional', 40, null, 1),
+    ],
+    'lanche-manha': [
+      F('Banana prata', 1, 'unidade', 1),
+      F('Maçã, Fuji, com casca, crua', 1, 'unidade', 1),
+      F('Iogurte natural desnatado', 170, null),
+      F('Castanha de caju', 25, null, 1),
+      F('Amêndoa', 25, null, 1),
+      F('Ovo de galinha cozido', 2, 'unidade'),
+      F('Queijo minas frescal', 40, null),
+      F('Barra de proteína', 1, 'unidade'),
+      F('Mexerica', 1, 'unidade', 1),
+      F('Whey protein concentrado', 30, null),
+      F('Pasta de amendoim integral', 20, null),
+      F('Biscoito de arroz integral', 4, 'unidade', 1),
+    ],
+    almoco: [
+      F('Arroz branco cozido', 130, null),
+      F('Arroz integral cozido', 130, null, 1),
+      F('Feijão carioca cozido', 100, null, 1),
+      F('Feijão preto cozido', 100, null, 1),
+      F('Peito de frango grelhado', 150, null),
+      F('Carne, bovina, patinho, sem gordura, refogada, sem sal', 130, null),
+      F('Filé de tilápia grelhado', 150, null),
+      F('Salmão, filé, com pele, fresco,  grelhado', 1, 'filé'),
+      F('Ovo frito', 2, 'unidade'),
+      F('Batata doce cozida', 150, null, 1),
+      F('Purê de batata', 130, null),
+      F('Macarrão cozido', 130, null),
+      F('Salada de alface e tomate', 120, null, 1),
+      F('Brócolis cozido', 100, null, 1),
+      F('Abobrinha refogada', 120, null, 1),
+      F('Couve refogada', 80, null, 1),
+      F('Farofa', 30, null),
+      F('Strogonoff de frango', 180, null),
+      F('Carne de panela', 150, null),
+      F('Lentilha cozida', 100, null, 1),
+    ],
+    'lanche-tarde': [
+      F('Iogurte grego Danone tradicional', 1, 'pote'),
+      F('Whey protein concentrado', 30, null),
+      F('Banana prata', 1, 'unidade', 1),
+      F('Maçã, Fuji, com casca, crua', 1, 'unidade', 1),
+      F('Pão de forma integral', 2, 'fatia', 1),
+      F('Pasta de amendoim integral', 20, null),
+      F('Ovo de galinha cozido', 2, 'unidade'),
+      F('Sanduíche natural de frango', 1, 'unidade'),
+      F('Castanha do Pará', 20, null, 1),
+      F('Pipoca, com óleo de soja, sem sal', 30, null, 1),
+      F('Tapioca goma hidratada', 60, null),
+      F('Queijo minas frescal', 40, null),
+      F('Café com leite', 200, null),
+      F('Barra de proteína', 1, 'unidade'),
+      F('Mamão, Papaia, cru', 180, null, 1),
+      F('Bolo de cenoura com cobertura', 1, 'fatia'),
+    ],
+    jantar: [
+      F('Peito de frango grelhado', 150, null),
+      F('Filé de tilápia grelhado', 150, null),
+      F('Omelete', 150, null),
+      F('Sopa de legumes', 300, null, 1),
+      F('Salada de alface e tomate', 150, null, 1),
+      F('Arroz integral cozido', 100, null, 1),
+      F('Batata doce cozida', 130, null, 1),
+      F('Legumes refogados', 150, null, 1),
+      F('Carne, boi, acém moída, cozida, com óleo, cebola e alho, sem sal', 130, null),
+      F('Sanduíche natural de frango', 1, 'unidade'),
+      F('Panqueca de carne', 2, 'unidade'),
+      F('Feijão carioca cozido', 90, null, 1),
+      F('Ovo de galinha, cozido', 3, 'unidade'),
+      F('Wrap de frango', 1, 'unidade'),
+      F('Combinado de sushi e sashimi (média)', 200, null),
+    ],
+    ceia: [
+      F('Iogurte natural desnatado', 170, null),
+      F('Leite desnatado', 200, null),
+      F('Queijo cottage', 100, null),
+      F('Whey protein concentrado', 25, null),
+      F('Ovo de galinha cozido', 2, 'unidade'),
+      F('Gelatina diet preparada', 200, null),
+      F('Chá de camomila', 200, null),
+      F('Maçã, Fuji, com casca, crua', 1, 'unidade', 1),
+      F('Castanha de caju', 15, null, 1),
+      F('Iogurte grego Danone tradicional', 1, 'pote'),
+    ],
+  };
+  CATALOGO.madrugada = CATALOGO.ceia;
+
+  // O que segura a fome: proteína por caloria e comida "grande" para pouca
+  // caloria (densidade baixa). É o critério que assume quando o dia estourou.
+  function saciedade(f, fibra) {
+    const kcal = Math.max(f.kcal, 1);
+    const prot = Math.min((f.p * 4) / kcal, 0.6) / 0.6;
+    const leveza = 1 - Math.min(kcal / 300, 1);
+    return 0.45 * prot + 0.4 * leveza + (fibra ? 0.15 : 0);
+  }
+
+  const gramasDa = (food, med) => {
+    if (!med || !food.m) return null;
+    const alvo = (food.m || []).find(([r]) => r.toLowerCase().includes(med));
+    return alvo || null;
+  };
+
+  // Um candidato pronto para pontuar: alimento + porção + macros daquela porção
+  function montar(food, qtd, med, extra = {}) {
+    if (!food) return null;
+    const medida = gramasDa(food, med);
+    const gramas = medida ? qtd * medida[1] : qtd;
+    if (!(gramas > 0)) return null;
+    const fator = gramas / 100;
+    return {
+      food,
+      qtd,
+      medida: medida ? medida[0] : 'g',
+      gramas,
+      kcal: food.kcal * fator,
+      p: food.p * fator,
+      c: food.c * fator,
+      g: food.g * fator,
+      ...extra,
+    };
+  }
+
+  // Ajusta a porção para caber no alvo da refeição, sem virar migalha nem
+  // banquete: gramas variam livre, unidades andam de meia em meia
+  function ajustar(cand, alvoKcal, tetoKcal) {
+    if (!(cand.kcal > 0) || !(alvoKcal > 0)) return cand;
+    const teto = tetoKcal != null ? Math.min(alvoKcal * 1.35, tetoKcal) : alvoKcal * 1.35;
+    if (cand.kcal <= teto) return cand;
+    const passo = cand.medida === 'g' ? 0.05 : 0.5;
+    const bruto = (teto / cand.kcal) * cand.qtd;
+    let novo = Math.max(passo, Math.round(bruto / passo) * passo);
+    if (cand.medida === 'g') novo = Math.max(10, Math.round(bruto / 5) * 5);
+    if (novo >= cand.qtd) return cand;
+    const k = novo / cand.qtd;
+    return {
+      ...cand,
+      qtd: Math.round(novo * 100) / 100,
+      gramas: cand.gramas * k,
+      kcal: cand.kcal * k,
+      p: cand.p * k,
+      c: cand.c * k,
+      g: cand.g * k,
+      reduzido: true,
+    };
+  }
+
+  const chaveDia = (d) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+
+  /* ---- Contexto: metas, o que já foi consumido e o histórico ---- */
+
+  async function contexto(quando) {
+    const data = quando || new Date();
+    const ref = refeicaoDe(data);
+    const s = MacroDB.getSettings();
+    const metas = {
+      kcal: s.metaKcal || s.gastoDiario || null,
+      p: s.metaP || null,
+      c: s.metaC || null,
+      g: s.metaG || null,
+    };
+    const entries = await MacroDB.getAllEntries();
+    const hoje = chaveDia(data);
+    const consumido = { kcal: 0, p: 0, c: 0, g: 0 };
+    const comidosHoje = new Set();
+    const recentes = new Map(); // foodId → dias desde a última vez
+    const frequencia = new Map(); // foodId → vezes
+    const naRefeicao = new Map(); // foodId → vezes nesta mesma refeição
+    const porcao = new Map(); // foodId → última porção usada
+    for (const e of entries) {
+      const d = new Date(e.ts);
+      if (chaveDia(d) === hoje) {
+        if (d <= data) {
+          consumido.kcal += e.kcal;
+          consumido.p += e.p;
+          consumido.c += e.c;
+          consumido.g += e.g;
+        }
+        comidosHoje.add(e.foodId);
+      }
+      frequencia.set(e.foodId, (frequencia.get(e.foodId) || 0) + 1);
+      if (refeicaoDe(d).chave === ref.chave)
+        naRefeicao.set(e.foodId, (naRefeicao.get(e.foodId) || 0) + 1);
+      const dias = Math.floor((data - d) / 86400000);
+      if (dias >= 0 && (!recentes.has(e.foodId) || dias < recentes.get(e.foodId)))
+        recentes.set(e.foodId, dias);
+      if (!porcao.has(e.foodId) || new Date(porcao.get(e.foodId).ts) < d)
+        porcao.set(e.foodId, { ts: e.ts, qtd: e.qtd, medida: e.medida });
+    }
+    const restante = {
+      kcal: metas.kcal ? metas.kcal - consumido.kcal : null,
+      p: metas.p ? metas.p - consumido.p : null,
+      c: metas.c ? metas.c - consumido.c : null,
+      g: metas.g ? metas.g - consumido.g : null,
+    };
+    // quanto desta refeição ainda cabe: o que sobrou do dia, dividido entre as
+    // refeições que ainda faltam, na proporção de cada uma
+    const idx = REFEICOES.indexOf(ref);
+    const pesoRestante = REFEICOES.slice(idx).reduce((n, r) => n + r.peso, 0) || ref.peso;
+    const fatia = ref.peso / pesoRestante;
+    // o que sobrou do dia cai na refeição atual na proporção dela, mas com
+    // teto: a última refeição do dia não vira jantar de 1.800 kcal só porque
+    // ninguém comeu nada até aqui
+    const teto = metas.kcal ? metas.kcal * ref.peso * 1.8 : 700;
+    const alvoKcal =
+      restante.kcal != null ? Math.max(80, Math.min(restante.kcal * fatia, teto)) : Math.min(450, teto);
+    // "no limite": sobrou menos de 12% da meta, ou algum macro já estourou
+    const estourou =
+      (restante.kcal != null && restante.kcal <= 0) ||
+      (metas.p && restante.p <= 0) ||
+      (metas.c && restante.c <= 0) ||
+      (metas.g && restante.g <= 0);
+    const apertado =
+      estourou || (metas.kcal && restante.kcal < Math.max(0.12 * metas.kcal, alvoKcal * 0.5));
+    return {
+      data, ref, metas, consumido, restante, alvoKcal, apertado, estourou,
+      comidosHoje, recentes, frequencia, naRefeicao, porcao,
+    };
+  }
+
+  /* ---- Placar ---- */
+
+  // Direção dos macros que faltam, em calorias: um vetor para comparar com o
+  // que o alimento oferece (assim proteína em falta puxa comida proteica)
+  function alvoMacros(ctx) {
+    const { restante, metas } = ctx;
+    if (!metas.p && !metas.c && !metas.g) return { p: 0.3, c: 0.45, g: 0.25 };
+    const v = {
+      p: Math.max(0, (restante.p || 0) * 4),
+      c: Math.max(0, (restante.c || 0) * 4),
+      g: Math.max(0, (restante.g || 0) * 9),
+    };
+    const soma = v.p + v.c + v.g;
+    if (!soma) return { p: 0.4, c: 0.3, g: 0.3 };
+    return { p: v.p / soma, c: v.c / soma, g: v.g / soma };
+  }
+
+  function pontuar(cand, ctx, alvo) {
+    const kcal = Math.max(cand.kcal, 1);
+    const perfil = {
+      p: (cand.p * 4) / kcal,
+      c: (cand.c * 4) / kcal,
+      g: (cand.g * 9) / kcal,
+    };
+    // o quanto o alimento aponta para os macros que faltam (cosseno)
+    const dot = perfil.p * alvo.p + perfil.c * alvo.c + perfil.g * alvo.g;
+    const norma =
+      Math.hypot(perfil.p, perfil.c, perfil.g) * Math.hypot(alvo.p, alvo.c, alvo.g) || 1;
+    const macro = dot / norma;
+    // tamanho da porção perto do que cabe nesta refeição
+    const dif = (cand.kcal - ctx.alvoKcal) / Math.max(ctx.alvoKcal * 0.6, 1);
+    const tamanho = Math.exp(-dif * dif);
+    const sac = saciedade(cand.food, cand.fibra);
+    const freq = ctx.frequencia.get(cand.food.i) || 0;
+    const naRef = ctx.naRefeicao.get(cand.food.i) || 0;
+    const habito = Math.min(Math.log1p(freq) / 3, 0.5) + Math.min(naRef * 0.08, 0.3);
+    const dias = ctx.recentes.has(cand.food.i) ? ctx.recentes.get(cand.food.i) : 99;
+    const enjoo = ctx.comidosHoje.has(cand.food.i) ? 1.1 : dias <= 1 ? 0.35 : dias <= 3 ? 0.12 : 0;
+    // estourando o que resta: cada caloria a mais dói
+    const excesso = ctx.restante.kcal != null ? Math.max(0, cand.kcal - Math.max(ctx.restante.kcal, 0)) : 0;
+    const puni = ctx.restante.kcal != null ? excesso / Math.max(ctx.alvoKcal, 120) : 0;
+    if (ctx.apertado) {
+      return sac * 2.2 + macro * 0.5 + habito * 0.3 - puni * 1.6 - enjoo;
+    }
+    return macro * 1.5 + tamanho * 1.1 + habito + sac * 0.5 - puni * 0.8 - enjoo;
+  }
+
+  /* ---- Candidatos ---- */
+
+  function doCatalogo(ctx) {
+    const lista = CATALOGO[ctx.ref.chave] || CATALOGO.almoco;
+    const saida = [];
+    for (const item of lista) {
+      const achados = FoodSearch.search(item.b, 3);
+      const food = achados[0];
+      if (!food) continue;
+      const cand = montar(food, item.q, item.med, { fibra: item.fibra, origem: 'catalogo' });
+      if (cand) saida.push(cand);
+    }
+    return saida;
+  }
+
+  // O que a própria pessoa costuma comer nesta refeição, na porção que ela usa
+  async function doHistorico(ctx) {
+    const saida = [];
+    for (const [foodId, vezes] of ctx.naRefeicao.entries()) {
+      if (vezes < 1) continue;
+      const food = await MacroDB.getFood(foodId);
+      if (!food) continue;
+      const p = ctx.porcao.get(foodId);
+      const cand = montar(food, p ? p.qtd : 100, p && p.medida !== 'g' ? p.medida.toLowerCase() : null, {
+        origem: 'historico',
+      });
+      if (cand) saida.push(cand);
+    }
+    return saida;
+  }
+
+  // Sorteio proporcional ao placar entre os melhores: a lista muda a cada
+  // toque sem deixar de fazer sentido
+  function sortear(ranked, n) {
+    const pool = ranked.slice(0, Math.max(n * 4, 12));
+    const escolhidos = [];
+    const usados = new Set();
+    while (escolhidos.length < n && pool.length) {
+      const livres = pool.filter((c) => !usados.has(c.food.i) && !usados.has(c.food.n));
+      if (!livres.length) break;
+      const min = Math.min(...livres.map((c) => c.placar));
+      const pesos = livres.map((c) => Math.pow(c.placar - min + 0.25, 2));
+      const total = pesos.reduce((a, b) => a + b, 0);
+      let r = Math.random() * total;
+      let i = 0;
+      while (i < livres.length - 1 && r > pesos[i]) {
+        r -= pesos[i];
+        i++;
+      }
+      escolhidos.push(livres[i]);
+      usados.add(livres[i].food.i);
+      usados.add(livres[i].food.n);
+    }
+    return escolhidos;
+  }
+
+  function motivoDe(cand, ctx) {
+    if (ctx.estourou) return 'O dia já fechou a conta: isto sacia com o mínimo de estrago';
+    if (ctx.apertado) return 'Sobrou pouco para hoje: enche bastante para poucas calorias';
+    if (cand.origem === 'historico')
+      return `Você costuma comer isto ${ctx.ref.art} ${ctx.ref.nome.toLowerCase()}`;
+    const alvo = alvoMacros(ctx);
+    const maior = alvo.p >= alvo.c && alvo.p >= alvo.g ? 'p' : alvo.c >= alvo.g ? 'c' : 'g';
+    const perfil = { p: cand.p * 4, c: cand.c * 4, g: cand.g * 9 };
+    const dom = perfil.p >= perfil.c && perfil.p >= perfil.g ? 'p' : perfil.c >= perfil.g ? 'c' : 'g';
+    if (dom === maior && maior === 'p' && ctx.restante.p > 0)
+      return `Faltam ${Math.round(ctx.restante.p)} g de proteína hoje`;
+    if (dom === maior && maior === 'c' && ctx.restante.c > 0)
+      return `Ainda cabem ${Math.round(ctx.restante.c)} g de carboidrato`;
+    if (dom === maior && maior === 'g' && ctx.restante.g > 0)
+      return `Ainda cabem ${Math.round(ctx.restante.g)} g de gordura`;
+    return 'Cabe no que ainda sobra para hoje';
+  }
+
+  /* ---- API ---- */
+
+  async function sugerir(quando, opcoes = {}) {
+    const n = opcoes.n || 3;
+    const ctx = await contexto(quando);
+    const alvo = alvoMacros(ctx);
+    const teto = ctx.restante.kcal != null && ctx.restante.kcal > 0 ? ctx.restante.kcal : null;
+    const brutos = [...(await doHistorico(ctx)), ...doCatalogo(ctx)];
+    const vistos = new Set();
+    const cands = [];
+    for (const c of brutos) {
+      const chave = c.food.n.toLowerCase();
+      if (vistos.has(chave)) continue;
+      vistos.add(chave);
+      const ajustado = ctx.apertado
+        ? ajustar(c, Math.max(ctx.alvoKcal * 0.6, 90), teto)
+        : ajustar(c, ctx.alvoKcal, null);
+      if (!(ajustado.kcal > 0)) continue;
+      ajustado.placar = pontuar(ajustado, ctx, alvo);
+      cands.push(ajustado);
+    }
+    cands.sort((a, b) => b.placar - a.placar);
+    const escolhidos = sortear(cands, n).map((c) => ({ ...c, motivo: motivoDe(c, ctx) }));
+    return { ctx, sugestoes: escolhidos };
+  }
+
+  return { sugerir, contexto, refeicaoDe, REFEICOES, CATALOGO };
+})();
+
+if (typeof window !== 'undefined') window.Sugestao = Sugestao;
+
+</script>
+<script>
+/* Leitor de código de barras: aponta a câmera para a embalagem e o alimento
+   entra no diário sem digitar nada.
+
+   A leitura é do próprio navegador (BarcodeDetector, Chrome/Android). Onde não
+   existe — iPhone, por exemplo —, sobra o campo para digitar os números, que
+   é o mesmo caminho a partir dali.
+
+   Quem responde "que produto é esse" é o Open Food Facts, a base aberta de
+   rótulos: sai daqui só o número do código de barras. O que vem de lá é
+   gravado como alimento próprio, então da segunda vez em diante o mesmo
+   produto é encontrado offline, na busca normal. */
+const Barras = (() => {
+  const $ = (s) => document.querySelector(s);
+  const API = 'https://world.openfoodfacts.org/api/v2/product/';
+  const FORMATOS = ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'itf'];
+
+  let stream = null;
+  let lendo = false;
+  let aoEscolher = null;
+  let iniciado = false;
+
+  const suportado = () => typeof window !== 'undefined' && 'BarcodeDetector' in window;
+  const status = (txt, tipo) => {
+    const el = $('#scan-status');
+    if (!el) return;
+    el.textContent = txt;
+    el.className = `scan-status${tipo ? ` ${tipo}` : ''}`;
+  };
+
+  function pararCamera() {
+    lendo = false;
+    if (stream) {
+      for (const t of stream.getTracks()) t.stop();
+      stream = null;
+    }
+    const v = $('#scan-video');
+    if (v) v.srcObject = null;
+    const palco = $('#scan-palco');
+    if (palco) palco.hidden = true;
+  }
+
+  async function ligarCamera() {
+    if (!suportado()) {
+      status('Este navegador não lê o código pela câmera. Digite os números abaixo.', 'aviso');
+      return;
+    }
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      status('Sem acesso à câmera aqui. Digite os números abaixo.', 'aviso');
+      return;
+    }
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' } },
+        audio: false,
+      });
+    } catch (e) {
+      const negado = e && (e.name === 'NotAllowedError' || e.name === 'SecurityError');
+      status(
+        negado
+          ? 'Permissão de câmera negada. Libere nas configurações do navegador ou digite os números abaixo.'
+          : 'Não consegui abrir a câmera. Digite os números abaixo.',
+        'aviso'
+      );
+      return;
+    }
+    const video = $('#scan-video');
+    $('#scan-palco').hidden = false;
+    video.srcObject = stream;
+    try {
+      await video.play();
+    } catch {
+      /* alguns navegadores só tocam depois de um gesto; o autoplay resolve */
+    }
+    status('Procurando o código… mantenha a embalagem enquadrada.');
+    const detector = new window.BarcodeDetector({ formats: FORMATOS });
+    lendo = true;
+    const passo = async () => {
+      if (!lendo) return;
+      try {
+        const achados = await detector.detect(video);
+        const codigo = achados.map((x) => x.rawValue).find((x) => /^\d{8,14}$/.test(x || ''));
+        if (codigo) {
+          if (navigator.vibrate) navigator.vibrate(60);
+          pararCamera();
+          $('#scan-codigo').value = codigo;
+          await buscar(codigo);
+          return;
+        }
+      } catch {
+        /* frame ruim: tenta o próximo */
+      }
+      setTimeout(passo, 220);
+    };
+    setTimeout(passo, 400);
+  }
+
+  /* ---- Consulta ---- */
+
+  const num = (v) => {
+    const n = Number(v);
+    return Number.isFinite(n) && n >= 0 ? n : null;
+  };
+
+  // Monta o alimento a partir do que o Open Food Facts devolve. Sem os quatro
+  // números por 100 g não dá para registrar nada, então isso é o mínimo.
+  function daApi(prod, codigo) {
+    const nut = prod.nutriments || {};
+    let kcal = num(nut['energy-kcal_100g']);
+    if (kcal == null && num(nut.energy_100g) != null) kcal = num(nut.energy_100g) / 4.184;
+    const p = num(nut.proteins_100g);
+    const c = num(nut.carbohydrates_100g);
+    const g = num(nut.fat_100g);
+    if (kcal == null || p == null || c == null || g == null) return null;
+    const marca = (prod.brands || '').split(',')[0].trim();
+    const base = (prod.product_name_pt || prod.product_name || '').trim();
+    if (!base) return null;
+    const nome = marca && !base.toLowerCase().includes(marca.toLowerCase()) ? `${base} (${marca})` : base;
+    const food = {
+      i: `cod-${codigo}`,
+      n: nome,
+      f: 'p',
+      cod: codigo,
+      origem: 'Open Food Facts',
+      kcal: Math.round(kcal * 10) / 10,
+      p: Math.round(p * 10) / 10,
+      c: Math.round(c * 10) / 10,
+      g: Math.round(g * 10) / 10,
+      m: [],
+    };
+    // porção do rótulo e tamanho da embalagem viram medidas caseiras
+    const porcao = parseFloat(String(prod.serving_size || '').replace(',', '.'));
+    if (porcao > 0 && porcao < 2000) food.m.push([`porção (${Math.round(porcao)} g)`, Math.round(porcao)]);
+    const pacote = parseFloat(String(prod.quantity || '').replace(',', '.'));
+    if (pacote > 0 && pacote <= 5000 && Math.round(pacote) !== Math.round(porcao || 0))
+      food.m.push([`embalagem (${Math.round(pacote)} g)`, Math.round(pacote)]);
+    if (/\b(ml|l|litro)\b/i.test(String(prod.quantity || prod.serving_size || ''))) food.l = 1;
+    if (!food.m.length) delete food.m;
+    return food;
+  }
+
+  async function buscar(codigo) {
+    const cod = String(codigo || '').replace(/\D/g, '');
+    if (cod.length < 8) {
+      status('Código curto demais — confira os números.', 'aviso');
+      return;
+    }
+    $('#scan-achado').hidden = true;
+    status('Procurando esse código…');
+    // já escaneado antes: resolve offline, sem rede
+    const meus = await MacroDB.getCustomFoods();
+    const conhecido = meus.find((f) => f.cod === cod);
+    if (conhecido) {
+      mostrar(conhecido, 'Você já tinha escaneado este produto.');
+      return;
+    }
+    let prod = null;
+    try {
+      const r = await fetch(
+        `${API}${encodeURIComponent(cod)}.json?fields=product_name,product_name_pt,brands,quantity,serving_size,nutriments`,
+        { headers: { Accept: 'application/json' } }
+      );
+      if (r.ok) {
+        const json = await r.json();
+        if (json && json.status === 1 && json.product) prod = json.product;
+      }
+    } catch {
+      status('Sem internet para consultar o código. Cadastre o alimento pelo rótulo.', 'aviso');
+      return;
+    }
+    if (!prod) {
+      status(`Não encontrei o código ${cod} na base de rótulos. Cadastre o alimento pelo rótulo.`, 'aviso');
+      return;
+    }
+    const food = daApi(prod, cod);
+    if (!food) {
+      status('Achei o produto, mas o rótulo dele não tem a tabela nutricional completa.', 'aviso');
+      return;
+    }
+    mostrar(food, 'Confira os números com o rótulo antes de salvar.');
+  }
+
+  const fmt = (v, casas = 1) =>
+    Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: casas });
+
+  function mostrar(food, nota) {
+    status('Produto encontrado.', 'ok');
+    const box = $('#scan-achado');
+    box.innerHTML = `
+      <div class="scan-card">
+        <b>${food.n}</b>
+        <span class="scan-macros">${fmt(food.kcal, 0)} kcal · P ${fmt(food.p)} · C ${fmt(food.c)} · G ${fmt(food.g)} <i>(100 ${food.l ? 'ml' : 'g'})</i></span>
+        <span class="scan-nota">${nota}${food.origem ? ` Fonte: ${food.origem}.` : ''}</span>
+        <button class="btn btn-primary" id="btn-scan-usar" type="button">Usar este alimento</button>
+      </div>`;
+    box.hidden = false;
+    $('#btn-scan-usar').onclick = async () => {
+      const meus = await MacroDB.getCustomFoods();
+      if (!meus.some((f) => f.i === food.i)) {
+        await MacroDB.addCustomFood(food);
+        FoodSearch.buildIndex(await MacroDB.ensureFoods());
+      }
+      fechar();
+      if (aoEscolher) aoEscolher(food);
+    };
+  }
+
+  /* ---- Abrir e fechar ---- */
+
+  function fechar() {
+    pararCamera();
+    const back = $('#modal-barras');
+    if (back) back.classList.remove('open');
+  }
+
+  function abrir(opcoes = {}) {
+    aoEscolher = opcoes.aoEscolher || null;
+    const back = $('#modal-barras');
+    if (!back) return;
+    if (!iniciado) {
+      iniciado = true;
+      $('#btn-scan-fechar').addEventListener('click', fechar);
+      $('#btn-scan-buscar').addEventListener('click', () => buscar($('#scan-codigo').value));
+      $('#scan-codigo').addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter') buscar($('#scan-codigo').value);
+      });
+      back.addEventListener('click', (ev) => {
+        if (ev.target === back) fechar();
+      });
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) pararCamera();
+      });
+    }
+    $('#scan-achado').hidden = true;
+    $('#scan-codigo').value = '';
+    status('Aponte a câmera para o código de barras da embalagem.');
+    back.classList.add('open');
+    ligarCamera();
+  }
+
+  return { abrir, fechar, buscar, suportado, daApi };
+})();
+
+if (typeof window !== 'undefined') window.Barras = Barras;
+
+</script>
+<script>
 /* Tela Diário: adicionar/editar/excluir registros, histórico agrupado por dia. */
 (() => {
   const $ = (sel) => document.querySelector(sel);
@@ -3289,6 +4127,9 @@ const SupabaseSync = (() => {
   const selMedida = $('#sel-medida');
   const inpDataHora = $('#inp-datahora');
   const preview = $('#preview');
+
+  const esc = (t) =>
+    String(t ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
   let tomSelect = null;
   let foodSelecionado = null;
@@ -3901,6 +4742,91 @@ const SupabaseSync = (() => {
     }, 80);
   }
 
+  /* ---- Sugestão e código de barras ---- */
+
+  // Coloca um alimento no modal já com a porção escolhida — é por aqui que
+  // entram tanto a sugestão quanto o produto lido no código de barras
+  async function usarAlimento(food, qtd, medida) {
+    fallbackFood = null;
+    tomSelect.addOption({ ...food });
+    tomSelect.setValue(food.i, true);
+    await onFoodChange(food.i);
+    tomSelect.blur();
+    if (qtd != null) {
+      const opts = [...selMedida.options].map((o) => o.value);
+      selMedida.value = medida && opts.includes(medida) ? medida : 'g';
+      inpQtd.value = selMedida.value === 'g' && medida && medida !== 'g' ? Math.round(qtd) : qtd;
+      atualizarPreview();
+    }
+  }
+
+  function fecharSugestoes() {
+    const box = $('#sug-box');
+    box.hidden = true;
+    box.innerHTML = '';
+  }
+
+  async function renderSugestoes() {
+    const box = $('#sug-box');
+    box.hidden = false;
+    box.innerHTML = '<p class="sug-carregando">Escolhendo…</p>';
+    const quando = inpDataHora.value ? new Date(inpDataHora.value) : new Date();
+    let dados;
+    try {
+      dados = await Sugestao.sugerir(quando, { n: 3 });
+    } catch {
+      box.innerHTML = '<p class="sug-carregando">Não consegui montar uma sugestão agora.</p>';
+      return;
+    }
+    const { ctx, sugestoes } = dados;
+    if (!sugestoes.length) {
+      box.innerHTML = '<p class="sug-carregando">Sem sugestões para este horário.</p>';
+      return;
+    }
+    const r = ctx.restante;
+    const resumo = ctx.metas.kcal
+      ? `${ctx.ref.nome} · ${r.kcal > 0 ? `faltam ${fmt(r.kcal, 0)} kcal hoje` : `${fmt(-r.kcal, 0)} kcal acima da meta`}${
+          ctx.metas.p ? ` · proteína ${r.p > 0 ? `faltam ${fmt(r.p, 0)} g` : 'no limite'}` : ''
+        }`
+      : `${ctx.ref.nome} · defina a dieta alvo em Ajustes para sugestões mais certeiras`;
+    box.innerHTML = `
+      <div class="sug-head">
+        <div>
+          <b>Sugestão para agora</b>
+          <span class="sug-sub">${esc(resumo)}</span>
+        </div>
+        <div class="sug-acoes">
+          <button class="btn btn-mini" id="btn-sug-outra" type="button">Trocar</button>
+          <button class="btn btn-mini" id="btn-sug-fechar" type="button">Fechar</button>
+        </div>
+      </div>
+      ${ctx.apertado ? '<p class="sug-alerta">Modo saciedade: priorizando o que enche mais estourando o mínimo.</p>' : ''}
+      <div class="sug-lista">
+        ${sugestoes
+          .map(
+            (x, i) => `
+          <div class="sug-card">
+            <div class="sug-info">
+              <b>${esc(x.food.n)}</b>
+              <span class="sug-porcao">${fmt(x.qtd, 2)} ${esc(x.medida === 'g' ? (x.food.l ? 'ml' : 'g') : x.medida)} · ${fmt(x.kcal, 0)} kcal · P ${fmt(x.p)} · C ${fmt(x.c)} · G ${fmt(x.g)}</span>
+              <span class="sug-motivo">${esc(x.motivo)}</span>
+            </div>
+            <button class="btn btn-mini btn-primary sug-usar" type="button" data-i="${i}">Usar</button>
+          </div>`
+          )
+          .join('')}
+      </div>`;
+    $('#btn-sug-outra').onclick = renderSugestoes;
+    $('#btn-sug-fechar').onclick = fecharSugestoes;
+    box.querySelectorAll('.sug-usar').forEach((b) => {
+      b.onclick = async () => {
+        const x = sugestoes[Number(b.dataset.i)];
+        fecharSugestoes();
+        await usarAlimento(x.food, x.qtd, x.medida);
+      };
+    });
+  }
+
   /* ---- Histórico ---- */
 
   const SVG_DEL =
@@ -4232,6 +5158,13 @@ const SupabaseSync = (() => {
     $('#btn-salvar').addEventListener('click', salvar);
     $('#btn-incluir').addEventListener('click', incluirNaRefeicao);
     $('#btn-abrir-cadastro').addEventListener('click', abrirCadastro);
+    $('#btn-sugestao').addEventListener('click', () => {
+      if ($('#sug-box').hidden) renderSugestoes();
+      else fecharSugestoes();
+    });
+    $('#btn-barras').addEventListener('click', () => {
+      Barras.abrir({ aoEscolher: (food) => usarAlimento(food, null, null) });
+    });
     $('#btn-cad-cancelar').addEventListener('click', () => cadBackdrop.classList.remove('open'));
     $('#btn-cad-salvar').addEventListener('click', salvarCadastro);
     backdrop.addEventListener('click', (ev) => {

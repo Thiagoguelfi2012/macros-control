@@ -33,6 +33,23 @@ python3 -m http.server 8000
   cabeçalho (ou no ícone de lápis) abre a **refeição inteira para editar** — os
   itens voltam para a cesta do modal, onde dá para trocar quantidades, remover,
   acrescentar alimentos e mudar o horário de todos de uma vez.
+- **Código de barras**: no modal de adicionar, o botão **📷 Código de barras**
+  abre a câmera e lê o código da embalagem (BarcodeDetector do próprio
+  navegador — no iPhone, que não tem, dá para digitar os números). O produto é
+  consultado no **Open Food Facts** (sai daqui só o número do código) e, ao
+  usar, fica gravado como alimento próprio: da segunda vez em diante ele é
+  encontrado **offline**, na busca normal, sem nova consulta à rede. Porção e
+  tamanho da embalagem do rótulo viram medidas caseiras.
+- **Sugestão**: o botão **✨ Sugestão** responde "o que como agora?" olhando
+  quatro coisas — o **horário** (café, lanche, almoço, jantar, ceia), a **dieta
+  alvo**, **o que já foi consumido no dia** e o **histórico da própria pessoa**
+  (o que ela costuma comer naquela refeição, na porção que ela usa). O placar
+  ordena; a escolha final é **sorteada** entre os melhores, então "Trocar"
+  sempre traz opções diferentes sem deixar de fazer sentido. A porção é
+  ajustada para caber no que sobrou. Quando o dia já estourou (ou está perto
+  disso), entra o **modo saciedade**: passa a valer o que enche mais por
+  caloria — proteína alta e baixa densidade calórica — estourando o mínimo
+  possível.
 - **Relatório para o médico**: o botão **PDF** na barra de filtros abre uma prévia
   com duas saídas. **Baixar PDF** gera o arquivo para impressão (jsPDF, com os
   gráficos como imagem). **Enviar HTML** gera um **arquivo HTML interativo e
@@ -262,8 +279,13 @@ node tools/build-foods.mjs
 ```
 
 Ao regenerar com mudanças, incremente o `v` gravado pelo script e o `FOODS_VERSION`
-em `js/db.js` (e rode `node tools/stamp-assets.mjs`) para forçar os navegadores a
-recarregarem a base.
+em `js/db.js` para forçar os navegadores a recarregarem a base.
+
+Depois de **qualquer** alteração em `js/` ou `css/`, rode `node
+tools/stamp-assets.mjs`: ele carimba `?v=<hash do conteúdo>` em cada arquivo nas
+quatro páginas. É o que impede o navegador de continuar servindo um JavaScript
+antigo — quando o carimbo era a versão da base, mexer só no código não mudava a
+URL e o celular ficava com o arquivo velho em cache.
 
 O app também **se recupera sozinho de cache preso**, que é o modo de falha mais
 comum em site estático: se o `foods.json` que chegou tiver versão **menor** que a
@@ -283,6 +305,8 @@ css/app.css                    estilos (tokens de tema claro/escuro)
 js/db.js                       camada IndexedDB + localStorage (+ backup/merge)
 js/busca.js                    busca tokenizada sem acentos, TACO/IBGE priorizados
 js/diario.js                   tela Diário
+js/sugestao.js                 motor de sugestão de refeição (hora, meta, histórico)
+js/barras.js                   leitor de código de barras + Open Food Facts
 js/relatorios.js               tela Relatórios (Chart.js)
 js/treinos.js                  treinos, execução com carga e evolução (Chart.js)
 js/exercicios.js               biblioteca de exercícios da academia (gerado)
@@ -299,4 +323,5 @@ tools/pastas.mjs               camada de pastas de amendoim, castanhas e semente
 tools/sorvetes.mjs             camada de sorvetes, picolés e gelaterias
 tools/build-exercicios.mjs     gerador da biblioteca de exercícios
 tools/build-standalone.mjs     gera controle-de-macros.html (arquivo único)
+tools/stamp-assets.mjs         carimba ?v=<hash do conteúdo> nos js/css das páginas
 ```
