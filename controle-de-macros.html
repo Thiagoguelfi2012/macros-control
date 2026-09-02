@@ -474,11 +474,14 @@ main { max-width: 860px; margin: 0 auto; padding: 20px 16px 110px; }
 .cesta .imp-title { font-size: 12.5px; font-weight: 600; color: var(--ink-2); margin-bottom: 6px; }
 .cesta-item {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  /* as calorias sobem para a linha do nome: assim a segunda linha inteira fica
+     para a quantidade e a etiqueta de densidade, que numa tela estreita não
+     cabiam ao lado do número (e acabavam impressas por cima dele) */
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
   grid-template-areas:
-    'tog nome del'
-    'tog meta del';
-  align-items: center; column-gap: 8px; row-gap: 1px; font-size: 13px;
+    'tog nome kcal del'
+    'tog meta meta meta';
+  align-items: center; column-gap: 6px; row-gap: 1px; font-size: 13px;
   padding: 5px 0; border-bottom: 1px solid var(--grid);
 }
 .cesta-item:last-of-type { border-bottom: none; }
@@ -488,13 +491,18 @@ main { max-width: 860px; margin: 0 auto; padding: 20px 16px 110px; }
 /* quantidade e calorias dividem a segunda linha, abaixo do nome */
 .cesta-item .ci-qtd {
   grid-area: meta; color: var(--muted); font-size: 12px;
+  min-width: 0; display: flex; align-items: center; gap: 6px;
+}
+.cesta-item .ci-qtd-txt {
   min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
+.cesta-item .ci-qtd .dens { flex: none; }
 .cesta-item .ci-kcal {
-  grid-area: meta; justify-self: end; font-weight: 600;
+  grid-area: kcal; justify-self: end; font-weight: 600;
   white-space: nowrap; font-variant-numeric: tabular-nums;
 }
-.cesta-item .icon-btn { padding: 4px; }
+.cesta-item .icon-btn { padding: 3px; }
+.cesta-item .dens { font-size: 10.5px; padding: 1px 5px; }
 .cesta-item .icon-btn svg { width: 14px; height: 14px; }
 .cesta-item .act-toggle { color: var(--accent); }
 /* item desativado: continua na lista, mas fora da conta */
@@ -508,6 +516,7 @@ main { max-width: 860px; margin: 0 auto; padding: 20px 16px 110px; }
   border-top: 1px solid var(--grid); font-variant-numeric: tabular-nums;
 }
 .cesta-total b { color: var(--ink); }
+.ct-parte { white-space: nowrap; }
 
 /* ---- Impacto na meta do dia (modal) ---- */
 .impacto {
@@ -966,8 +975,8 @@ main { max-width: 860px; margin: 0 auto; padding: 20px 16px 110px; }
 .sug-card {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px;
+  gap: 8px;
+  padding: 9px 10px;
   border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--surface);
@@ -993,6 +1002,8 @@ main { max-width: 860px; margin: 0 auto; padding: 20px 16px 110px; }
 }
 .sug-card .btn-mini {
   flex: none;
+  padding: 6px 9px;
+  font-size: 12px;
 }
 .sug-carregando {
   margin: 0;
@@ -1138,8 +1149,7 @@ main { max-width: 860px; margin: 0 auto; padding: 20px 16px 110px; }
 :root[data-theme='dark'] .dens-3 { color: #ff9a6b; }
 :root[data-theme='dark'] .dens-4 { color: #ff8080; }
 .opt-dens { display: block; margin-top: 2px; }
-.cesta-item .ci-qtd .dens { margin-left: 4px; }
-.cesta-item .ci-acoes { grid-area: del; display: flex; align-items: center; gap: 2px; }
+.cesta-item .ci-acoes { grid-area: del; display: flex; align-items: center; gap: 2px; align-self: center; }
 .cesta-item.editando {
   background: var(--wash);
   border-radius: 8px;
@@ -4665,13 +4675,14 @@ if (typeof window !== 'undefined') window.Barras = Barras;
       row.innerHTML = `
         <button class="icon-btn act-toggle" title="${it.off ? 'Voltar para a refeição' : 'Tirar da conta sem remover'}" aria-label="${it.off ? 'Ativar item' : 'Desativar item'}" aria-pressed="${it.off ? 'false' : 'true'}">${it.off ? SVG_OFF : SVG_ON}</button>
         <span class="ci-nome"></span>
-        <span class="ci-qtd">${qtdStr(it)} ${chipDensidade(porCem, false)}</span>
+        <span class="ci-qtd"><span class="ci-qtd-txt"></span>${chipDensidade(porCem, false)}</span>
         <span class="ci-kcal">${fmt(it.kcal, 0)} kcal</span>
         <span class="ci-acoes">
           <button class="icon-btn act-editar" title="Editar quantidade ou medida" aria-label="Editar item">${SVG_EDIT}</button>
           <button class="icon-btn act-del" title="Remover da refeição" aria-label="Remover">${SVG_DEL}</button>
         </span>`;
       row.querySelector('.ci-nome').textContent = it.nome;
+      row.querySelector('.ci-qtd-txt').textContent = qtdStr(it);
       row.querySelector('.act-editar').addEventListener('click', () => editarItemCesta(idx));
       row.querySelector('.act-toggle').addEventListener('click', () => {
         it.off = !it.off;
@@ -4691,8 +4702,13 @@ if (typeof window !== 'undefined') window.Barras = Barras;
     });
     const t = somaCesta();
     const fora = cesta.length - ativos().length;
+    // cada pedaço não se parte no meio: sem isso o "g" final caía sozinho na
+    // linha de baixo em tela estreita
     $('#cesta-total').innerHTML =
-      `Total: <b>${fmt(t.kcal, 0)}</b> kcal · P <b>${fmt(t.p)}</b> · C <b>${fmt(t.c)}</b> · G <b>${fmt(t.g)}</b> g` +
+      `<span class="ct-parte">Total: <b>${fmt(t.kcal, 0)}</b> kcal</span> ` +
+      `<span class="ct-parte">· P <b>${fmt(t.p)}</b> g</span> ` +
+      `<span class="ct-parte">· C <b>${fmt(t.c)}</b> g</span> ` +
+      `<span class="ct-parte">· G <b>${fmt(t.g)}</b> g</span>` +
       (fora ? ` <span class="cesta-fora">(${fora} item${fora > 1 ? 'ns' : ''} desativado${fora > 1 ? 's' : ''})</span>` : '');
   }
 
@@ -5148,8 +5164,8 @@ if (typeof window !== 'undefined') window.Barras = Barras;
     box.innerHTML = `
       <div class="sug-head">
         <div>
-          <b>Prato sugerido · ${esc(ctx.ref.nome)}</b>
-          <span class="sug-sub">${esc(cabecalho)}</span>
+          <b>Prato sugerido</b>
+          <span class="sug-sub">${esc(ctx.ref.nome)} · ${esc(cabecalho)}</span>
         </div>
         <div class="sug-acoes">
           <button class="btn btn-mini" id="btn-sug-outra" type="button">Trocar</button>
@@ -5167,7 +5183,7 @@ if (typeof window !== 'undefined') window.Barras = Barras;
               <span class="sug-porcao">${fmt(x.qtd, 2)} ${esc(x.medida === 'g' ? (x.food.l ? 'ml' : 'g') : x.medida)} · ${fmt(x.kcal, 0)} kcal · P ${fmt(x.p)} · C ${fmt(x.c)} · G ${fmt(x.g)} ${chipDensidade(x.food, false)}</span>
               <span class="sug-motivo">${esc(x.motivo)}</span>
             </div>
-            <button class="btn btn-mini sug-usar" type="button" data-i="${i}" title="Abrir só este item">Só este</button>
+            <button class="btn btn-mini sug-usar" type="button" data-i="${i}" title="Abrir só este item no formulário">Só&nbsp;este</button>
           </div>`
           )
           .join('')}

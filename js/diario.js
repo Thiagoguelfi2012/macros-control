@@ -330,13 +330,14 @@
       row.innerHTML = `
         <button class="icon-btn act-toggle" title="${it.off ? 'Voltar para a refeição' : 'Tirar da conta sem remover'}" aria-label="${it.off ? 'Ativar item' : 'Desativar item'}" aria-pressed="${it.off ? 'false' : 'true'}">${it.off ? SVG_OFF : SVG_ON}</button>
         <span class="ci-nome"></span>
-        <span class="ci-qtd">${qtdStr(it)} ${chipDensidade(porCem, false)}</span>
+        <span class="ci-qtd"><span class="ci-qtd-txt"></span>${chipDensidade(porCem, false)}</span>
         <span class="ci-kcal">${fmt(it.kcal, 0)} kcal</span>
         <span class="ci-acoes">
           <button class="icon-btn act-editar" title="Editar quantidade ou medida" aria-label="Editar item">${SVG_EDIT}</button>
           <button class="icon-btn act-del" title="Remover da refeição" aria-label="Remover">${SVG_DEL}</button>
         </span>`;
       row.querySelector('.ci-nome').textContent = it.nome;
+      row.querySelector('.ci-qtd-txt').textContent = qtdStr(it);
       row.querySelector('.act-editar').addEventListener('click', () => editarItemCesta(idx));
       row.querySelector('.act-toggle').addEventListener('click', () => {
         it.off = !it.off;
@@ -356,8 +357,13 @@
     });
     const t = somaCesta();
     const fora = cesta.length - ativos().length;
+    // cada pedaço não se parte no meio: sem isso o "g" final caía sozinho na
+    // linha de baixo em tela estreita
     $('#cesta-total').innerHTML =
-      `Total: <b>${fmt(t.kcal, 0)}</b> kcal · P <b>${fmt(t.p)}</b> · C <b>${fmt(t.c)}</b> · G <b>${fmt(t.g)}</b> g` +
+      `<span class="ct-parte">Total: <b>${fmt(t.kcal, 0)}</b> kcal</span> ` +
+      `<span class="ct-parte">· P <b>${fmt(t.p)}</b> g</span> ` +
+      `<span class="ct-parte">· C <b>${fmt(t.c)}</b> g</span> ` +
+      `<span class="ct-parte">· G <b>${fmt(t.g)}</b> g</span>` +
       (fora ? ` <span class="cesta-fora">(${fora} item${fora > 1 ? 'ns' : ''} desativado${fora > 1 ? 's' : ''})</span>` : '');
   }
 
@@ -813,8 +819,8 @@
     box.innerHTML = `
       <div class="sug-head">
         <div>
-          <b>Prato sugerido · ${esc(ctx.ref.nome)}</b>
-          <span class="sug-sub">${esc(cabecalho)}</span>
+          <b>Prato sugerido</b>
+          <span class="sug-sub">${esc(ctx.ref.nome)} · ${esc(cabecalho)}</span>
         </div>
         <div class="sug-acoes">
           <button class="btn btn-mini" id="btn-sug-outra" type="button">Trocar</button>
@@ -832,7 +838,7 @@
               <span class="sug-porcao">${fmt(x.qtd, 2)} ${esc(x.medida === 'g' ? (x.food.l ? 'ml' : 'g') : x.medida)} · ${fmt(x.kcal, 0)} kcal · P ${fmt(x.p)} · C ${fmt(x.c)} · G ${fmt(x.g)} ${chipDensidade(x.food, false)}</span>
               <span class="sug-motivo">${esc(x.motivo)}</span>
             </div>
-            <button class="btn btn-mini sug-usar" type="button" data-i="${i}" title="Abrir só este item">Só este</button>
+            <button class="btn btn-mini sug-usar" type="button" data-i="${i}" title="Abrir só este item no formulário">Só&nbsp;este</button>
           </div>`
           )
           .join('')}
