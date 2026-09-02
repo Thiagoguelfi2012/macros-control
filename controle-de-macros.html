@@ -7430,6 +7430,13 @@ function abrirTudo(abrir){document.querySelectorAll('details').forEach(function(
   const esc = (t) =>
     String(t ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   const cssVar = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  // hex do tema → rgba, para as barras terem transparência sem inventar cor
+  const corComAlfa = (cor, alfa) => {
+    const m = /^#?([0-9a-f]{6})$/i.exec(String(cor).trim());
+    if (!m) return cor;
+    const n = parseInt(m[1], 16);
+    return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alfa})`;
+  };
   const dataBr = (iso) => new Date(iso).toLocaleDateString('pt-BR');
   // eixo com uma data por execução: dia/mês cabe onde a data cheia não caberia
   const dataCurta = (iso) =>
@@ -8570,7 +8577,7 @@ function abrirTudo(abrir){document.querySelectorAll('details').forEach(function(
       let pares = [];
       chart.data.datasets.forEach((ds, di) => {
         const meta = chart.getDatasetMeta(di);
-        if (meta.hidden) return;
+        if (meta.hidden || ds.semRotulo) return;
         const cor = chart.data.datasets.length > 1 ? ds.borderColor : null;
         const sfx = ds.sufixoRotulo || sufixo;
         const comValor = [];
@@ -8651,6 +8658,44 @@ function abrirTudo(abrir){document.querySelectorAll('details').forEach(function(
   // detalhe, então ela vai para o fim. Na musculação manda a carga; as
   // repetições só viram linha própria quando não há carga nenhuma (peso do
   // corpo), porque aí a progressão é justamente repetir mais vezes.
+  // Séries e faixa de repetições previstas para cada exercício, tiradas dos
+  // treinos cadastrados: é o que preenche a barra quando ninguém anotou as
+  // repetições daquele dia.
+  function prescricoes() {
+    const mapa = new Map();
+    for (const t of treinos)
+      for (const e of t.exercicios || [])
+        if (!mapa.has(e.exercicioId))
+          mapa.set(e.exercicioId, {
+            series: e.series || 3,
+            repMin: e.repMin || e.repMax || null,
+            unidadeRep: e.unidadeRep || 'rep',
+          });
+    return mapa;
+  }
+
+  // Repetições por série de um registro: a média do que foi anotado ("12/11/10"
+  // → 11) ou, quando não há nada anotado, o mínimo previsto no treino — que é a
+  // suposição conservadora, a série que com certeza foi feita.
+  function repsDoRegistro(reps, prev) {
+    const ns = String(reps ?? '').match(/\d+(?:[.,]\d+)?/g);
+    if (ns && ns.length) {
+      const vals = ns.map((x) => Number(x.replace(',', '.')));
+      const media = vals.reduce((a, b) => a + b, 0) / vals.length;
+      return {
+        porSerie: Math.round(media * 10) / 10,
+        series: vals.length,
+        total: Math.round(vals.reduce((a, b) => a + b, 0) * 10) / 10,
+        estimado: false,
+      };
+    }
+    if (prev && prev.unidadeRep === 'rep' && prev.repMin > 0) {
+      const series = prev.series || 3;
+      return { porSerie: prev.repMin, series, total: prev.repMin * series, estimado: true };
+    }
+    return null;
+  }
+
   function seriesDe(e, un) {
     const cardio = e.grupo === 'Cardio' || e.pontos.some((p) => p.bpm != null);
     const DEF = {
@@ -8692,16 +8737,19 @@ function abrirTudo(abrir){document.querySelectorAll('details').forEach(function(
     }
 
     // série de carga por exercício, na ordem em que apareceram no treino
+    const previstos = prescricoes();
     const porExercicio = new Map();
     for (const s of relevantes) {
       for (const it of s.itens || []) {
         if (it.feito === false) continue;
-        const reps = somaReps(it.reps);
-        const temAlgo = it.carga != null || it.tempoMin != null || it.bpm != null || reps != null;
+        const prev = previstos.get(it.exercicioId);
+        const rep = repsDoRegistro(it.reps, prev);
+        const temAlgo = it.carga != null || it.tempoMin != null || it.bpm != null || rep != null;
         if (!temAlgo) continue;
         if (!porExercicio.has(it.exercicioId))
           porExercicio.set(it.exercicioId, {
-            nome: it.nome, grupo: it.grupo || '', unidadeCarga: it.unidadeCarga || 'kg', pontos: [],
+            nome: it.nome, grupo: it.grupo || '', unidadeCarga: it.unidadeCarga || 'kg',
+            prev: prev || null, pontos: [],
           });
         const alvo = porExercicio.get(it.exercicioId);
         if (it.unidadeCarga) alvo.unidadeCarga = it.unidadeCarga;
@@ -8710,7 +8758,10 @@ function abrirTudo(abrir){document.querySelectorAll('details').forEach(function(
           ts: s.ts,
           carga: it.carga,
           reps: it.reps || '',
-          repsTotal: reps,
+          repSerie: rep ? rep.porSerie : null,
+          repSeries: rep ? rep.series : null,
+          repsTotal: rep ? rep.total : null,
+          repsEstimado: rep ? rep.estimado : false,
           tempoMin: it.tempoMin ?? null,
           bpm: it.bpm ?? null,
         });
@@ -8826,21 +8877,24 @@ function abrirTudo(abrir){document.querySelectorAll('details').forEach(function(
           .join(' · ');
         // repetições e volume (carga × reps) do primeiro ao último registro:
         // é o que separa "subiu a carga" de "subiu o treino"
-        const comReps = e.pontos.filter((p) => p.reps);
-        const resumoReps =
-          comReps.length && principal.campo !== 'repsTotal'
-            ? comReps.length > 1 && comReps[0].reps !== comReps[comReps.length - 1].reps
-              ? `Reps ${esc(comReps[0].reps)} → ${esc(comReps[comReps.length - 1].reps)}`
-              : `Reps ${esc(comReps[comReps.length - 1].reps)}`
-            : '';
+        const comReps = e.pontos.filter((p) => p.repSerie != null);
+        const anotadas = comReps.filter((p) => !p.repsEstimado);
+        e.temBarras = comReps.length > 0 && principal.campo !== 'repsTotal';
+        const resumoReps = e.temBarras
+          ? anotadas.length > 1 && anotadas[0].repSerie !== anotadas[anotadas.length - 1].repSerie
+            ? `Reps por série ${fmt(anotadas[0].repSerie)} → ${fmt(anotadas[anotadas.length - 1].repSerie)}`
+            : `Reps por série ${fmt(comReps[comReps.length - 1].repSerie)}`
+          : '';
         const comVol = e.pontos.filter((p) => volumeDe(p, un) != null);
         const resumoVol =
           comVol.length > 1
             ? `Volume ${fmt(volumeDe(comVol[0], un))} → ${fmt(volumeDe(comVol[comVol.length - 1], un))} ${un}`
             : '';
-        // sem reps anotadas o gráfico só tem a carga: avisa onde procurar
-        const semReps =
-          !comReps.length && principal.campo === 'carga' ? 'sem repetições anotadas ainda' : '';
+        // barra clara = repetições supostas pelo mínimo previsto no treino
+        const supostas = comReps.length - anotadas.length;
+        const semReps = supostas
+          ? `${supostas} ${supostas === 1 ? 'dia sem reps anotadas' : 'dias sem reps anotadas'} (barra clara: mínimo previsto)`
+          : '';
         const extras = [resumoOutras, resumoReps, resumoVol, semReps].filter(Boolean).join(' · ');
         return `
         <div class="chart-card">
@@ -8993,60 +9047,104 @@ function abrirTudo(abrir){document.querySelectorAll('details').forEach(function(
           ticks: { ...base.ticks, color: series.length > 1 ? CORES[sr.campo] : base.ticks.color },
         };
       }
+      const linhas = series.map((sr) => ({
+        type: 'line',
+        label: `${sr.rotulo} (${sr.sufixo})`,
+        data: e.pontos.map((p) => p[sr.campo]),
+        yAxisID: EIXO[sr.campo],
+        sufixoRotulo: sr.sufixo,
+        borderColor: CORES[sr.campo],
+        backgroundColor: CORES[sr.campo],
+        borderWidth: 2,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        tension: 0,
+        spanGaps: true,
+        fill: false,
+        order: 0,
+      }));
+      // As repetições viram barras atrás da linha da carga: escrever "8 reps"
+      // colado no ponto embaralhava os dois números, e a barra mostra de longe
+      // se o volume caiu quando a carga subiu. Barra clara = repetição suposta
+      // pelo mínimo previsto no treino, porque naquele dia ninguém anotou.
+      const corBarra = cssVar('--s2');
+      if (e.temBarras) {
+        const maxRep = Math.max(...e.pontos.map((p) => p.repSerie || 0));
+        linhas.push({
+          type: 'bar',
+          label: 'Reps por série',
+          data: e.pontos.map((p) => p.repSerie),
+          yAxisID: 'yReps',
+          sufixoRotulo: 'reps',
+          semRotulo: true,
+          backgroundColor: e.pontos.map((p) =>
+            p.repsEstimado ? corComAlfa(corBarra, 0.18) : corComAlfa(corBarra, 0.55)
+          ),
+          borderColor: e.pontos.map((p) =>
+            p.repsEstimado ? corComAlfa(corBarra, 0.35) : corComAlfa(corBarra, 0.75)
+          ),
+          borderWidth: 1,
+          borderRadius: 3,
+          barPercentage: 0.55,
+          categoryPercentage: 0.8,
+          order: 3,
+        });
+        // a barra ocupa só a parte de baixo: o topo fica livre para a linha
+        escalas.yReps = {
+          position: 'right',
+          beginAtZero: true,
+          suggestedMax: Math.max(maxRep * 3, 4),
+          grid: { display: false, drawTicks: false },
+          border: { display: false },
+          // duas marcas bastam: zero e o topo das repetições — o resto do eixo
+          // é espaço reservado para a linha da carga
+          afterBuildTicks: (eixo) => {
+            eixo.ticks = [{ value: 0 }, { value: Math.round(maxRep) }];
+          },
+          ticks: {
+            color: corBarra,
+            font: { size: 10 },
+            autoSkip: false,
+            callback: (v) => (v ? `${fmt(v, 0)} reps` : '0'),
+          },
+        };
+      }
       chartsEvo.push(
         new Chart(cv, {
-          type: 'line',
-          data: {
-            labels: e.pontos.map((p) => dataCurta(p.ts)),
-            datasets: series.map((sr) => ({
-              label: `${sr.rotulo} (${sr.sufixo})`,
-              data: e.pontos.map((p) => p[sr.campo]),
-              yAxisID: EIXO[sr.campo],
-              sufixoRotulo: sr.sufixo,
-              // as repetições acompanham a linha principal: é sob o ponto da
-              // carga que "12/10/8 reps" faz sentido
-              abaixo:
-                sr.campo === series[0].campo
-                  ? e.pontos.map((p) =>
-                      p.reps && String(p.reps) !== String(p[sr.campo]) ? `${p.reps} reps` : ''
-                    )
-                  : [],
-              borderColor: CORES[sr.campo],
-              backgroundColor: CORES[sr.campo],
-              borderWidth: 2,
-              pointRadius: 4,
-              pointHoverRadius: 6,
-              tension: 0,
-              spanGaps: true,
-              fill: false,
-            })),
-          },
+          type: 'bar',
+          data: { labels: e.pontos.map((p) => dataCurta(p.ts)), datasets: linhas },
           options: {
             responsive: true,
             maintainAspectRatio: false,
             interaction: { mode: 'index', intersect: false },
             plugins: {
               legend: {
-                display: series.length > 1,
+                display: linhas.length > 1,
                 labels: { color: ink2, usePointStyle: true, pointStyleWidth: 10, boxHeight: 8, font: { size: 11 } },
               },
               tooltip: {
                 callbacks: {
                   title: (itens) => dataBr(e.pontos[itens[0].dataIndex].ts),
-                  label: (ctx) => ` ${ctx.dataset.label.split(' (')[0]}: ${fmt(ctx.parsed.y)} ${ctx.dataset.sufixoRotulo}`,
+                  label: (ctx) => {
+                    const p = e.pontos[ctx.dataIndex];
+                    const nome = ctx.dataset.label.split(' (')[0];
+                    if (ctx.dataset.yAxisID === 'yReps')
+                      return ` ${nome}: ${fmt(ctx.parsed.y)} reps${
+                        p.repsEstimado ? ' (suposto: mínimo previsto)' : p.repSeries > 1 ? ` · ${p.reps}` : ''
+                      }`;
+                    return ` ${nome}: ${fmt(ctx.parsed.y)} ${ctx.dataset.sufixoRotulo}`;
+                  },
                   afterBody: (itens) => {
                     const p = e.pontos[itens[0].dataIndex];
                     const vol = volumeDe(p, un);
-                    return [
-                      p.reps && !series.some((sr) => sr.campo === 'repsTotal') ? `Reps: ${p.reps}` : '',
-                      vol != null ? `Volume: ${fmt(vol)} ${un}` : '',
-                    ].filter(Boolean);
+                    return vol != null
+                      ? [`Volume: ${fmt(vol)} ${un}${p.repsEstimado ? ' (estimado)' : ''}`]
+                      : [];
                   },
                 },
               },
             },
-            // o rótulo de duas linhas (carga + reps) precisa de mais folga em cima
-            layout: { padding: { top: e.pontos.some((p) => p.reps) ? 44 : 30, bottom: 6 } },
+            layout: { padding: { top: 30, bottom: 6 } },
             scales: escalas,
           },
           plugins: [rotulosDePonto()],
