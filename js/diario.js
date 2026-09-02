@@ -8,6 +8,30 @@
   const inpDataHora = $('#inp-datahora');
   const preview = $('#preview');
 
+  // Relação gramas/kcal: quantas gramas daquele alimento cabem em 100 kcal.
+  // É o número que responde "o que enche mais pelo mesmo tanto de caloria" —
+  // 400 g de brócolis e 18 g de chocolate dão as mesmas 100 kcal.
+  const densidade = (food) => {
+    if (!food || !(food.kcal > 0)) return null;
+    const gramasPor100 = 1e4 / food.kcal;
+    const nivel = food.kcal <= 80 ? 1 : food.kcal <= 180 ? 2 : food.kcal <= 350 ? 3 : 4;
+    return {
+      nivel,
+      kcal100: food.kcal,
+      gramas: gramasPor100,
+      un: food.l ? 'ml' : 'g',
+      rotulo: ['', 'leve', 'moderado', 'denso', 'muito denso'][nivel],
+    };
+  };
+  const chipDensidade = (food, texto) => {
+    const d = densidade(food);
+    if (!d) return '';
+    const g = d.gramas >= 1000 ? `${fmt(d.gramas / 1000, 1)} k${d.un}` : `${fmt(d.gramas, 0)} ${d.un}`;
+    return `<span class="dens dens-${d.nivel}" title="${d.rotulo}: ${fmt(d.kcal100, 0)} kcal por 100 ${d.un}">${
+      texto ? `${g} por 100 kcal` : `${g}/100 kcal`
+    }</span>`;
+  };
+
   const esc = (t) =>
     String(t ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
@@ -42,6 +66,7 @@
 
   function abrirModal(entry = null) {
     editandoId = entry ? entry.id : null;
+    editandoItemCesta = null;
     $('#modal-titulo').textContent = entry
       ? 'Editar registro'
       : editandoRefeicao
@@ -135,6 +160,7 @@
   }
 
   function sairDaEdicaoDeRefeicao() {
+    editandoItemCesta = null;
     if (!editandoRefeicao) return;
     editandoRefeicao = null;
     cesta = [];
@@ -203,6 +229,8 @@
   let cesta = []; // itens já "incluídos na refeição", salvos todos juntos
   // refeição inteira sendo editada: guarda os ids que serão substituídos ao salvar
   let editandoRefeicao = null;
+  // índice do item da cesta aberto para edição (quantidade, medida ou alimento)
+  let editandoItemCesta = null;
 
   // Celular em segundo plano descarta a página e a recarrega na volta: a
   // refeição em montagem é persistida e restaurada (expira em 12 h).
@@ -296,13 +324,20 @@
       const row = document.createElement('div');
       row.className = 'cesta-item';
       if (it.off) row.classList.add('off');
+      if (editandoItemCesta === idx) row.classList.add('editando');
+      // densidade do próprio registro: as calorias que ele tem pelas gramas que ele tem
+      const porCem = it.gramas > 0 ? { kcal: (it.kcal / it.gramas) * 100, l: it.ml } : null;
       row.innerHTML = `
         <button class="icon-btn act-toggle" title="${it.off ? 'Voltar para a refeição' : 'Tirar da conta sem remover'}" aria-label="${it.off ? 'Ativar item' : 'Desativar item'}" aria-pressed="${it.off ? 'false' : 'true'}">${it.off ? SVG_OFF : SVG_ON}</button>
         <span class="ci-nome"></span>
-        <span class="ci-qtd">${qtdStr(it)}</span>
+        <span class="ci-qtd">${qtdStr(it)} ${chipDensidade(porCem, false)}</span>
         <span class="ci-kcal">${fmt(it.kcal, 0)} kcal</span>
-        <button class="icon-btn act-del" title="Remover da refeição" aria-label="Remover">${SVG_DEL}</button>`;
+        <span class="ci-acoes">
+          <button class="icon-btn act-editar" title="Editar quantidade ou medida" aria-label="Editar item">${SVG_EDIT}</button>
+          <button class="icon-btn act-del" title="Remover da refeição" aria-label="Remover">${SVG_DEL}</button>
+        </span>`;
       row.querySelector('.ci-nome').textContent = it.nome;
+      row.querySelector('.act-editar').addEventListener('click', () => editarItemCesta(idx));
       row.querySelector('.act-toggle').addEventListener('click', () => {
         it.off = !it.off;
         salvarCesta();
@@ -311,6 +346,8 @@
       });
       row.querySelector('.act-del').addEventListener('click', () => {
         cesta.splice(idx, 1);
+        if (editandoItemCesta === idx) sairDaEdicaoDeItem(true);
+        else if (editandoItemCesta != null && editandoItemCesta > idx) editandoItemCesta--;
         salvarCesta();
         renderCesta();
         atualizarPreview();
@@ -324,10 +361,82 @@
       (fora ? ` <span class="cesta-fora">(${fora} item${fora > 1 ? 'ns' : ''} desativado${fora > 1 ? 's' : ''})</span>` : '');
   }
 
+  // Abre um item já incluído para conferir e mudar: o alimento volta para o
+  // topo do modal com a quantidade e a medida dele, e o botão de incluir vira
+  // "Salvar alteração". Antes era preciso excluir e adicionar tudo de novo.
+  async function editarItemCesta(idx) {
+    const it = cesta[idx];
+    if (!it) return;
+    editandoItemCesta = idx;
+    let food = await MacroDB.getFood(it.foodId);
+    if (food && food.n !== it.nome) food = null;
+    // alimento apagado (ou de outra base): reconstrói a partir do registro
+    if (!food && it.gramas > 0) {
+      const f100 = 100 / it.gramas;
+      food = {
+        i: it.foodId, n: it.nome, f: 'p',
+        kcal: it.kcal * f100, p: it.p * f100, c: it.c * f100, g: it.g * f100,
+      };
+      if (it.ml) food.l = 1;
+      if (it.medida !== 'g' && it.qtd > 0) food.m = [[it.medida, it.gramas / it.qtd]];
+      fallbackFood = food;
+    } else {
+      fallbackFood = null;
+    }
+    tomSelect.addOption({ ...food });
+    tomSelect.setValue(it.foodId, true);
+    await onFoodChange(it.foodId);
+    tomSelect.blur();
+    const opts = [...selMedida.options].map((o) => o.value);
+    if (opts.includes(it.medida)) {
+      selMedida.value = it.medida;
+      inpQtd.value = it.qtd;
+    } else {
+      selMedida.value = 'g';
+      inpQtd.value = it.gramas;
+    }
+    renderCesta();
+    atualizarPreview();
+    setTimeout(() => {
+      inpQtd.focus();
+      inpQtd.select();
+    }, 60);
+  }
+
+  function sairDaEdicaoDeItem(semLimpar) {
+    if (editandoItemCesta == null) return;
+    editandoItemCesta = null;
+    if (!semLimpar) limparSelecao();
+    renderCesta();
+    atualizarPreview();
+  }
+
+  // Botão de incluir: muda de papel quando um item da cesta está em edição
+  function atualizarBotaoIncluir() {
+    const btn = $('#btn-incluir');
+    if (!btn) return;
+    const editando = editandoItemCesta != null;
+    btn.textContent = editando ? 'Salvar alteração no item' : '+ Incluir na refeição e adicionar outro';
+    btn.classList.toggle('btn-primary', editando);
+    const cancelar = $('#btn-cancelar-item');
+    if (cancelar) cancelar.hidden = !editando;
+  }
+
   function incluirNaRefeicao() {
     const item = itemAtual();
     if (!item) {
       tomSelect.focus();
+      return;
+    }
+    if (editandoItemCesta != null && cesta[editandoItemCesta]) {
+      // item desativado continua desativado depois de editado
+      if (cesta[editandoItemCesta].off) item.off = true;
+      cesta[editandoItemCesta] = item;
+      editandoItemCesta = null;
+      salvarCesta();
+      limparSelecao();
+      renderCesta();
+      atualizarPreview();
       return;
     }
     cesta.push(item);
@@ -403,6 +512,7 @@
 
   function atualizarPreview() {
     atualizarBotaoSalvar();
+    atualizarBotaoIncluir();
     if (!foodSelecionado) {
       preview.hidden = true;
       $('#btn-incluir').hidden = true;
@@ -424,6 +534,7 @@
     $('#pv-p').textContent = fmt(r.p);
     $('#pv-c').textContent = fmt(r.c);
     $('#pv-g').textContent = fmt(r.g);
+    $('#pv-dens').innerHTML = chipDensidade(foodSelecionado, true);
     preview.hidden = false;
     renderImpacto(r);
   }
@@ -718,7 +829,7 @@
           <div class="sug-card">
             <div class="sug-info">
               <b>${esc(x.food.n)}</b>
-              <span class="sug-porcao">${fmt(x.qtd, 2)} ${esc(x.medida === 'g' ? (x.food.l ? 'ml' : 'g') : x.medida)} · ${fmt(x.kcal, 0)} kcal · P ${fmt(x.p)} · C ${fmt(x.c)} · G ${fmt(x.g)}</span>
+              <span class="sug-porcao">${fmt(x.qtd, 2)} ${esc(x.medida === 'g' ? (x.food.l ? 'ml' : 'g') : x.medida)} · ${fmt(x.kcal, 0)} kcal · P ${fmt(x.p)} · C ${fmt(x.c)} · G ${fmt(x.g)} ${chipDensidade(x.food, false)}</span>
               <span class="sug-motivo">${esc(x.motivo)}</span>
             </div>
             <button class="btn btn-mini sug-usar" type="button" data-i="${i}" title="Abrir só este item">Só este</button>
@@ -1074,7 +1185,8 @@
             { t: 'TACO', b: 'TBCA', i: 'IBGE', u: 'USDA', r: 'estimativa', m: 'rótulo da marca', p: 'meu alimento' }[item.f] || '';
           return `<div>
             <span class="opt-name">${escape(item.n)}</span>
-            <span class="opt-meta">${fmt(item.kcal, 0)} kcal · P ${fmt(item.p)} · C ${fmt(item.c)} · G ${fmt(item.g)} (100 g) · ${fonte}</span>
+            <span class="opt-meta">${fmt(item.kcal, 0)} kcal · P ${fmt(item.p)} · C ${fmt(item.c)} · G ${fmt(item.g)} (100 ${item.l ? 'ml' : 'g'}) · ${fonte}</span>
+            <span class="opt-dens">${chipDensidade(item, true)}</span>
           </div>`;
         },
         no_results: (data) =>
@@ -1109,6 +1221,7 @@
     });
     $('#btn-salvar').addEventListener('click', salvar);
     $('#btn-incluir').addEventListener('click', incluirNaRefeicao);
+    $('#btn-cancelar-item').addEventListener('click', () => sairDaEdicaoDeItem());
     $('#btn-abrir-cadastro').addEventListener('click', abrirCadastro);
     $('#btn-sugestao').addEventListener('click', () => {
       if ($('#sug-box').hidden) renderSugestoes();

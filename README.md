@@ -26,13 +26,21 @@ python3 -m http.server 8000
   marcas brasileiras e pratos curados); quantidade em **gramas, mililitros ou
   medidas caseiras** (unidade, fatia, xícara, concha, lata, dose…) com prévia dos
   macros; monta refeição com vários itens de uma vez (com impacto na meta antes de
-  salvar) e a refeição em montagem sobrevive ao app ir para segundo plano; data e
+  salvar), cada item da refeição pode ser **editado sem sair da tela** (o lápis
+  devolve o alimento para o topo do modal com a quantidade e a medida dele, e o
+  botão vira "Salvar alteração no item" — antes era preciso excluir e adicionar
+  de novo) e a refeição em montagem sobrevive ao app ir para segundo plano; data e
   hora registradas (e editáveis depois). Histórico agrupado por dia, em ordem
   descendente, com totais por dia e ações de repetir/editar/excluir por registro.
   Refeições com mais de um item viram um **subcard** com nome e horário; tocar no
   cabeçalho (ou no ícone de lápis) abre a **refeição inteira para editar** — os
   itens voltam para a cesta do modal, onde dá para trocar quantidades, remover,
   acrescentar alimentos e mudar o horário de todos de uma vez.
+- **Gramas por 100 kcal**: cada alimento mostra, na busca, na prévia, na cesta
+  e nas sugestões, **quantas gramas dele cabem em 100 kcal** — 407 g de
+  brócolis contra 19 g de chocolate ao leite. A etiqueta é colorida pela
+  densidade (leve, moderado, denso, muito denso), então dá para escolher pelo
+  que enche mais sem contar nada.
 - **Código de barras**: no modal de adicionar, o botão **📷 Código de barras**
   abre a câmera e lê o código da embalagem (BarcodeDetector do próprio
   navegador — no iPhone, que não tem, dá para digitar os números). O produto é

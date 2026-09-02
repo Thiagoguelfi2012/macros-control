@@ -1099,3 +1099,40 @@ main { max-width: 860px; margin: 0 auto; padding: 20px 16px 110px; }
 .sug-meta-val.over {
   color: var(--bad-text);
 }
+
+/* ---- Densidade energética (gramas por 100 kcal) ---- */
+
+.dens {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  border: 1px solid transparent;
+}
+.dens-1 { color: #0a7a4a; background: rgba(27, 175, 122, 0.14); border-color: rgba(27, 175, 122, 0.3); }
+.dens-2 { color: #7a6a00; background: rgba(202, 138, 4, 0.16); border-color: rgba(202, 138, 4, 0.3); }
+.dens-3 { color: #a4491a; background: rgba(235, 104, 52, 0.16); border-color: rgba(235, 104, 52, 0.32); }
+.dens-4 { color: #a52121; background: rgba(208, 59, 59, 0.16); border-color: rgba(208, 59, 59, 0.32); }
+@media (prefers-color-scheme: dark) {
+  .dens-1 { color: #56d3a2; }
+  .dens-2 { color: #e0c153; }
+  .dens-3 { color: #ff9a6b; }
+  .dens-4 { color: #ff8080; }
+}
+:root[data-theme='dark'] .dens-1 { color: #56d3a2; }
+:root[data-theme='dark'] .dens-2 { color: #e0c153; }
+:root[data-theme='dark'] .dens-3 { color: #ff9a6b; }
+:root[data-theme='dark'] .dens-4 { color: #ff8080; }
+.opt-dens { display: block; margin-top: 2px; }
+.cesta-item .ci-qtd .dens { margin-left: 4px; }
+.cesta-item .ci-acoes { grid-area: del; display: flex; align-items: center; gap: 2px; }
+.cesta-item.editando {
+  background: var(--wash);
+  border-radius: 8px;
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+#pv-dens { margin-left: auto; }
+#btn-cancelar-item { display: block; margin: 6px 0 0; }
