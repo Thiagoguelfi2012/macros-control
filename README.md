@@ -97,9 +97,13 @@ python3 -m http.server 8000
   - **Evolução** — card de **frequência** (dias com treino no período, média por
     semana e uma barra por semana), **duração dos treinos** em barras (com tempo
     total e média) e um gráfico de linha por exercício com a **progressão de
-    carga** ao longo das execuções, com o **valor escrito em cada ponto**, uma
-    marca no eixo X por execução e no eixo Y por carga registrada. Filtros por
-    treino e por período (7, 15, 30, 90, 180 dias, 1 ano ou tudo); execuções
+    carga** ao longo das execuções, com o **valor escrito em cada ponto** e, logo
+    abaixo dele, as **repetições daquele dia** ("140 kg" em cima, "8/8/6 reps"
+    embaixo) — é assim que dá para ler 120 kg em 12 reps virando 140 kg em 8. O
+    subtítulo do gráfico fecha a conta com o **volume** (carga × repetições) do
+    primeiro ao último registro. Uma marca no eixo X por execução e no eixo Y
+    por carga registrada. Filtros por treino e por período (7, 15, 30, 90, 180
+    dias, 1 ano ou tudo); execuções
     com mais de 4 h ficam fora das contas de tempo. No fim da aba, depois de
     todos os gráficos, vem a **lista das execuções** do período — data, treino e
     quantos exercícios —, cada uma com a **duração editável** (para corrigir o
@@ -113,8 +117,15 @@ python3 -m http.server 8000
   Exercícios de **cardio** registram, além da carga, **tempo (min)** e **BPM
   médio** — a biblioteca já marca isso sozinha para os aparelhos de cardio, e
   qualquer exercício pode ligar as duas caixas no editor. Na Evolução esse
-  exercício ganha um gráfico com **três eixos** (carga à esquerda, tempo e BPM à
-  direita), cada série na sua cor.
+  exercício ganha um gráfico com **três eixos**, cada série na sua cor — e no
+  cardio a ordem se inverte: **tempo à esquerda** (é a linha principal, a que
+  manda no indicador de evolução do card), **BPM** em seguida e a **carga**
+  (nível/velocidade) por último, porque ali o que conta é quanto tempo e a que
+  batimento, não o peso.
+
+  Exercícios de peso do corpo (sem carga nenhuma) não ficam sem gráfico: a linha
+  passa a ser o **total de repetições** da execução, com o detalhe das séries
+  escrito embaixo do ponto.
 
   Séries podem ser contadas em **repetições, segundos** (isometrias como a prancha)
   ou **minutos** (cardio). A **carga** é o número que o usuário registra para

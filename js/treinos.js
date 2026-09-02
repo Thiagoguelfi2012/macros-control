@@ -612,6 +612,15 @@
     return saida;
   }
 
+  // "12/11/10" → 33: o total de repetições da série, que é o número que dá
+  // para comparar de um treino para o outro (e multiplicar pela carga)
+  const somaReps = (txt) => {
+    if (txt == null || txt === '') return null;
+    const ns = String(txt).match(/\d+(?:[.,]\d+)?/g);
+    if (!ns) return null;
+    return Math.round(ns.reduce((n, x) => n + Number(x.replace(',', '.')), 0) * 10) / 10;
+  };
+
   // "25 kg · 12/11/10 · 20 min · 142 bpm" — só o que aquele registro tem
   const resumoRegistro = (it, reg) =>
     [
@@ -1096,11 +1105,16 @@
   // Escreve o valor de cada ponto (ou barra). Quando dois rótulos vizinhos
   // colidiriam, o segundo desce para baixo do ponto em vez de sumir: a ideia é
   // que todo ponto mostre o seu número.
+  //
+  // Um dataset pode trazer `abaixo: [...]` com um segundo texto por ponto — é
+  // assim que as repetições aparecem embaixo da carga ("140 kg" em cima,
+  // "8/8/6 reps" embaixo), sem precisar de mais um eixo no gráfico.
   const rotulosDePonto = (sufixo) => ({
     id: 'rotulosDePonto',
     afterDatasetsDraw(chart) {
       const { ctx, chartArea } = chart;
       const ALTURA = 13;
+      const ALTURA_SUB = 12;
       ctx.save();
       ctx.font = '600 11px ui-sans-serif, system-ui, sans-serif';
       ctx.textAlign = 'center';
@@ -1118,7 +1132,7 @@
         const comValor = [];
         meta.data.forEach((ponto, i) => {
           const v = ds.data[i];
-          if (v != null) comValor.push({ ponto, v, cor, sufixo: sfx });
+          if (v != null) comValor.push({ ponto, v, cor, sufixo: sfx, abaixo: (ds.abaixo || [])[i] || '' });
         });
         // muitos pontos não cabem rotulados: fica só o que muda (mais o
         // primeiro e o último), que é justamente onde a progressão acontece;
@@ -1126,7 +1140,11 @@
         let escolhidos = comValor;
         if (comValor.length * chart.data.datasets.length > 14) {
           escolhidos = comValor.filter(
-            (x, i) => i === 0 || i === comValor.length - 1 || x.v !== comValor[i - 1].v
+            (x, i) =>
+              i === 0 ||
+              i === comValor.length - 1 ||
+              x.v !== comValor[i - 1].v ||
+              x.abaixo !== comValor[i - 1].abaixo
           );
           if (escolhidos.length > 8) {
             const vals = comValor.map((x) => x.v);
@@ -1139,29 +1157,41 @@
         }
         pares = pares.concat(escolhidos);
       });
-      pares.forEach(({ ponto, v, cor, sufixo: sfx }) => {
+      const FONTE_VALOR = '600 11px ui-sans-serif, system-ui, sans-serif';
+      const FONTE_REPS = '500 10px ui-sans-serif, system-ui, sans-serif';
+      pares.forEach(({ ponto, v, cor, sufixo: sfx, abaixo }) => {
         const texto = `${fmt(v)}${sfx ? ` ${sfx}` : ''}`;
-        ctx.fillStyle = cor || cssVar('--ink');
-        const meia = ctx.measureText(texto).width / 2;
-        // sem vazar pelas laterais do gráfico
-        const x = Math.min(Math.max(ponto.x, chartArea.left + meia), chartArea.right - meia);
-        // sempre acima do ponto; se colidir com um rótulo já escrito, sobe um
-        // degrau — assim todo ponto mostra o seu valor sem sobreposição
-        let y = ponto.y - 9;
-        let livre = false;
-        for (let passo = 0; passo < 5; passo++) {
-          const r = { x0: x - meia, x1: x + meia, y0: y - ALTURA, y1: y };
-          if (!bate(r)) {
-            livre = true;
-            break;
+        ctx.font = FONTE_VALOR;
+        const meiaValor = ctx.measureText(texto).width / 2;
+        ctx.font = FONTE_REPS;
+        const meiaBloco = Math.max(meiaValor, abaixo ? ctx.measureText(abaixo).width / 2 : 0);
+        // procura um lugar acima do ponto: se colidir com um rótulo já escrito,
+        // sobe um degrau, até caber ou sair da área do gráfico
+        const encaixar = (meia, altura) => {
+          const x = Math.min(Math.max(ponto.x, chartArea.left + meia), chartArea.right - meia);
+          let y = ponto.y - 9;
+          for (let passo = 0; passo < 5; passo++) {
+            const r = { x0: x - meia, x1: x + meia, y0: y - altura, y1: y };
+            if (!bate(r) && y - altura >= chartArea.top - 22) return { x, y, r };
+            y -= altura;
           }
-          y -= ALTURA;
+          return null;
+        };
+        // o par carga/repetições é um bloco só, para os dois subirem juntos;
+        // quando o bloco de duas linhas não cabe, o valor sozinho ainda cabe
+        let vaga = abaixo ? encaixar(meiaBloco, ALTURA + ALTURA_SUB) : null;
+        const comReps = !!vaga;
+        if (!vaga) vaga = encaixar(meiaValor, ALTURA);
+        if (!vaga) return;
+        desenhados.push(vaga.r);
+        ctx.fillStyle = cor || cssVar('--ink');
+        ctx.font = FONTE_VALOR;
+        ctx.fillText(texto, vaga.x, comReps ? vaga.y - ALTURA_SUB : vaga.y);
+        if (comReps) {
+          ctx.fillStyle = cssVar('--muted');
+          ctx.font = FONTE_REPS;
+          ctx.fillText(abaixo, vaga.x, vaga.y);
         }
-        // não escreve fora da área do gráfico: melhor faltar um rótulo do que
-        // ele aparecer solto por cima do título
-        if (!livre || y - ALTURA < chartArea.top - 22) return;
-        desenhados.push({ x0: x - meia, x1: x + meia, y0: y - ALTURA, y1: y });
-        ctx.fillText(texto, x, y);
       });
       ctx.restore();
     },
@@ -1171,6 +1201,33 @@
     for (const c of chartsEvo) c.destroy();
     chartsEvo = [];
   }
+
+  // Quais linhas o gráfico de um exercício mostra, em ordem de importância.
+  // No cardio o que conta é o tempo e o BPM — a carga (nível/velocidade) é o
+  // detalhe, então ela vai para o fim. Na musculação manda a carga; as
+  // repetições só viram linha própria quando não há carga nenhuma (peso do
+  // corpo), porque aí a progressão é justamente repetir mais vezes.
+  function seriesDe(e, un) {
+    const cardio = e.grupo === 'Cardio' || e.pontos.some((p) => p.bpm != null);
+    const DEF = {
+      carga: { campo: 'carga', rotulo: 'Carga', sufixo: un },
+      repsTotal: { campo: 'repsTotal', rotulo: 'Reps', sufixo: 'reps' },
+      tempoMin: { campo: 'tempoMin', rotulo: 'Tempo', sufixo: 'min' },
+      bpm: { campo: 'bpm', rotulo: 'BPM', sufixo: 'bpm' },
+    };
+    const ordem = cardio
+      ? ['tempoMin', 'bpm', 'carga', 'repsTotal']
+      : ['carga', 'repsTotal', 'tempoMin', 'bpm'];
+    const com = ordem.filter((c) => e.pontos.some((p) => p[c] != null));
+    return com
+      .filter((c) => c !== 'repsTotal' || !com.includes('carga'))
+      .map((c) => DEF[c]);
+  }
+
+  // Carga × repetições: o número que diz se 140 kg em 8 reps é mais ou menos
+  // trabalho do que 120 kg em 12. Só faz sentido quando a carga é peso.
+  const volumeDe = (p, un) =>
+    un === 'kg' && p.carga != null && p.repsTotal ? Math.round(p.carga * p.repsTotal) : null;
 
   function renderEvolucao() {
     destruirCharts();
@@ -1195,13 +1252,24 @@
     for (const s of relevantes) {
       for (const it of s.itens || []) {
         if (it.feito === false) continue;
-        const temAlgo = it.carga != null || it.tempoMin != null || it.bpm != null;
+        const reps = somaReps(it.reps);
+        const temAlgo = it.carga != null || it.tempoMin != null || it.bpm != null || reps != null;
         if (!temAlgo) continue;
         if (!porExercicio.has(it.exercicioId))
-          porExercicio.set(it.exercicioId, { nome: it.nome, unidadeCarga: it.unidadeCarga || 'kg', pontos: [] });
+          porExercicio.set(it.exercicioId, {
+            nome: it.nome, grupo: it.grupo || '', unidadeCarga: it.unidadeCarga || 'kg', pontos: [],
+          });
         const alvo = porExercicio.get(it.exercicioId);
         if (it.unidadeCarga) alvo.unidadeCarga = it.unidadeCarga;
-        alvo.pontos.push({ ts: s.ts, carga: it.carga, tempoMin: it.tempoMin ?? null, bpm: it.bpm ?? null });
+        if (it.grupo) alvo.grupo = it.grupo;
+        alvo.pontos.push({
+          ts: s.ts,
+          carga: it.carga,
+          reps: it.reps || '',
+          repsTotal: reps,
+          tempoMin: it.tempoMin ?? null,
+          bpm: it.bpm ?? null,
+        });
       }
     }
 
@@ -1294,12 +1362,7 @@
     wrap.innerHTML = blocoDuracao + [...porExercicio.entries()]
       .map(([id, e]) => {
         const un = unCarga(e);
-        // séries disponíveis para este exercício, na ordem de importância
-        const series = [
-          { campo: 'carga', rotulo: 'Carga', sufixo: un },
-          { campo: 'tempoMin', rotulo: 'Tempo', sufixo: 'min' },
-          { campo: 'bpm', rotulo: 'BPM', sufixo: 'bpm' },
-        ].filter((sr) => e.pontos.some((p) => p[sr.campo] != null));
+        const series = seriesDe(e, un);
         e.series = series;
         const principal = series[0];
         const comValor = e.pontos.filter((p) => p[principal.campo] != null);
@@ -1317,13 +1380,28 @@
             return `${sr.rotulo} ${fmt(a2)} → ${fmt(b2)} ${sr.sufixo}`;
           })
           .join(' · ');
+        // repetições e volume (carga × reps) do primeiro ao último registro:
+        // é o que separa "subiu a carga" de "subiu o treino"
+        const comReps = e.pontos.filter((p) => p.reps);
+        const resumoReps =
+          comReps.length && principal.campo !== 'repsTotal'
+            ? comReps.length > 1 && comReps[0].reps !== comReps[comReps.length - 1].reps
+              ? `Reps ${esc(comReps[0].reps)} → ${esc(comReps[comReps.length - 1].reps)}`
+              : `Reps ${esc(comReps[comReps.length - 1].reps)}`
+            : '';
+        const comVol = e.pontos.filter((p) => volumeDe(p, un) != null);
+        const resumoVol =
+          comVol.length > 1
+            ? `Volume ${fmt(volumeDe(comVol[0], un))} → ${fmt(volumeDe(comVol[comVol.length - 1], un))} ${un}`
+            : '';
+        const extras = [resumoOutras, resumoReps, resumoVol].filter(Boolean).join(' · ');
         return `
         <div class="chart-card">
           <div class="evo-head">
             <h3>${esc(e.nome)}</h3>
             <span class="evo-delta ${sinal}">${rotulo}</span>
           </div>
-          <p class="sub">${principal.rotulo} ${fmt(ini)} ${principal.sufixo} → ${fmt(fim)} ${principal.sufixo}${resumoOutras ? ` · ${resumoOutras}` : ''} · ${e.pontos.length} ${e.pontos.length === 1 ? 'registro' : 'registros'}</p>
+          <p class="sub">${principal.rotulo} ${fmt(ini)} ${principal.sufixo} → ${fmt(fim)} ${principal.sufixo}${extras ? ` · ${extras}` : ''} · ${e.pontos.length} ${e.pontos.length === 1 ? 'registro' : 'registros'}</p>
           <div class="chart-wrap evo"><canvas id="evo-${esc(id)}"></canvas></div>
         </div>`;
       })
@@ -1450,8 +1528,12 @@
       const cv = document.getElementById(`evo-${id}`);
       if (!cv) continue;
       const un = unCarga(e);
-      const CORES = { carga: cssVar('--accent'), tempoMin: cssVar('--s3'), bpm: cssVar('--s2') };
-      const EIXO = { carga: 'y', tempoMin: 'yTempo', bpm: 'yBpm' };
+      // repsTotal só vira linha quando não há carga, então divide o eixo 'y'
+      const CORES = {
+        carga: cssVar('--accent'), repsTotal: cssVar('--accent'),
+        tempoMin: cssVar('--s3'), bpm: cssVar('--s2'),
+      };
+      const EIXO = { carga: 'y', repsTotal: 'y', tempoMin: 'yTempo', bpm: 'yBpm' };
       const series = e.series || [{ campo: 'carga', rotulo: 'Carga', sufixo: un }];
       const escalas = { x: eixos(un, e.pontos.map((p) => p.carga)).x };
       for (const [n, sr] of series.entries()) {
@@ -1474,6 +1556,14 @@
               data: e.pontos.map((p) => p[sr.campo]),
               yAxisID: EIXO[sr.campo],
               sufixoRotulo: sr.sufixo,
+              // as repetições acompanham a linha principal: é sob o ponto da
+              // carga que "12/10/8 reps" faz sentido
+              abaixo:
+                sr.campo === series[0].campo
+                  ? e.pontos.map((p) =>
+                      p.reps && String(p.reps) !== String(p[sr.campo]) ? `${p.reps} reps` : ''
+                    )
+                  : [],
               borderColor: CORES[sr.campo],
               backgroundColor: CORES[sr.campo],
               borderWidth: 2,
@@ -1497,10 +1587,19 @@
                 callbacks: {
                   title: (itens) => dataBr(e.pontos[itens[0].dataIndex].ts),
                   label: (ctx) => ` ${ctx.dataset.label.split(' (')[0]}: ${fmt(ctx.parsed.y)} ${ctx.dataset.sufixoRotulo}`,
+                  afterBody: (itens) => {
+                    const p = e.pontos[itens[0].dataIndex];
+                    const vol = volumeDe(p, un);
+                    return [
+                      p.reps && !series.some((sr) => sr.campo === 'repsTotal') ? `Reps: ${p.reps}` : '',
+                      vol != null ? `Volume: ${fmt(vol)} ${un}` : '',
+                    ].filter(Boolean);
+                  },
                 },
               },
             },
-            layout: { padding: { top: 30, bottom: 4 } },
+            // o rótulo de duas linhas (carga + reps) precisa de mais folga em cima
+            layout: { padding: { top: e.pontos.some((p) => p.reps) ? 44 : 30, bottom: 6 } },
             scales: escalas,
           },
           plugins: [rotulosDePonto()],
