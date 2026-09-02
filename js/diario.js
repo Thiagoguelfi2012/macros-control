@@ -649,40 +649,70 @@
   async function renderSugestoes() {
     const box = $('#sug-box');
     box.hidden = false;
-    box.innerHTML = '<p class="sug-carregando">Escolhendo…</p>';
+    box.innerHTML = '<p class="sug-carregando">Montando o prato…</p>';
     const quando = inpDataHora.value ? new Date(inpDataHora.value) : new Date();
     let dados;
     try {
-      dados = await Sugestao.sugerir(quando, { n: 3 });
+      dados = await Sugestao.sugerir(quando, {});
     } catch {
       box.innerHTML = '<p class="sug-carregando">Não consegui montar uma sugestão agora.</p>';
       return;
     }
-    const { ctx, sugestoes } = dados;
-    if (!sugestoes.length) {
+    const { ctx, alvo, itens, total, modo } = dados;
+    if (!itens.length) {
       box.innerHTML = '<p class="sug-carregando">Sem sugestões para este horário.</p>';
       return;
     }
-    const r = ctx.restante;
-    const resumo = ctx.metas.kcal
-      ? `${ctx.ref.nome} · ${r.kcal > 0 ? `faltam ${fmt(r.kcal, 0)} kcal hoje` : `${fmt(-r.kcal, 0)} kcal acima da meta`}${
-          ctx.metas.p ? ` · proteína ${r.p > 0 ? `faltam ${fmt(r.p, 0)} g` : 'no limite'}` : ''
+    const restante = ctx.restante;
+    const cabecalho = ctx.metas.kcal
+      ? `${restante.kcal > 0 ? `faltam ${fmt(restante.kcal, 0)} kcal hoje` : `${fmt(-restante.kcal, 0)} kcal acima da meta`}${
+          ctx.metas.p ? ` · proteína ${restante.p > 0 ? `faltam ${fmt(restante.p, 0)} g` : 'no limite'}` : ''
         }`
-      : `${ctx.ref.nome} · defina a dieta alvo em Ajustes para sugestões mais certeiras`;
+      : 'defina a dieta alvo em Ajustes para sugestões mais certeiras';
+    // como o prato ficou perto do alvo desta refeição
+    const linha = (rot, feito, meta, un) => {
+      const pct = meta > 0 ? Math.min(140, (feito / meta) * 100) : 0;
+      const perto = meta > 0 && Math.abs(feito - meta) <= Math.max(meta * 0.15, 3);
+      return `
+        <div class="sug-meta">
+          <span class="sug-meta-rot">${rot}</span>
+          <span class="sug-bar"><i style="width:${Math.min(100, pct).toFixed(0)}%"></i></span>
+          <span class="sug-meta-val${perto ? ' ok' : ''}">${fmt(feito, 0)}/${fmt(meta, 0)} ${un}</span>
+        </div>`;
+    };
+    // previsão do dia com o prato somado ao que já foi consumido
+    const impacto = (rot, atual, add, meta, un) => {
+      const novo = atual + add;
+      const base = Math.min(100, (atual / meta) * 100);
+      const somado = Math.max(0, Math.min(100 - base, (add / meta) * 100));
+      const estoura = novo > meta;
+      return `
+        <div class="sug-meta">
+          <span class="sug-meta-rot">${rot}</span>
+          <span class="sug-bar"><i style="width:${base.toFixed(0)}%"></i><i class="add" style="width:${somado.toFixed(0)}%"></i></span>
+          <span class="sug-meta-val${estoura ? ' over' : ''}">${fmt(novo, 0)}/${fmt(meta, 0)} ${un} · ${fmt((novo / meta) * 100, 0)}%</span>
+        </div>`;
+    };
+    const sobra = (c, t) => {
+      const resta = c.metas.kcal - c.consumido.kcal - t.kcal;
+      const restaP = c.metas.p ? c.metas.p - c.consumido.p - t.p : null;
+      if (resta < 0) return `Passa ${fmt(-resta, 0)} kcal da meta do dia.`;
+      return `Sobram ${fmt(resta, 0)} kcal${restaP != null ? ` e ${fmt(Math.max(restaP, 0), 0)} g de proteína` : ''} para o resto do dia.`;
+    };
     box.innerHTML = `
       <div class="sug-head">
         <div>
-          <b>Sugestão para agora</b>
-          <span class="sug-sub">${esc(resumo)}</span>
+          <b>Prato sugerido · ${esc(ctx.ref.nome)}</b>
+          <span class="sug-sub">${esc(cabecalho)}</span>
         </div>
         <div class="sug-acoes">
           <button class="btn btn-mini" id="btn-sug-outra" type="button">Trocar</button>
           <button class="btn btn-mini" id="btn-sug-fechar" type="button">Fechar</button>
         </div>
       </div>
-      ${ctx.apertado ? '<p class="sug-alerta">Modo saciedade: priorizando o que enche mais estourando o mínimo.</p>' : ''}
+      ${modo === 'saciedade' ? '<p class="sug-alerta">Modo saciedade: o dia está no limite, então o prato é o que enche mais estourando o mínimo.</p>' : ''}
       <div class="sug-lista">
-        ${sugestoes
+        ${itens
           .map(
             (x, i) => `
           <div class="sug-card">
@@ -691,16 +721,58 @@
               <span class="sug-porcao">${fmt(x.qtd, 2)} ${esc(x.medida === 'g' ? (x.food.l ? 'ml' : 'g') : x.medida)} · ${fmt(x.kcal, 0)} kcal · P ${fmt(x.p)} · C ${fmt(x.c)} · G ${fmt(x.g)}</span>
               <span class="sug-motivo">${esc(x.motivo)}</span>
             </div>
-            <button class="btn btn-mini btn-primary sug-usar" type="button" data-i="${i}">Usar</button>
+            <button class="btn btn-mini sug-usar" type="button" data-i="${i}" title="Abrir só este item">Só este</button>
           </div>`
           )
           .join('')}
-      </div>`;
+      </div>
+      <div class="sug-metas">
+        <div class="sug-titulo">O prato x o alvo desta refeição</div>
+        ${linha('Calorias', total.kcal, alvo.kcal, 'kcal')}
+        ${linha('Proteínas', total.p, alvo.p, 'g')}
+        ${linha('Carboidratos', total.c, alvo.c, 'g')}
+        ${linha('Gorduras', total.g, alvo.g, 'g')}
+        <p class="sug-legenda">Alvo desta refeição: o que falta hoje dividido entre as refeições que ainda vêm.</p>
+      </div>
+      ${
+        ctx.metas.kcal
+          ? `<div class="sug-metas">
+        <div class="sug-titulo">Como o dia fica depois desta refeição</div>
+        ${impacto('Calorias', ctx.consumido.kcal, total.kcal, ctx.metas.kcal, 'kcal')}
+        ${ctx.metas.p ? impacto('Proteínas', ctx.consumido.p, total.p, ctx.metas.p, 'g') : ''}
+        ${ctx.metas.c ? impacto('Carboidratos', ctx.consumido.c, total.c, ctx.metas.c, 'g') : ''}
+        ${ctx.metas.g ? impacto('Gorduras', ctx.consumido.g, total.g, ctx.metas.g, 'g') : ''}
+        <p class="sug-legenda">${esc(sobra(ctx, total))}</p>
+      </div>`
+          : ''
+      }
+      <button class="btn btn-primary sug-montar" id="btn-sug-montar" type="button">Montar refeição com estes ${itens.length} itens</button>`;
     $('#btn-sug-outra').onclick = renderSugestoes;
     $('#btn-sug-fechar').onclick = fecharSugestoes;
+    $('#btn-sug-montar').onclick = () => {
+      for (const x of itens) {
+        const item = {
+          foodId: x.food.i,
+          nome: x.food.n,
+          qtd: x.qtd,
+          medida: x.medida,
+          gramas: Math.round(x.gramas * 10) / 10,
+          kcal: Math.round(x.kcal * 10) / 10,
+          p: Math.round(x.p * 10) / 10,
+          c: Math.round(x.c * 10) / 10,
+          g: Math.round(x.g * 10) / 10,
+        };
+        if (x.food.l) item.ml = 1;
+        cesta.push(item);
+      }
+      salvarCesta();
+      renderCesta();
+      atualizarPreview();
+      fecharSugestoes();
+    };
     box.querySelectorAll('.sug-usar').forEach((b) => {
       b.onclick = async () => {
-        const x = sugestoes[Number(b.dataset.i)];
+        const x = itens[Number(b.dataset.i)];
         fecharSugestoes();
         await usarAlimento(x.food, x.qtd, x.medida);
       };

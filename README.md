@@ -40,16 +40,23 @@ python3 -m http.server 8000
   usar, fica gravado como alimento próprio: da segunda vez em diante ele é
   encontrado **offline**, na busca normal, sem nova consulta à rede. Porção e
   tamanho da embalagem do rótulo viram medidas caseiras.
-- **Sugestão**: o botão **✨ Sugestão** responde "o que como agora?" olhando
-  quatro coisas — o **horário** (café, lanche, almoço, jantar, ceia), a **dieta
-  alvo**, **o que já foi consumido no dia** e o **histórico da própria pessoa**
-  (o que ela costuma comer naquela refeição, na porção que ela usa). O placar
-  ordena; a escolha final é **sorteada** entre os melhores, então "Trocar"
-  sempre traz opções diferentes sem deixar de fazer sentido. A porção é
-  ajustada para caber no que sobrou. Quando o dia já estourou (ou está perto
-  disso), entra o **modo saciedade**: passa a valer o que enche mais por
-  caloria — proteína alta e baixa densidade calórica — estourando o mínimo
-  possível.
+- **Sugestão de refeição**: o botão **✨ Sugestão** monta um **prato inteiro**
+  para o horário — proteína, carboidrato, leguminosa, vegetal e gordura boa,
+  cada um com a sua porção. O alvo da refeição é **o que ainda falta hoje de
+  cada macro dividido entre as refeições que ainda vêm** (às 11h o almoço leva
+  a fatia dele, não o dia inteiro), e as **porções são calculadas** para bater
+  nesse alvo: a proteína manda no prato, a gordura entra depois e o
+  carboidrato fecha a conta. Os alimentos saem do **histórico da própria
+  pessoa** naquela refeição (na porção que ela usa) somado a um catálogo por
+  refeição — não é repetir um prato do passado, é remontar um novo com o que
+  ela come. A escolha de cada vaga é **sorteada** entre os melhores colocados,
+  então "Trocar" traz outro prato; o que já foi comido hoje quase não volta.
+  O painel mostra **o prato contra o alvo da refeição** e **como o dia fica
+  depois dela** (barra por macro, com a parte já consumida e a que o prato
+  acrescenta), e **Montar refeição** joga todos os itens de uma vez na cesta do
+  modal. Quando o dia já estourou (ou está perto), entra o **modo saciedade**:
+  prato curto, com o que enche mais por caloria — proteína alta e densidade
+  baixa — estourando o mínimo possível.
 - **Relatório para o médico**: o botão **PDF** na barra de filtros abre uma prévia
   com duas saídas. **Baixar PDF** gera o arquivo para impressão (jsPDF, com os
   gráficos como imagem). **Enviar HTML** gera um **arquivo HTML interativo e
@@ -116,7 +123,8 @@ python3 -m http.server 8000
     total e média) e um gráfico de linha por exercício com a **progressão de
     carga** ao longo das execuções, com o **valor escrito em cada ponto** e, logo
     abaixo dele, as **repetições daquele dia** ("140 kg" em cima, "8/8/6 reps"
-    embaixo) — é assim que dá para ler 120 kg em 12 reps virando 140 kg em 8. O
+    embaixo — ao iniciar o treino o campo de repetições já vem preenchido com o
+    último registro, ou com o previsto do plano, para não faltar o dado) — é assim que dá para ler 120 kg em 12 reps virando 140 kg em 8. O
     subtítulo do gráfico fecha a conta com o **volume** (carga × repetições) do
     primeiro ao último registro. Uma marca no eixo X por execução e no eixo Y
     por carga registrada. Filtros por treino e por período (7, 15, 30, 90, 180
@@ -305,7 +313,7 @@ css/app.css                    estilos (tokens de tema claro/escuro)
 js/db.js                       camada IndexedDB + localStorage (+ backup/merge)
 js/busca.js                    busca tokenizada sem acentos, TACO/IBGE priorizados
 js/diario.js                   tela Diário
-js/sugestao.js                 motor de sugestão de refeição (hora, meta, histórico)
+js/sugestao.js                 monta o prato: papéis, alvo por refeição e porções
 js/barras.js                   leitor de código de barras + Open Food Facts
 js/relatorios.js               tela Relatórios (Chart.js)
 js/treinos.js                  treinos, execução com carga e evolução (Chart.js)

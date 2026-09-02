@@ -596,6 +596,28 @@
   }
   const ultimaCarga = (exercicioId, exceto) => ultimoValor(exercicioId, 'carga', exceto);
 
+  // Últimas repetições feitas naquele exercício. Serve de ponto de partida ao
+  // executar: o campo já vem preenchido e a pessoa só corrige o que mudou —
+  // sem isso ninguém anota reps, e o gráfico fica só com a carga.
+  function ultimasReps(exercicioId, exceto) {
+    const lista = finalizadas();
+    for (let i = lista.length - 1; i >= 0; i--) {
+      const s = lista[i];
+      if (exceto && s.id === exceto) continue;
+      const item = (s.itens || []).find(
+        (x) => x.exercicioId === exercicioId && x.reps && x.feito !== false
+      );
+      if (item) return item.reps;
+    }
+    return '';
+  }
+
+  // Sem histórico, o previsto do treino vira o palpite inicial: 3x12 → "12/12/12"
+  const repsPrevistas = (e) => {
+    if ((e.unidadeRep || 'rep') !== 'rep' || !(e.series > 0) || !(e.repMax > 0)) return '';
+    return Array.from({ length: Math.min(e.series, 6) }, () => e.repMax).join('/');
+  };
+
   // Últimas execuções daquele exercício, da mais recente para a mais antiga.
   // É com isso que a tela mostra a evolução de repetições, não só de carga.
   function historicoExercicio(exercicioId, exceto, quantos = 3) {
@@ -705,7 +727,7 @@
           ? ultimoValor(e.exercicioId, 'tempoMin') ?? (e.unidadeRep === 'min' ? e.repMax : null)
           : null,
         bpm: e.registraBpm ? ultimoValor(e.exercicioId, 'bpm') ?? null : null,
-        reps: '',
+        reps: ultimasReps(e.exercicioId) || repsPrevistas(e),
         feito: false,
       })),
     };
@@ -1394,7 +1416,10 @@
           comVol.length > 1
             ? `Volume ${fmt(volumeDe(comVol[0], un))} → ${fmt(volumeDe(comVol[comVol.length - 1], un))} ${un}`
             : '';
-        const extras = [resumoOutras, resumoReps, resumoVol].filter(Boolean).join(' · ');
+        // sem reps anotadas o gráfico só tem a carga: avisa onde procurar
+        const semReps =
+          !comReps.length && principal.campo === 'carga' ? 'sem repetições anotadas ainda' : '';
+        const extras = [resumoOutras, resumoReps, resumoVol, semReps].filter(Boolean).join(' · ');
         return `
         <div class="chart-card">
           <div class="evo-head">

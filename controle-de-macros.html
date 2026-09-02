@@ -1050,6 +1050,67 @@ main { max-width: 860px; margin: 0 auto; padding: 20px 16px 110px; }
   color: var(--muted);
 }
 
+.sug-metas {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.sug-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+.sug-meta-rot {
+  flex: none;
+  width: 92px;
+  font-size: 11.5px;
+  color: var(--ink-2);
+}
+.sug-bar {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--grid);
+  overflow: hidden;
+}
+.sug-bar i {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}
+.sug-meta-val {
+  flex: none;
+  font-size: 11.5px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.sug-meta-val.ok {
+  color: var(--good-text);
+}
+.sug-legenda {
+  margin: 6px 0 0;
+  font-size: 11px;
+  color: var(--muted);
+}
+.sug-montar {
+  width: 100%;
+  margin-top: 12px;
+}
+.sug-titulo {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.sug-bar i.add {
+  background: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+.sug-meta-val.over {
+  color: var(--bad-text);
+}
+
 </style>
 </head>
 <body>
@@ -3449,13 +3510,17 @@ const SupabaseSync = (() => {
 
 </script>
 <script>
-/* Sugestão de refeição: o que comer agora, olhando a hora, a dieta alvo, o que
-   já foi consumido no dia e o histórico da própria pessoa.
+/* Sugestão de refeição: monta um prato para agora.
 
-   A ideia não é acertar "a" comida certa, e sim oferecer três opções plausíveis
-   e diferentes a cada toque: o placar ordena, mas a escolha final é sorteada
-   entre os melhores colocados. Quando o dia já estourou (ou está por estourar),
-   o critério troca: passa a valer o que dá mais saciedade por caloria. */
+   Não é repetir uma refeição do passado: o histórico serve para saber *quais
+   alimentos* a pessoa come em cada refeição; o prato em si é montado na hora,
+   escolhendo um item para cada papel (proteína, carboidrato, legume…) e
+   **ajustando as porções** até bater com os macros que ainda faltam.
+
+   O alvo da refeição sai do que falta no dia dividido entre as refeições que
+   ainda vêm pela frente — às 11h o almoço leva a sua fatia, não o dia inteiro.
+   Quando o dia já estourou (ou está perto), o critério troca: vale o que dá
+   mais saciedade por caloria, estourando o mínimo possível. */
 const Sugestao = (() => {
   const REFEICOES = [
     { chave: 'madrugada', nome: 'Madrugada', art: 'na', ate: 5, peso: 0.05 },
@@ -3472,119 +3537,156 @@ const Sugestao = (() => {
     return REFEICOES.find((r) => h < r.ate) || REFEICOES[REFEICOES.length - 1];
   };
 
-  // Catálogo por refeição: [termo de busca, quantidade, medida].
+  // Papéis no prato. O macro entre parênteses é o que aquele papel regula
+  // quando as porções são ajustadas.
+  const PAPEIS = {
+    prot: { macro: 'p', min: 0.5, max: 1.8, rotulo: 'proteína' },
+    carb: { macro: 'c', min: 0.4, max: 2.2, rotulo: 'carboidrato' },
+    leg: { macro: 'c', min: 0.5, max: 1.8, rotulo: 'leguminosa' },
+    fruta: { macro: 'c', min: 0.5, max: 2, rotulo: 'fruta' },
+    gord: { macro: 'g', min: 0.3, max: 1.8, rotulo: 'gordura boa' },
+    veg: { macro: null, min: 0.8, max: 1.6, rotulo: 'vegetal' },
+    bebida: { macro: null, min: 0.5, max: 1.5, rotulo: 'bebida' },
+  };
+
+  // Catálogo por refeição: [termo de busca, quantidade, medida, papel, fibra].
   // A medida é um pedaço do rótulo da medida caseira ("unidade", "fatia"…) ou
   // null para gramas. `fibra` marca o que segura a fome por volume e fibra —
   // entra no cálculo de saciedade, que as tabelas não trazem.
-  const F = (b, q, med, fibra) => ({ b, q, med, fibra: !!fibra });
+  const F = (b, q, med, papel, fibra) => ({ b, q, med, papel, fibra: !!fibra });
   const CATALOGO = {
     cafe: [
-      F('Ovo de galinha cozido', 2, 'unidade'),
-      F('Ovo, galinha, mexido, com margarina, sem sal', 2, 'unidade'),
-      F('Pão, trigo, francês', 1, 'unidade'),
-      F('Pão de forma integral', 2, 'fatia', 1),
-      F('Tapioca goma hidratada', 60, null),
-      F('Aveia em flocos', 40, null, 1),
-      F('Iogurte natural integral', 170, null),
-      F('Iogurte grego Danone tradicional', 1, 'pote'),
-      F('Queijo minas frescal', 50, null),
-      F('Requeijão cremoso', 30, null),
-      F('Mamão, Papaia, cru', 180, null, 1),
-      F('Banana prata', 1, 'unidade', 1),
-      F('Café com leite', 200, null),
-      F('Leite desnatado', 200, null),
-      F('Whey protein concentrado', 30, null),
-      F('Cuscuz de milho cozido', 120, null, 1),
-      F('Crepioca', 1, 'unidade'),
-      F('Pão de queijo Forno de Minas (congelado, assado)', 2, 'unidade'),
-      F('Abacate', 100, null, 1),
-      F('Granola tradicional', 40, null, 1),
+      F('Ovo de galinha cozido', 2, 'unidade', 'prot'),
+      F('Ovo, galinha, mexido, com margarina, sem sal', 2, 'unidade', 'prot'),
+      F('Pão, trigo, francês', 1, 'unidade', 'carb'),
+      F('Pão de forma integral', 2, 'fatia', 'carb', 1),
+      F('Tapioca goma hidratada', 60, null, 'carb'),
+      F('Aveia em flocos', 40, null, 'carb', 1),
+      F('Cuscuz de milho cozido', 120, null, 'carb', 1),
+      F('Crepioca', 1, 'unidade', 'prot'),
+      F('Pão de queijo Forno de Minas (congelado, assado)', 2, 'unidade', 'carb'),
+      F('Iogurte natural integral', 170, null, 'prot'),
+      F('Iogurte grego Danone tradicional', 1, 'pote', 'prot'),
+      F('Queijo, minas, frescal', 50, null, 'prot'),
+      F('Requeijão cremoso', 30, null, 'gord'),
+      F('Whey protein concentrado', 30, null, 'prot'),
+      F('Mamão, Papaia, cru', 180, null, 'fruta', 1),
+      F('Banana prata', 1, 'unidade', 'fruta', 1),
+      F('Maçã, Fuji, com casca, crua', 1, 'unidade', 'fruta', 1),
+      F('Abacate', 100, null, 'gord', 1),
+      F('Granola tradicional', 40, null, 'carb', 1),
+      F('Café com leite', 200, null, 'bebida'),
+      F('Leite desnatado', 200, null, 'bebida'),
     ],
     'lanche-manha': [
-      F('Banana prata', 1, 'unidade', 1),
-      F('Maçã, Fuji, com casca, crua', 1, 'unidade', 1),
-      F('Iogurte natural desnatado', 170, null),
-      F('Castanha de caju', 25, null, 1),
-      F('Amêndoa', 25, null, 1),
-      F('Ovo de galinha cozido', 2, 'unidade'),
-      F('Queijo minas frescal', 40, null),
-      F('Barra de proteína', 1, 'unidade'),
-      F('Mexerica', 1, 'unidade', 1),
-      F('Whey protein concentrado', 30, null),
-      F('Pasta de amendoim integral', 20, null),
-      F('Biscoito de arroz integral', 4, 'unidade', 1),
+      F('Banana prata', 1, 'unidade', 'fruta', 1),
+      F('Maçã, Fuji, com casca, crua', 1, 'unidade', 'fruta', 1),
+      F('Mexerica', 1, 'unidade', 'fruta', 1),
+      F('Mamão, Papaia, cru', 180, null, 'fruta', 1),
+      F('Iogurte natural desnatado', 170, null, 'prot'),
+      F('Iogurte grego Danone tradicional', 1, 'pote', 'prot'),
+      F('Ovo de galinha cozido', 2, 'unidade', 'prot'),
+      F('Queijo, minas, frescal', 40, null, 'prot'),
+      F('Barra de proteína', 1, 'unidade', 'prot'),
+      F('Whey protein concentrado', 30, null, 'prot'),
+      F('Castanha de caju', 25, null, 'gord', 1),
+      F('Amêndoa', 25, null, 'gord', 1),
+      F('Pasta de amendoim integral', 20, null, 'gord'),
+      F('Biscoito de arroz integral', 4, 'unidade', 'carb', 1),
     ],
     almoco: [
-      F('Arroz branco cozido', 130, null),
-      F('Arroz integral cozido', 130, null, 1),
-      F('Feijão carioca cozido', 100, null, 1),
-      F('Feijão preto cozido', 100, null, 1),
-      F('Peito de frango grelhado', 150, null),
-      F('Carne, bovina, patinho, sem gordura, refogada, sem sal', 130, null),
-      F('Filé de tilápia grelhado', 150, null),
-      F('Salmão, filé, com pele, fresco,  grelhado', 1, 'filé'),
-      F('Ovo frito', 2, 'unidade'),
-      F('Batata doce cozida', 150, null, 1),
-      F('Purê de batata', 130, null),
-      F('Macarrão cozido', 130, null),
-      F('Salada de alface e tomate', 120, null, 1),
-      F('Brócolis cozido', 100, null, 1),
-      F('Abobrinha refogada', 120, null, 1),
-      F('Couve refogada', 80, null, 1),
-      F('Farofa', 30, null),
-      F('Strogonoff de frango', 180, null),
-      F('Carne de panela', 150, null),
-      F('Lentilha cozida', 100, null, 1),
+      F('Frango, peito, sem pele, grelhado', 150, null, 'prot'),
+      F('Carne, bovina, patinho, sem gordura, refogada, sem sal', 130, null, 'prot'),
+      F('Filé de tilápia grelhado', 150, null, 'prot'),
+      F('Salmão, filé, com pele, fresco,  grelhado', 1, 'filé', 'prot'),
+      F('Ovo frito', 2, 'unidade', 'prot'),
+      F('Strogonoff de frango', 180, null, 'prot'),
+      F('Carne de panela', 150, null, 'prot'),
+      F('Arroz branco cozido', 130, null, 'carb'),
+      F('Arroz integral cozido', 130, null, 'carb', 1),
+      F('Macarrão cozido', 130, null, 'carb'),
+      F('Batata doce cozida', 150, null, 'carb', 1),
+      F('Purê de batata', 130, null, 'carb'),
+      F('Feijão carioca cozido', 100, null, 'leg', 1),
+      F('Feijão preto cozido', 100, null, 'leg', 1),
+      F('Lentilha cozida', 100, null, 'leg', 1),
+      F('Salada de alface e tomate', 120, null, 'veg', 1),
+      F('Brócolis cozido', 100, null, 'veg', 1),
+      F('Abobrinha refogada', 120, null, 'veg', 1),
+      F('Couve refogada', 80, null, 'veg', 1),
+      F('Farofa', 30, null, 'carb'),
+      F('Azeite, de oliva, extra virgem', 1, 'colher de sopa', 'gord'),
+      F('Abacate, cru', 80, null, 'gord', 1),
     ],
     'lanche-tarde': [
-      F('Iogurte grego Danone tradicional', 1, 'pote'),
-      F('Whey protein concentrado', 30, null),
-      F('Banana prata', 1, 'unidade', 1),
-      F('Maçã, Fuji, com casca, crua', 1, 'unidade', 1),
-      F('Pão de forma integral', 2, 'fatia', 1),
-      F('Pasta de amendoim integral', 20, null),
-      F('Ovo de galinha cozido', 2, 'unidade'),
-      F('Sanduíche natural de frango', 1, 'unidade'),
-      F('Castanha do Pará', 20, null, 1),
-      F('Pipoca, com óleo de soja, sem sal', 30, null, 1),
-      F('Tapioca goma hidratada', 60, null),
-      F('Queijo minas frescal', 40, null),
-      F('Café com leite', 200, null),
-      F('Barra de proteína', 1, 'unidade'),
-      F('Mamão, Papaia, cru', 180, null, 1),
-      F('Bolo de cenoura com cobertura', 1, 'fatia'),
+      F('Iogurte grego Danone tradicional', 1, 'pote', 'prot'),
+      F('Whey protein concentrado', 30, null, 'prot'),
+      F('Ovo de galinha cozido', 2, 'unidade', 'prot'),
+      F('Queijo, minas, frescal', 40, null, 'prot'),
+      F('Barra de proteína', 1, 'unidade', 'prot'),
+      F('Sanduíche natural de frango', 1, 'unidade', 'prot'),
+      F('Pão de forma integral', 2, 'fatia', 'carb', 1),
+      F('Tapioca goma hidratada', 60, null, 'carb'),
+      F('Biscoito de arroz integral', 4, 'unidade', 'carb', 1),
+      F('Bolo de cenoura com cobertura', 1, 'fatia', 'carb'),
+      F('Pipoca, com óleo de soja, sem sal', 30, null, 'carb', 1),
+      F('Banana prata', 1, 'unidade', 'fruta', 1),
+      F('Maçã, Fuji, com casca, crua', 1, 'unidade', 'fruta', 1),
+      F('Mamão, Papaia, cru', 180, null, 'fruta', 1),
+      F('Pasta de amendoim integral', 20, null, 'gord'),
+      F('Castanha do Pará', 20, null, 'gord', 1),
+      F('Café com leite', 200, null, 'bebida'),
     ],
     jantar: [
-      F('Peito de frango grelhado', 150, null),
-      F('Filé de tilápia grelhado', 150, null),
-      F('Omelete', 150, null),
-      F('Sopa de legumes', 300, null, 1),
-      F('Salada de alface e tomate', 150, null, 1),
-      F('Arroz integral cozido', 100, null, 1),
-      F('Batata doce cozida', 130, null, 1),
-      F('Legumes refogados', 150, null, 1),
-      F('Carne, boi, acém moída, cozida, com óleo, cebola e alho, sem sal', 130, null),
-      F('Sanduíche natural de frango', 1, 'unidade'),
-      F('Panqueca de carne', 2, 'unidade'),
-      F('Feijão carioca cozido', 90, null, 1),
-      F('Ovo de galinha, cozido', 3, 'unidade'),
-      F('Wrap de frango', 1, 'unidade'),
-      F('Combinado de sushi e sashimi (média)', 200, null),
+      F('Frango, peito, sem pele, grelhado', 150, null, 'prot'),
+      F('Filé de tilápia grelhado', 150, null, 'prot'),
+      F('Omelete', 150, null, 'prot'),
+      F('Carne, boi, acém moída, cozida, com óleo, cebola e alho, sem sal', 130, null, 'prot'),
+      F('Ovo de galinha, cozido', 3, 'unidade', 'prot'),
+      F('Sanduíche natural de frango', 1, 'unidade', 'prot'),
+      F('Panqueca de carne', 2, 'unidade', 'prot'),
+      F('Combinado de sushi e sashimi (média)', 200, null, 'prot'),
+      F('Arroz integral cozido', 100, null, 'carb', 1),
+      F('Batata doce cozida', 130, null, 'carb', 1),
+      F('Wrap de frango', 1, 'unidade', 'prot'),
+      F('Feijão carioca cozido', 90, null, 'leg', 1),
+      F('Sopa de legumes', 300, null, 'veg', 1),
+      F('Salada de alface e tomate', 150, null, 'veg', 1),
+      F('Legumes refogados', 150, null, 'veg', 1),
+      F('Brócolis cozido', 100, null, 'veg', 1),
+      F('Azeite, de oliva, extra virgem', 1, 'colher de sopa', 'gord'),
+      F('Castanha-de-caju, torrada, salgada', 20, null, 'gord', 1),
     ],
     ceia: [
-      F('Iogurte natural desnatado', 170, null),
-      F('Leite desnatado', 200, null),
-      F('Queijo cottage', 100, null),
-      F('Whey protein concentrado', 25, null),
-      F('Ovo de galinha cozido', 2, 'unidade'),
-      F('Gelatina diet preparada', 200, null),
-      F('Chá de camomila', 200, null),
-      F('Maçã, Fuji, com casca, crua', 1, 'unidade', 1),
-      F('Castanha de caju', 15, null, 1),
-      F('Iogurte grego Danone tradicional', 1, 'pote'),
+      F('Iogurte natural desnatado', 170, null, 'prot'),
+      F('Queijo cottage', 100, null, 'prot'),
+      F('Whey protein concentrado', 25, null, 'prot'),
+      F('Ovo de galinha cozido', 2, 'unidade', 'prot'),
+      F('Iogurte grego Danone tradicional', 1, 'pote', 'prot'),
+      F('Leite desnatado', 200, null, 'bebida'),
+      F('Chá de camomila', 200, null, 'bebida'),
+      F('Gelatina diet preparada', 200, null, 'fruta'),
+      F('Maçã, Fuji, com casca, crua', 1, 'unidade', 'fruta', 1),
+      F('Castanha de caju', 15, null, 'gord', 1),
     ],
   };
   CATALOGO.madrugada = CATALOGO.ceia;
+
+  // Molde do prato: quais papéis entram e em que ordem de prioridade.
+  // `min` é quantos itens o prato precisa ter para valer a pena.
+  const MOLDES = {
+    cafe: { papeis: ['carb', 'prot', 'fruta', 'gord'], min: 2 },
+    'lanche-manha': { papeis: ['prot', 'fruta', 'gord'], min: 2 },
+    almoco: { papeis: ['prot', 'carb', 'leg', 'veg', 'gord'], min: 3 },
+    'lanche-tarde': { papeis: ['prot', 'carb', 'fruta'], min: 2 },
+    jantar: { papeis: ['prot', 'carb', 'veg', 'gord'], min: 2 },
+    ceia: { papeis: ['prot', 'fruta'], min: 1 },
+    madrugada: { papeis: ['prot'], min: 1 },
+  };
+
+  /* ---- Utilidades ---- */
+
+  const chaveDia = (d) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
 
   // O que segura a fome: proteína por caloria e comida "grande" para pouca
   // caloria (densidade baixa). É o critério que assume quando o dia estourou.
@@ -3595,57 +3697,78 @@ const Sugestao = (() => {
     return 0.45 * prot + 0.4 * leveza + (fibra ? 0.15 : 0);
   }
 
-  const gramasDa = (food, med) => {
+  // Papel de um alimento que veio do histórico (o catálogo já traz o seu)
+  function papelDe(f) {
+    const kcal = Math.max(f.kcal, 1);
+    const p = (f.p * 4) / kcal;
+    const c = (f.c * 4) / kcal;
+    const g = (f.g * 9) / kcal;
+    if (f.l && kcal <= 80) return 'bebida';
+    // pouca caloria por 100 g é acompanhamento, não fonte de macro: uma salada
+    // com azeite tem a gordura dominando a fatia de kcal e ainda é salada
+    if (kcal <= 70) return 'veg';
+    if (p >= 0.3) return 'prot';
+    if (g >= 0.5) return 'gord';
+    if (c >= 0.6) return kcal <= 110 ? 'fruta' : 'carb';
+    if (c >= 0.4 && p >= 0.18) return 'leg';
+    return 'carb';
+  }
+
+  const medidaDe = (food, med) => {
     if (!med || !food.m) return null;
-    const alvo = (food.m || []).find(([r]) => r.toLowerCase().includes(med));
-    return alvo || null;
+    return (food.m || []).find(([r]) => r.toLowerCase().includes(med)) || null;
   };
 
-  // Um candidato pronto para pontuar: alimento + porção + macros daquela porção
+  // Um item de prato: alimento + porção + macros daquela porção
   function montar(food, qtd, med, extra = {}) {
     if (!food) return null;
-    const medida = gramasDa(food, med);
-    const gramas = medida ? qtd * medida[1] : qtd;
+    const medida = medidaDe(food, med);
+    const porUn = medida ? medida[1] : 1;
+    const gramas = qtd * porUn;
     if (!(gramas > 0)) return null;
-    const fator = gramas / 100;
-    return {
+    return recalcular({
       food,
       qtd,
       medida: medida ? medida[0] : 'g',
-      gramas,
-      kcal: food.kcal * fator,
-      p: food.p * fator,
-      c: food.c * fator,
-      g: food.g * fator,
+      porUn,
+      base: qtd,
+      papel: extra.papel || papelDe(food),
+      fibra: !!extra.fibra,
+      origem: extra.origem || 'catalogo',
       ...extra,
-    };
+    });
   }
 
-  // Ajusta a porção para caber no alvo da refeição, sem virar migalha nem
-  // banquete: gramas variam livre, unidades andam de meia em meia
-  function ajustar(cand, alvoKcal, tetoKcal) {
-    if (!(cand.kcal > 0) || !(alvoKcal > 0)) return cand;
-    const teto = tetoKcal != null ? Math.min(alvoKcal * 1.35, tetoKcal) : alvoKcal * 1.35;
-    if (cand.kcal <= teto) return cand;
-    const passo = cand.medida === 'g' ? 0.05 : 0.5;
-    const bruto = (teto / cand.kcal) * cand.qtd;
-    let novo = Math.max(passo, Math.round(bruto / passo) * passo);
-    if (cand.medida === 'g') novo = Math.max(10, Math.round(bruto / 5) * 5);
-    if (novo >= cand.qtd) return cand;
-    const k = novo / cand.qtd;
+  function recalcular(item) {
+    const gramas = item.qtd * item.porUn;
+    const k = gramas / 100;
     return {
-      ...cand,
-      qtd: Math.round(novo * 100) / 100,
-      gramas: cand.gramas * k,
-      kcal: cand.kcal * k,
-      p: cand.p * k,
-      c: cand.c * k,
-      g: cand.g * k,
-      reduzido: true,
+      ...item,
+      gramas,
+      kcal: item.food.kcal * k,
+      p: item.food.p * k,
+      c: item.food.c * k,
+      g: item.food.g * k,
     };
   }
 
-  const chaveDia = (d) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+  // Porções realistas: gramas de 5 em 5, medidas caseiras de meia em meia
+  function arredondar(item, qtd) {
+    const lim = PAPEIS[item.papel] || PAPEIS.carb;
+    // em gramas dá para servir bem mais; em unidades (um sanduíche, um pote)
+    // ninguém come o dobro — o teto é mais curto
+    const teto = item.base * (item.medida === 'g' ? lim.max : Math.min(lim.max, 1.5));
+    let q = Math.min(Math.max(qtd, item.base * lim.min), teto);
+    if (item.medida === 'g') q = Math.max(10, Math.round(q / 5) * 5);
+    else q = Math.max(0.5, Math.round(q * 2) / 2);
+    return recalcular({ ...item, qtd: q });
+  }
+
+  const somar = (itens) =>
+    itens.reduce(
+      (a, x) => ({ kcal: a.kcal + x.kcal, p: a.p + x.p, c: a.c + x.c, g: a.g + x.g }),
+      { kcal: 0, p: 0, c: 0, g: 0 }
+    );
 
   /* ---- Contexto: metas, o que já foi consumido e o histórico ---- */
 
@@ -3693,76 +3816,37 @@ const Sugestao = (() => {
       c: metas.c ? metas.c - consumido.c : null,
       g: metas.g ? metas.g - consumido.g : null,
     };
-    // quanto desta refeição ainda cabe: o que sobrou do dia, dividido entre as
-    // refeições que ainda faltam, na proporção de cada uma
+    // o que ainda falta hoje cai nesta refeição na proporção dela entre as que
+    // ainda vêm: às 11h o almoço leva a sua fatia, não o dia inteiro
     const idx = REFEICOES.indexOf(ref);
     const pesoRestante = REFEICOES.slice(idx).reduce((n, r) => n + r.peso, 0) || ref.peso;
     const fatia = ref.peso / pesoRestante;
-    // o que sobrou do dia cai na refeição atual na proporção dela, mas com
-    // teto: a última refeição do dia não vira jantar de 1.800 kcal só porque
-    // ninguém comeu nada até aqui
-    const teto = metas.kcal ? metas.kcal * ref.peso * 1.8 : 700;
+    const tetoKcal = metas.kcal ? metas.kcal * ref.peso * 1.8 : 700;
     const alvoKcal =
-      restante.kcal != null ? Math.max(80, Math.min(restante.kcal * fatia, teto)) : Math.min(450, teto);
-    // "no limite": sobrou menos de 12% da meta, ou algum macro já estourou
+      restante.kcal != null ? Math.max(80, Math.min(restante.kcal * fatia, tetoKcal)) : Math.min(450, tetoKcal);
+    // alvo de cada macro para esta refeição: mesma fatia, com teto proporcional
+    const fatiaMacro = (v, meta) =>
+      v == null || meta == null ? null : Math.max(0, Math.min(v * fatia, meta * ref.peso * 1.8));
+    const alvo = {
+      kcal: alvoKcal,
+      p: fatiaMacro(restante.p, metas.p),
+      c: fatiaMacro(restante.c, metas.c),
+      g: fatiaMacro(restante.g, metas.g),
+    };
+    // sem dieta alvo configurada: divide as calorias da refeição num padrão
+    // equilibrado, só para ter um norte
+    if (alvo.p == null) alvo.p = (alvoKcal * 0.28) / 4;
+    if (alvo.c == null) alvo.c = (alvoKcal * 0.44) / 4;
+    if (alvo.g == null) alvo.g = (alvoKcal * 0.28) / 9;
     const estourou =
       (restante.kcal != null && restante.kcal <= 0) ||
-      (metas.p && restante.p <= 0) ||
-      (metas.c && restante.c <= 0) ||
-      (metas.g && restante.g <= 0);
+      (metas.p && restante.p <= 0 && metas.c && restante.c <= 0);
     const apertado =
       estourou || (metas.kcal && restante.kcal < Math.max(0.12 * metas.kcal, alvoKcal * 0.5));
     return {
-      data, ref, metas, consumido, restante, alvoKcal, apertado, estourou,
+      data, ref, metas, consumido, restante, alvo, alvoKcal, fatia, apertado, estourou,
       comidosHoje, recentes, frequencia, naRefeicao, porcao,
     };
-  }
-
-  /* ---- Placar ---- */
-
-  // Direção dos macros que faltam, em calorias: um vetor para comparar com o
-  // que o alimento oferece (assim proteína em falta puxa comida proteica)
-  function alvoMacros(ctx) {
-    const { restante, metas } = ctx;
-    if (!metas.p && !metas.c && !metas.g) return { p: 0.3, c: 0.45, g: 0.25 };
-    const v = {
-      p: Math.max(0, (restante.p || 0) * 4),
-      c: Math.max(0, (restante.c || 0) * 4),
-      g: Math.max(0, (restante.g || 0) * 9),
-    };
-    const soma = v.p + v.c + v.g;
-    if (!soma) return { p: 0.4, c: 0.3, g: 0.3 };
-    return { p: v.p / soma, c: v.c / soma, g: v.g / soma };
-  }
-
-  function pontuar(cand, ctx, alvo) {
-    const kcal = Math.max(cand.kcal, 1);
-    const perfil = {
-      p: (cand.p * 4) / kcal,
-      c: (cand.c * 4) / kcal,
-      g: (cand.g * 9) / kcal,
-    };
-    // o quanto o alimento aponta para os macros que faltam (cosseno)
-    const dot = perfil.p * alvo.p + perfil.c * alvo.c + perfil.g * alvo.g;
-    const norma =
-      Math.hypot(perfil.p, perfil.c, perfil.g) * Math.hypot(alvo.p, alvo.c, alvo.g) || 1;
-    const macro = dot / norma;
-    // tamanho da porção perto do que cabe nesta refeição
-    const dif = (cand.kcal - ctx.alvoKcal) / Math.max(ctx.alvoKcal * 0.6, 1);
-    const tamanho = Math.exp(-dif * dif);
-    const sac = saciedade(cand.food, cand.fibra);
-    const freq = ctx.frequencia.get(cand.food.i) || 0;
-    const naRef = ctx.naRefeicao.get(cand.food.i) || 0;
-    const habito = Math.min(Math.log1p(freq) / 3, 0.5) + Math.min(naRef * 0.08, 0.3);
-    const dias = ctx.recentes.has(cand.food.i) ? ctx.recentes.get(cand.food.i) : 99;
-    const enjoo = ctx.comidosHoje.has(cand.food.i) ? 1.1 : dias <= 1 ? 0.35 : dias <= 3 ? 0.12 : 0;
-    // estourando o que resta: cada caloria a mais dói
-    const excesso = ctx.restante.kcal != null ? Math.max(0, cand.kcal - Math.max(ctx.restante.kcal, 0)) : 0;
-    const puni = ctx.restante.kcal != null ? excesso / Math.max(ctx.alvoKcal, 120) : 0;
-    if (ctx.apertado) {
-      return sac * 2.2 + macro * 0.5 + habito * 0.3 - puni * 1.6 - enjoo;
-    }
-    return macro * 1.5 + tamanho * 1.1 + habito + sac * 0.5 - puni * 0.8 - enjoo;
   }
 
   /* ---- Candidatos ---- */
@@ -3771,22 +3855,25 @@ const Sugestao = (() => {
     const lista = CATALOGO[ctx.ref.chave] || CATALOGO.almoco;
     const saida = [];
     for (const item of lista) {
-      const achados = FoodSearch.search(item.b, 3);
-      const food = achados[0];
+      const food = FoodSearch.search(item.b, 1)[0];
       if (!food) continue;
-      const cand = montar(food, item.q, item.med, { fibra: item.fibra, origem: 'catalogo' });
+      const cand = montar(food, item.q, item.med, {
+        papel: item.papel,
+        fibra: item.fibra,
+        origem: 'catalogo',
+      });
       if (cand) saida.push(cand);
     }
     return saida;
   }
 
-  // O que a própria pessoa costuma comer nesta refeição, na porção que ela usa
+  // O que a própria pessoa come nesta refeição, na porção que ela usa. É daqui
+  // que sai a cara do prato — o molde só diz quantos de cada tipo entram.
   async function doHistorico(ctx) {
     const saida = [];
-    for (const [foodId, vezes] of ctx.naRefeicao.entries()) {
-      if (vezes < 1) continue;
+    for (const [foodId] of ctx.naRefeicao.entries()) {
       const food = await MacroDB.getFood(foodId);
-      if (!food) continue;
+      if (!food || !(food.kcal > 0)) continue;
       const p = ctx.porcao.get(foodId);
       const cand = montar(food, p ? p.qtd : 100, p && p.medida !== 'g' ? p.medida.toLowerCase() : null, {
         origem: 'historico',
@@ -3796,76 +3883,163 @@ const Sugestao = (() => {
     return saida;
   }
 
-  // Sorteio proporcional ao placar entre os melhores: a lista muda a cada
+  /* ---- Escolha de cada item do prato ---- */
+
+  // Pontua um candidato para um papel, olhando o que ainda falta *no prato*
+  function pontuar(cand, ctx, falta, macroDoPapel) {
+    const kcal = Math.max(cand.kcal, 1);
+    const perfil = { p: (cand.p * 4) / kcal, c: (cand.c * 4) / kcal, g: (cand.g * 9) / kcal };
+    const alvoV = {
+      p: Math.max(0, falta.p * 4),
+      c: Math.max(0, falta.c * 4),
+      g: Math.max(0, falta.g * 9),
+    };
+    const soma = alvoV.p + alvoV.c + alvoV.g || 1;
+    const dir = { p: alvoV.p / soma, c: alvoV.c / soma, g: alvoV.g / soma };
+    const dot = perfil.p * dir.p + perfil.c * dir.c + perfil.g * dir.g;
+    const norma = Math.hypot(perfil.p, perfil.c, perfil.g) * Math.hypot(dir.p, dir.c, dir.g) || 1;
+    const macro = dot / norma;
+    const freq = ctx.frequencia.get(cand.food.i) || 0;
+    const naRef = ctx.naRefeicao.get(cand.food.i) || 0;
+    const habito =
+      (cand.origem === 'historico' ? 0.55 : 0) +
+      Math.min(Math.log1p(freq) / 4, 0.35) +
+      Math.min(naRef * 0.06, 0.3);
+    const dias = ctx.recentes.has(cand.food.i) ? ctx.recentes.get(cand.food.i) : 99;
+    const enjoo = ctx.comidosHoje.has(cand.food.i) ? 1.2 : dias <= 1 ? 0.3 : dias <= 3 ? 0.1 : 0;
+    const sac = saciedade(cand.food, cand.fibra);
+    // densidade no macro do papel: quem ocupa a vaga da proteína precisa ser
+    // mesmo proteico, senão a porção estoura antes de a meta ser atingida
+    const fator = { p: 4, c: 4, g: 9 }[macroDoPapel] || 4;
+    const densidade = macroDoPapel ? Math.min(((cand.food[macroDoPapel] * fator) / Math.max(cand.food.kcal, 1)) / 0.5, 1) : 0;
+    if (ctx.apertado) return sac * 2.2 + macro * 0.6 + habito * 0.5 + densidade * 0.5 - enjoo;
+    return macro * 1.1 + habito * 1.1 + densidade * 0.9 + sac * 0.3 - enjoo;
+  }
+
+  // Sorteio proporcional ao placar entre os melhores: o prato muda a cada
   // toque sem deixar de fazer sentido
-  function sortear(ranked, n) {
-    const pool = ranked.slice(0, Math.max(n * 4, 12));
-    const escolhidos = [];
-    const usados = new Set();
-    while (escolhidos.length < n && pool.length) {
-      const livres = pool.filter((c) => !usados.has(c.food.i) && !usados.has(c.food.n));
-      if (!livres.length) break;
-      const min = Math.min(...livres.map((c) => c.placar));
-      const pesos = livres.map((c) => Math.pow(c.placar - min + 0.25, 2));
-      const total = pesos.reduce((a, b) => a + b, 0);
-      let r = Math.random() * total;
-      let i = 0;
-      while (i < livres.length - 1 && r > pesos[i]) {
-        r -= pesos[i];
-        i++;
-      }
-      escolhidos.push(livres[i]);
-      usados.add(livres[i].food.i);
-      usados.add(livres[i].food.n);
+  function sortear(lista) {
+    if (!lista.length) return null;
+    const pool = lista.slice(0, Math.min(8, lista.length));
+    const min = Math.min(...pool.map((c) => c.placar));
+    const pesos = pool.map((c) => Math.pow(c.placar - min + 0.3, 2));
+    const total = pesos.reduce((a, b) => a + b, 0);
+    let r = Math.random() * total;
+    for (let i = 0; i < pool.length; i++) {
+      r -= pesos[i];
+      if (r <= 0) return pool[i];
     }
-    return escolhidos;
+    return pool[pool.length - 1];
   }
 
-  function motivoDe(cand, ctx) {
-    if (ctx.estourou) return 'O dia já fechou a conta: isto sacia com o mínimo de estrago';
-    if (ctx.apertado) return 'Sobrou pouco para hoje: enche bastante para poucas calorias';
-    if (cand.origem === 'historico')
-      return `Você costuma comer isto ${ctx.ref.art} ${ctx.ref.nome.toLowerCase()}`;
-    const alvo = alvoMacros(ctx);
-    const maior = alvo.p >= alvo.c && alvo.p >= alvo.g ? 'p' : alvo.c >= alvo.g ? 'c' : 'g';
-    const perfil = { p: cand.p * 4, c: cand.c * 4, g: cand.g * 9 };
-    const dom = perfil.p >= perfil.c && perfil.p >= perfil.g ? 'p' : perfil.c >= perfil.g ? 'c' : 'g';
-    if (dom === maior && maior === 'p' && ctx.restante.p > 0)
-      return `Faltam ${Math.round(ctx.restante.p)} g de proteína hoje`;
-    if (dom === maior && maior === 'c' && ctx.restante.c > 0)
-      return `Ainda cabem ${Math.round(ctx.restante.c)} g de carboidrato`;
-    if (dom === maior && maior === 'g' && ctx.restante.g > 0)
-      return `Ainda cabem ${Math.round(ctx.restante.g)} g de gordura`;
-    return 'Cabe no que ainda sobra para hoje';
+  /* ---- Ajuste das porções ---- */
+
+  // Mexe na quantidade de cada item até o prato inteiro chegar perto do alvo
+  // de macros: cada papel puxa o macro que ele regula (proteína pela proteína,
+  // carboidrato pelo carbo…), em rodadas, respeitando limites de porção.
+  function equilibrar(itens, alvo) {
+    const atual = itens.map((x) => ({ ...x }));
+    // a ordem importa: a proteína manda no prato, a gordura entra depois e o
+    // carboidrato é quem fecha a conta — é a parte elástica da refeição
+    const ajustarMacro = (macro) => {
+      for (let i = 0; i < atual.length; i++) {
+        const item = atual[i];
+        if ((PAPEIS[item.papel] || {}).macro !== macro || !(alvo[macro] > 0)) continue;
+        const outros = atual.reduce((n, x, j) => (j === i ? n : n + x[macro]), 0);
+        const porQtd = (item.food[macro] * item.porUn) / 100;
+        if (!(porQtd > 0)) continue;
+        atual[i] = arredondar(item, (alvo[macro] - outros) / porQtd);
+      }
+    };
+    for (let volta = 0; volta < 5; volta++) for (const macro of ['p', 'g', 'c']) ajustarMacro(macro);
+    // sobra ou falta de caloria depois disso sai (ou entra) no carboidrato,
+    // que é o item que dá para servir a mais sem desmontar o prato
+    const flex = atual
+      .map((x, i) => ({ x, i }))
+      .filter(({ x }) => x.papel === 'carb' || x.papel === 'fruta');
+    for (let volta = 0; volta < 3 && flex.length; volta++) {
+      const dif = somar(atual).kcal - alvo.kcal;
+      if (Math.abs(dif) < alvo.kcal * 0.08) break;
+      const somaFlex = flex.reduce((n, { i }) => n + atual[i].kcal, 0) || 1;
+      const fator = (somaFlex - dif) / somaFlex;
+      if (!(fator > 0)) break;
+      for (const { i } of flex) atual[i] = arredondar(atual[i], atual[i].qtd * fator);
+      // encher de caloria não pode virar carboidrato demais: se passou muito do
+      // alvo de carbo, volta atrás e aceita a refeição um pouco mais leve
+    }
+    // trava final: carboidrato bem acima do alvo desmancha a refeição, então o
+    // item elástico volta atrás mesmo que as calorias fiquem abaixo
+    if (alvo.c > 0 && flex.length && somar(atual).c > alvo.c * 1.2) {
+      const excesso = somar(atual).c / (alvo.c * 1.1);
+      for (const { i } of flex) atual[i] = arredondar(atual[i], atual[i].qtd / excesso);
+    }
+    return atual;
   }
 
-  /* ---- API ---- */
+  /* ---- Montagem do prato ---- */
+
+  function motivoDe(item, ctx) {
+    const papel = (PAPEIS[item.papel] || {}).rotulo || 'complemento';
+    if (item.origem === 'historico') return `${papel} · você come isto ${ctx.ref.art} ${ctx.ref.nome.toLowerCase()}`;
+    return papel;
+  }
 
   async function sugerir(quando, opcoes = {}) {
-    const n = opcoes.n || 3;
     const ctx = await contexto(quando);
-    const alvo = alvoMacros(ctx);
-    const teto = ctx.restante.kcal != null && ctx.restante.kcal > 0 ? ctx.restante.kcal : null;
+    const molde = MOLDES[ctx.ref.chave] || MOLDES.almoco;
+    const papeis = ctx.apertado ? molde.papeis.filter((p) => p === 'prot' || p === 'veg' || p === 'fruta') : molde.papeis;
     const brutos = [...(await doHistorico(ctx)), ...doCatalogo(ctx)];
-    const vistos = new Set();
-    const cands = [];
+    // um alimento só entra uma vez, e o do histórico ganha do catálogo
+    const porNome = new Map();
     for (const c of brutos) {
-      const chave = c.food.n.toLowerCase();
-      if (vistos.has(chave)) continue;
-      vistos.add(chave);
-      const ajustado = ctx.apertado
-        ? ajustar(c, Math.max(ctx.alvoKcal * 0.6, 90), teto)
-        : ajustar(c, ctx.alvoKcal, null);
-      if (!(ajustado.kcal > 0)) continue;
-      ajustado.placar = pontuar(ajustado, ctx, alvo);
-      cands.push(ajustado);
+      const k = c.food.n.toLowerCase();
+      if (!porNome.has(k)) porNome.set(k, c);
     }
-    cands.sort((a, b) => b.placar - a.placar);
-    const escolhidos = sortear(cands, n).map((c) => ({ ...c, motivo: motivoDe(c, ctx) }));
-    return { ctx, sugestoes: escolhidos };
+    const disponiveis = [...porNome.values()];
+    const evitar = new Set(opcoes.evitar || []);
+
+    const prato = [];
+    const falta = { kcal: ctx.alvo.kcal, p: ctx.alvo.p, c: ctx.alvo.c, g: ctx.alvo.g };
+    for (const papel of papeis.length ? papeis : ['prot']) {
+      const opcoesPapel = disponiveis
+        .filter((c) => c.papel === papel && !prato.some((x) => x.food.i === c.food.i) && !evitar.has(c.food.i))
+        .map((c) => ({ ...c, placar: pontuar(c, ctx, falta, (PAPEIS[papel] || {}).macro) }))
+        .sort((a, b) => b.placar - a.placar);
+      const escolhido = sortear(opcoesPapel);
+      if (!escolhido) continue;
+      // no modo saciedade o prato é curto: dois itens bastam
+      if (ctx.apertado && prato.length >= 2) break;
+      prato.push(escolhido);
+      falta.p -= escolhido.p;
+      falta.c -= escolhido.c;
+      falta.g -= escolhido.g;
+      falta.kcal -= escolhido.kcal;
+    }
+    if (!prato.length) return { ctx, alvo: ctx.alvo, itens: [], total: somar([]), modo: 'normal' };
+
+    // no aperto o alvo é o que ainda cabe, não a fatia da refeição
+    const alvo = ctx.apertado
+      ? (() => {
+          const teto = Math.max(ctx.restante.kcal != null ? ctx.restante.kcal : 0, 120);
+          return {
+            kcal: Math.min(ctx.alvo.kcal, teto),
+            p: Math.max(ctx.alvo.p, 15),
+            c: Math.max(0, Math.min(ctx.alvo.c, (teto * 0.3) / 4)),
+            g: Math.max(0, Math.min(ctx.alvo.g, (teto * 0.25) / 9)),
+          };
+        })()
+      : ctx.alvo;
+    const itens = equilibrar(prato, alvo).map((x) => ({ ...x, motivo: motivoDe(x, ctx) }));
+    return {
+      ctx,
+      alvo,
+      itens,
+      total: somar(itens),
+      modo: ctx.apertado ? 'saciedade' : 'normal',
+    };
   }
 
-  return { sugerir, contexto, refeicaoDe, REFEICOES, CATALOGO };
+  return { sugerir, contexto, refeicaoDe, REFEICOES, CATALOGO, MOLDES, PAPEIS };
 })();
 
 if (typeof window !== 'undefined') window.Sugestao = Sugestao;
@@ -4769,40 +4943,70 @@ if (typeof window !== 'undefined') window.Barras = Barras;
   async function renderSugestoes() {
     const box = $('#sug-box');
     box.hidden = false;
-    box.innerHTML = '<p class="sug-carregando">Escolhendo…</p>';
+    box.innerHTML = '<p class="sug-carregando">Montando o prato…</p>';
     const quando = inpDataHora.value ? new Date(inpDataHora.value) : new Date();
     let dados;
     try {
-      dados = await Sugestao.sugerir(quando, { n: 3 });
+      dados = await Sugestao.sugerir(quando, {});
     } catch {
       box.innerHTML = '<p class="sug-carregando">Não consegui montar uma sugestão agora.</p>';
       return;
     }
-    const { ctx, sugestoes } = dados;
-    if (!sugestoes.length) {
+    const { ctx, alvo, itens, total, modo } = dados;
+    if (!itens.length) {
       box.innerHTML = '<p class="sug-carregando">Sem sugestões para este horário.</p>';
       return;
     }
-    const r = ctx.restante;
-    const resumo = ctx.metas.kcal
-      ? `${ctx.ref.nome} · ${r.kcal > 0 ? `faltam ${fmt(r.kcal, 0)} kcal hoje` : `${fmt(-r.kcal, 0)} kcal acima da meta`}${
-          ctx.metas.p ? ` · proteína ${r.p > 0 ? `faltam ${fmt(r.p, 0)} g` : 'no limite'}` : ''
+    const restante = ctx.restante;
+    const cabecalho = ctx.metas.kcal
+      ? `${restante.kcal > 0 ? `faltam ${fmt(restante.kcal, 0)} kcal hoje` : `${fmt(-restante.kcal, 0)} kcal acima da meta`}${
+          ctx.metas.p ? ` · proteína ${restante.p > 0 ? `faltam ${fmt(restante.p, 0)} g` : 'no limite'}` : ''
         }`
-      : `${ctx.ref.nome} · defina a dieta alvo em Ajustes para sugestões mais certeiras`;
+      : 'defina a dieta alvo em Ajustes para sugestões mais certeiras';
+    // como o prato ficou perto do alvo desta refeição
+    const linha = (rot, feito, meta, un) => {
+      const pct = meta > 0 ? Math.min(140, (feito / meta) * 100) : 0;
+      const perto = meta > 0 && Math.abs(feito - meta) <= Math.max(meta * 0.15, 3);
+      return `
+        <div class="sug-meta">
+          <span class="sug-meta-rot">${rot}</span>
+          <span class="sug-bar"><i style="width:${Math.min(100, pct).toFixed(0)}%"></i></span>
+          <span class="sug-meta-val${perto ? ' ok' : ''}">${fmt(feito, 0)}/${fmt(meta, 0)} ${un}</span>
+        </div>`;
+    };
+    // previsão do dia com o prato somado ao que já foi consumido
+    const impacto = (rot, atual, add, meta, un) => {
+      const novo = atual + add;
+      const base = Math.min(100, (atual / meta) * 100);
+      const somado = Math.max(0, Math.min(100 - base, (add / meta) * 100));
+      const estoura = novo > meta;
+      return `
+        <div class="sug-meta">
+          <span class="sug-meta-rot">${rot}</span>
+          <span class="sug-bar"><i style="width:${base.toFixed(0)}%"></i><i class="add" style="width:${somado.toFixed(0)}%"></i></span>
+          <span class="sug-meta-val${estoura ? ' over' : ''}">${fmt(novo, 0)}/${fmt(meta, 0)} ${un} · ${fmt((novo / meta) * 100, 0)}%</span>
+        </div>`;
+    };
+    const sobra = (c, t) => {
+      const resta = c.metas.kcal - c.consumido.kcal - t.kcal;
+      const restaP = c.metas.p ? c.metas.p - c.consumido.p - t.p : null;
+      if (resta < 0) return `Passa ${fmt(-resta, 0)} kcal da meta do dia.`;
+      return `Sobram ${fmt(resta, 0)} kcal${restaP != null ? ` e ${fmt(Math.max(restaP, 0), 0)} g de proteína` : ''} para o resto do dia.`;
+    };
     box.innerHTML = `
       <div class="sug-head">
         <div>
-          <b>Sugestão para agora</b>
-          <span class="sug-sub">${esc(resumo)}</span>
+          <b>Prato sugerido · ${esc(ctx.ref.nome)}</b>
+          <span class="sug-sub">${esc(cabecalho)}</span>
         </div>
         <div class="sug-acoes">
           <button class="btn btn-mini" id="btn-sug-outra" type="button">Trocar</button>
           <button class="btn btn-mini" id="btn-sug-fechar" type="button">Fechar</button>
         </div>
       </div>
-      ${ctx.apertado ? '<p class="sug-alerta">Modo saciedade: priorizando o que enche mais estourando o mínimo.</p>' : ''}
+      ${modo === 'saciedade' ? '<p class="sug-alerta">Modo saciedade: o dia está no limite, então o prato é o que enche mais estourando o mínimo.</p>' : ''}
       <div class="sug-lista">
-        ${sugestoes
+        ${itens
           .map(
             (x, i) => `
           <div class="sug-card">
@@ -4811,16 +5015,58 @@ if (typeof window !== 'undefined') window.Barras = Barras;
               <span class="sug-porcao">${fmt(x.qtd, 2)} ${esc(x.medida === 'g' ? (x.food.l ? 'ml' : 'g') : x.medida)} · ${fmt(x.kcal, 0)} kcal · P ${fmt(x.p)} · C ${fmt(x.c)} · G ${fmt(x.g)}</span>
               <span class="sug-motivo">${esc(x.motivo)}</span>
             </div>
-            <button class="btn btn-mini btn-primary sug-usar" type="button" data-i="${i}">Usar</button>
+            <button class="btn btn-mini sug-usar" type="button" data-i="${i}" title="Abrir só este item">Só este</button>
           </div>`
           )
           .join('')}
-      </div>`;
+      </div>
+      <div class="sug-metas">
+        <div class="sug-titulo">O prato x o alvo desta refeição</div>
+        ${linha('Calorias', total.kcal, alvo.kcal, 'kcal')}
+        ${linha('Proteínas', total.p, alvo.p, 'g')}
+        ${linha('Carboidratos', total.c, alvo.c, 'g')}
+        ${linha('Gorduras', total.g, alvo.g, 'g')}
+        <p class="sug-legenda">Alvo desta refeição: o que falta hoje dividido entre as refeições que ainda vêm.</p>
+      </div>
+      ${
+        ctx.metas.kcal
+          ? `<div class="sug-metas">
+        <div class="sug-titulo">Como o dia fica depois desta refeição</div>
+        ${impacto('Calorias', ctx.consumido.kcal, total.kcal, ctx.metas.kcal, 'kcal')}
+        ${ctx.metas.p ? impacto('Proteínas', ctx.consumido.p, total.p, ctx.metas.p, 'g') : ''}
+        ${ctx.metas.c ? impacto('Carboidratos', ctx.consumido.c, total.c, ctx.metas.c, 'g') : ''}
+        ${ctx.metas.g ? impacto('Gorduras', ctx.consumido.g, total.g, ctx.metas.g, 'g') : ''}
+        <p class="sug-legenda">${esc(sobra(ctx, total))}</p>
+      </div>`
+          : ''
+      }
+      <button class="btn btn-primary sug-montar" id="btn-sug-montar" type="button">Montar refeição com estes ${itens.length} itens</button>`;
     $('#btn-sug-outra').onclick = renderSugestoes;
     $('#btn-sug-fechar').onclick = fecharSugestoes;
+    $('#btn-sug-montar').onclick = () => {
+      for (const x of itens) {
+        const item = {
+          foodId: x.food.i,
+          nome: x.food.n,
+          qtd: x.qtd,
+          medida: x.medida,
+          gramas: Math.round(x.gramas * 10) / 10,
+          kcal: Math.round(x.kcal * 10) / 10,
+          p: Math.round(x.p * 10) / 10,
+          c: Math.round(x.c * 10) / 10,
+          g: Math.round(x.g * 10) / 10,
+        };
+        if (x.food.l) item.ml = 1;
+        cesta.push(item);
+      }
+      salvarCesta();
+      renderCesta();
+      atualizarPreview();
+      fecharSugestoes();
+    };
     box.querySelectorAll('.sug-usar').forEach((b) => {
       b.onclick = async () => {
-        const x = sugestoes[Number(b.dataset.i)];
+        const x = itens[Number(b.dataset.i)];
         fecharSugestoes();
         await usarAlimento(x.food, x.qtd, x.medida);
       };
@@ -7602,6 +7848,28 @@ function abrirTudo(abrir){document.querySelectorAll('details').forEach(function(
   }
   const ultimaCarga = (exercicioId, exceto) => ultimoValor(exercicioId, 'carga', exceto);
 
+  // Últimas repetições feitas naquele exercício. Serve de ponto de partida ao
+  // executar: o campo já vem preenchido e a pessoa só corrige o que mudou —
+  // sem isso ninguém anota reps, e o gráfico fica só com a carga.
+  function ultimasReps(exercicioId, exceto) {
+    const lista = finalizadas();
+    for (let i = lista.length - 1; i >= 0; i--) {
+      const s = lista[i];
+      if (exceto && s.id === exceto) continue;
+      const item = (s.itens || []).find(
+        (x) => x.exercicioId === exercicioId && x.reps && x.feito !== false
+      );
+      if (item) return item.reps;
+    }
+    return '';
+  }
+
+  // Sem histórico, o previsto do treino vira o palpite inicial: 3x12 → "12/12/12"
+  const repsPrevistas = (e) => {
+    if ((e.unidadeRep || 'rep') !== 'rep' || !(e.series > 0) || !(e.repMax > 0)) return '';
+    return Array.from({ length: Math.min(e.series, 6) }, () => e.repMax).join('/');
+  };
+
   // Últimas execuções daquele exercício, da mais recente para a mais antiga.
   // É com isso que a tela mostra a evolução de repetições, não só de carga.
   function historicoExercicio(exercicioId, exceto, quantos = 3) {
@@ -7711,7 +7979,7 @@ function abrirTudo(abrir){document.querySelectorAll('details').forEach(function(
           ? ultimoValor(e.exercicioId, 'tempoMin') ?? (e.unidadeRep === 'min' ? e.repMax : null)
           : null,
         bpm: e.registraBpm ? ultimoValor(e.exercicioId, 'bpm') ?? null : null,
-        reps: '',
+        reps: ultimasReps(e.exercicioId) || repsPrevistas(e),
         feito: false,
       })),
     };
@@ -8400,7 +8668,10 @@ function abrirTudo(abrir){document.querySelectorAll('details').forEach(function(
           comVol.length > 1
             ? `Volume ${fmt(volumeDe(comVol[0], un))} → ${fmt(volumeDe(comVol[comVol.length - 1], un))} ${un}`
             : '';
-        const extras = [resumoOutras, resumoReps, resumoVol].filter(Boolean).join(' · ');
+        // sem reps anotadas o gráfico só tem a carga: avisa onde procurar
+        const semReps =
+          !comReps.length && principal.campo === 'carga' ? 'sem repetições anotadas ainda' : '';
+        const extras = [resumoOutras, resumoReps, resumoVol, semReps].filter(Boolean).join(' · ');
         return `
         <div class="chart-card">
           <div class="evo-head">

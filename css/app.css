@@ -1038,3 +1038,64 @@ main { max-width: 860px; margin: 0 auto; padding: 20px 16px 110px; }
   font-size: 11.5px;
   color: var(--muted);
 }
+
+.sug-metas {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.sug-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+.sug-meta-rot {
+  flex: none;
+  width: 92px;
+  font-size: 11.5px;
+  color: var(--ink-2);
+}
+.sug-bar {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--grid);
+  overflow: hidden;
+}
+.sug-bar i {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}
+.sug-meta-val {
+  flex: none;
+  font-size: 11.5px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.sug-meta-val.ok {
+  color: var(--good-text);
+}
+.sug-legenda {
+  margin: 6px 0 0;
+  font-size: 11px;
+  color: var(--muted);
+}
+.sug-montar {
+  width: 100%;
+  margin-top: 12px;
+}
+.sug-titulo {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.sug-bar i.add {
+  background: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+.sug-meta-val.over {
+  color: var(--bad-text);
+}
