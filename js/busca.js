@@ -53,6 +53,8 @@ const FoodSearch = (() => {
       .replace(/\bvita ?power\b/g, 'vitapower')
       .replace(/\bmc ?donalds?\b/g, 'mcdonalds')
       .replace(/\bhamburger(s)?\b/g, 'hamburguer$1')
+      .replace(/\bsmash ?burguer(s)?\b/g, 'smash burger$1')
+      .replace(/\bsmashburger(s)?\b/g, 'smash burger$1')
       .replace(/\bx (burguer|burger|salada|tudo|bacon|egg)\b/g, 'x$1')
       // "bolacha" e "biscoito" são a mesma coisa (varia por região): as tabelas
       // e os rótulos usam "biscoito", então normaliza tudo para ele

@@ -671,4 +671,28 @@ export const CURADOS = [
   { n: 'Frango xadrez ao molho de ostra', kcal: 160, p: 14, c: 10, g: 7, m: [['porção (150 g)', 150]] },
   { n: 'Legumes salteados no wok (chinês)', kcal: 80, p: 2.5, c: 8, g: 4.5, m: [['porção (150 g)', 150]] },
   { n: 'Molho agridoce (chinês)', kcal: 165, p: 0.4, c: 40, g: 0.2, m: [['colher de sopa (18 g)', 18]] },
+
+  // ---- Hamburguerias artesanais: as redes de smash burger que as tabelas não
+  // cobrem. A Patties trabalha com discos ultrafinos de 40 g ("ultra smashed"):
+  // o Original é o cheeseburger da casa, dois discos com queijo americano,
+  // cebola, picles, ketchup e mostarda. Valores estimados pela composição.
+  { n: 'Patties Original (hambúrguer cheeseburger, 2 discos de 40 g)', kcal: 287, p: 15.6, c: 20, g: 15.6, m: [['unidade (160 g)', 160]] },
+  { n: 'Patties Original com bacon (hambúrguer)', kcal: 305, p: 17, c: 18.5, g: 18, m: [['unidade (175 g)', 175]] },
+  { n: 'Patties simples (hambúrguer de 1 disco de 40 g com queijo)', kcal: 283, p: 13.7, c: 25, g: 13.3, m: [['unidade (120 g)', 120]] },
+  { n: 'Patties triplo (hambúrguer de 3 discos com queijo)', kcal: 310, p: 17.5, c: 15.5, g: 20, m: [['unidade (210 g)', 210]] },
+  { n: 'Patties Ultra (hambúrguer de 4 discos com queijo)', kcal: 322, p: 18.5, c: 13, g: 22.5, m: [['unidade (255 g)', 255]] },
+  { n: 'Patties Big Patties (hambúrguer, 2 discos com queijo duplo e molho)', kcal: 270, p: 15, c: 18, g: 15.5, m: [['unidade (230 g)', 230]] },
+  { n: 'Patties Fat Greg (hambúrguer com bacon, cheddar e molho)', kcal: 318, p: 16.5, c: 15, g: 20.5, m: [['unidade (220 g)', 220]] },
+  { n: 'Patties de frango (sanduíche de frango empanado)', kcal: 275, p: 14, c: 22, g: 13.5, m: [['unidade (200 g)', 200]] },
+  { n: 'Patties vegetariano (hambúrguer de arroz negro, 2 discos)', kcal: 255, p: 8, c: 32, g: 9.5, m: [['unidade (165 g)', 165]] },
+  { n: 'Patties skinny fries (batata palito fina)', kcal: 340, p: 4, c: 42, g: 17, m: [['porção (120 g)', 120], ['porção grande (200 g)', 200]] },
+  { n: 'Patties milk shake', kcal: 150, p: 3.5, c: 20, g: 6, m: [['copo (300 ml)', 300]], l: 1 },
+  // genéricos de hamburgueria artesanal/smash, para as redes fora da lista
+  { n: 'Smash burger simples (hambúrguer de 1 disco com queijo)', kcal: 285, p: 14, c: 24, g: 14, m: [['unidade (130 g)', 130]] },
+  { n: 'Smash burger duplo (hambúrguer de 2 discos com queijo)', kcal: 295, p: 16, c: 19, g: 16.5, m: [['unidade (180 g)', 180]] },
+  { n: 'Smash burger duplo com bacon e cheddar (hambúrguer)', kcal: 315, p: 17, c: 17, g: 19, m: [['unidade (210 g)', 210]] },
+  { n: 'Hambúrguer artesanal 180 g com cheddar e bacon', kcal: 270, p: 16, c: 15, g: 16, m: [['unidade (330 g)', 330]] },
+  { n: 'Hambúrguer artesanal de frango grelhado', kcal: 210, p: 15, c: 20, g: 7.5, m: [['unidade (280 g)', 280]] },
+  { n: 'Batata rústica de hamburgueria', kcal: 290, p: 3.5, c: 38, g: 14, m: [['porção (150 g)', 150], ['porção grande (250 g)', 250]] },
+  { n: 'Batata frita com cheddar e bacon', kcal: 330, p: 8, c: 30, g: 20, m: [['porção (250 g)', 250]] },
 ];
