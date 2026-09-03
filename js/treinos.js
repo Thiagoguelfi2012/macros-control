@@ -21,6 +21,26 @@
     new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 
   const BIBLIOTECA = () => (window.EXERCICIOS || []);
+
+  // Músculos que o exercício trabalha: o principal (guardado no próprio item do
+  // treino) seguido dos auxiliares da biblioteca. Exercício cadastrado à mão
+  // fica só com o principal.
+  function musculosDe(it) {
+    const ex = BIBLIOTECA().find((x) => x.id === it.exercicioId);
+    const principal = it.grupo || (ex && ex.grupo) || '';
+    const sec = ex && Array.isArray(ex.sec) ? ex.sec.filter((g) => g !== principal) : [];
+    return { principal, sec };
+  }
+
+  const chipsMusculos = (it) => {
+    const { principal, sec } = musculosDe(it);
+    if (!principal && !sec.length) return '';
+    const chip = (g, tipo) =>
+      `<span class="mus ${tipo}" style="--cor-mus:${COR_GRUPO[g] || '#8a8a8a'}">${esc(g)}</span>`;
+    return `<div class="exec-musculos" aria-label="Músculos trabalhados">
+      ${principal ? chip(principal, 'principal') : ''}${sec.map((g) => chip(g, 'aux')).join('')}
+    </div>`;
+  };
   const acharExercicio = (id) => BIBLIOTECA().find((e) => e.id === id) || null;
 
   const semAcento = (t) =>
@@ -811,6 +831,7 @@
             </label>
             <span class="exec-alvo">${rotuloAlvo(it)}</span>
           </div>
+          ${chipsMusculos(it)}
           <div class="exec-campos">
             <div class="field">
               <label>${rotuloCampoCarga(it)}</label>

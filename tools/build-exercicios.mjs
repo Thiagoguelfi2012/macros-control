@@ -216,6 +216,67 @@ const LISTA = [
   ['Simulador de Escada', 'Cardio', 'Cardio'],
 ];
 
+// Músculos que o exercício também recruta, além do principal. Vale para a tela
+// do treino em andamento: saber que o supino também puxa tríceps e ombro muda
+// o que a pessoa espera sentir (e ajuda a não empilhar dois treinos no mesmo
+// músculo em dias seguidos). As regras vão do movimento mais específico para o
+// mais genérico e são somadas — a primeira que casa não interrompe as outras.
+const AJUDANTES = [
+  // ---- empurrar (peito/ombro/tríceps) ----
+  [/supino|flexao de braco|desenvolvimento/, ['Tríceps', 'Ombros']],
+  [/supino declinado/, ['Peito']],
+  [/crucifixo (reto|inclinado)|voador|crossover/, ['Ombros']],
+  [/pullover/, ['Costas', 'Tríceps']],
+  [/mergulho|paralelas/, ['Peito', 'Tríceps', 'Ombros']],
+  [/desenvolvimento|elevacao frontal/, ['Trapézio']],
+  [/elevacao lateral/, ['Trapézio']],
+  [/crucifixo inverso|face pull|remada alta/, ['Trapézio', 'Costas']],
+  // ---- puxar (costas/bíceps) ----
+  [/puxada|pulldown|barra fixa|remada|serrote/, ['Bíceps', 'Antebraço']],
+  [/remada (curvada|cavalinho|unilateral)|serrote/, ['Trapézio', 'Lombar']],
+  [/levantamento terra|terra romeno/, ['Lombar', 'Glúteos', 'Posterior de coxa', 'Trapézio']],
+  [/rosca/, ['Antebraço']],
+  [/encolhimento/, ['Antebraço']],
+  [/triceps (testa|frances|coice|banco)/, ['Ombros']],
+  // ---- pernas ----
+  [/agachamento|leg press|hack|afundo|avanco|bulgaro|passada/, ['Glúteos', 'Posterior de coxa']],
+  [/agachamento|afundo|avanco|bulgaro|passada|hack/, ['Abdômen']],
+  [/agachamento (livre|frontal)|hack/, ['Lombar']],
+  [/stiff|mesa flexora|flexora/, ['Glúteos', 'Lombar']],
+  [/elevacao pelvica|gluteo|coice/, ['Posterior de coxa', 'Lombar']],
+  [/step up|subida no banco/, ['Glúteos', 'Posterior de coxa', 'Abdômen']],
+  [/good morning/, ['Lombar', 'Glúteos', 'Posterior de coxa']],
+  [/hiperextensao|extensao lombar|superman/, ['Glúteos', 'Posterior de coxa']],
+  [/lenhador|rotacao de tronco|russian twist/, ['Lombar', 'Ombros']],
+  [/panturrilha/, []],
+  [/extensora/, []],
+  // ---- core e corpo inteiro ----
+  [/prancha/, ['Abdômen', 'Lombar', 'Ombros']],
+  [/abdominal|obliquo|elevacao de pernas/, ['Lombar']],
+  [/burpee|thruster|kettlebell|swing|arremesso|clean|snatch/, ['Ombros', 'Quadríceps', 'Glúteos', 'Costas']],
+  [/farmer|caminhada do fazendeiro/, ['Antebraço', 'Trapézio', 'Abdômen']],
+  [/battle rope|corda naval/, ['Ombros', 'Costas', 'Abdômen']],
+  // ---- cardio ----
+  [/esteira|corrida|escada|eliptico|transport/, ['Quadríceps', 'Panturrilha', 'Glúteos']],
+  [/bicicleta|spinning/, ['Quadríceps', 'Panturrilha']],
+  [/remo/, ['Costas', 'Bíceps', 'Quadríceps']],
+  [/pular corda/, ['Panturrilha', 'Ombros']],
+];
+
+// exercícios que são isolamento mesmo quando o nome contém um movimento
+// composto: "Panturrilha no Leg Press" é panturrilha, não é leg press
+const ISOLADOS = [/panturrilha/, /extensora/, /rosca de punho/, /aducao|abducao/];
+
+// no máximo três: a lista existe para orientar, não para virar aula de anatomia
+const ajudantesDe = (nome, grupo) => {
+  const n = semAcento(nome);
+  if (ISOLADOS.some((re) => re.test(n))) return [];
+  const saida = [];
+  for (const [re, grupos] of AJUDANTES)
+    if (re.test(n)) for (const g of grupos) if (g !== grupo && !saida.includes(g)) saida.push(g);
+  return saida.slice(0, 3);
+};
+
 const semAcento = (t) =>
   t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
@@ -227,14 +288,18 @@ const exercicios = LISTA.map(([nome, grupo, equipamento]) => {
   const id = idDe(nome);
   if (vistos.has(id)) throw new Error(`exercício duplicado: ${nome}`);
   vistos.add(id);
-  return { id, nome, grupo, equipamento };
+  const sec = ajudantesDe(nome, grupo);
+  return sec.length ? { id, nome, grupo, equipamento, sec } : { id, nome, grupo, equipamento };
 });
 
 const js = `/* Biblioteca de exercícios (Smart Fit) — gerado por tools/build-exercicios.mjs. Não editar à mão. */
 window.EXERCICIOS = ${JSON.stringify(exercicios)};
-window.EXERCICIOS_VERSAO = 2;
+window.EXERCICIOS_VERSAO = 3;
 `;
 writeFileSync(join(ROOT, 'js/exercicios.js'), js);
 const grupos = [...new Set(exercicios.map((e) => e.grupo))];
 console.log(`js/exercicios.js: ${exercicios.length} exercícios em ${grupos.length} grupos`);
 console.log(grupos.join(' · '));
+const semSec = exercicios.filter((e) => !e.sec);
+console.log(`com músculos auxiliares: ${exercicios.length - semSec.length} · só o principal: ${semSec.length}`);
+console.log(semSec.map((e) => e.nome).join(' | '));

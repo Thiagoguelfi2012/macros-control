@@ -1146,3 +1146,29 @@ main { max-width: 860px; margin: 0 auto; padding: 20px 16px 110px; }
 }
 #pv-dens { margin-left: auto; }
 #btn-cancelar-item { display: block; margin: 6px 0 0; }
+
+/* ---- Músculos trabalhados (card do exercício em execução) ---- */
+
+.exec-musculos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 8px 0 0 50px;
+}
+.mus {
+  font-size: 11px;
+  line-height: 1.5;
+  padding: 1px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+  color: var(--cor-mus);
+  border: 1px solid color-mix(in srgb, var(--cor-mus) 45%, transparent);
+  background: color-mix(in srgb, var(--cor-mus) 12%, transparent);
+}
+.mus.principal {
+  font-weight: 700;
+  color: var(--surface);
+  background: var(--cor-mus);
+  border-color: var(--cor-mus);
+}
+.exec-item.feito .exec-musculos { opacity: 0.55; }

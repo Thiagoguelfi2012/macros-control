@@ -148,7 +148,12 @@ python3 -m http.server 8000
   - **Exercícios** — biblioteca com **166 exercícios** de uma academia padrão
     (Smart Fit): aparelhos, polias, Smith, halteres/barras e peso corporal,
     agrupados por músculo e filtráveis por grupo e equipamento. É de onde saem os
-    exercícios ao montar um treino novo.
+    exercícios ao montar um treino novo. Cada exercício também sabe os
+    **músculos auxiliares** que recruta (supino → tríceps e ombros; puxada →
+    bíceps e antebraço), derivados por regra do movimento no gerador — e é o
+    que o **treino em andamento** mostra em etiquetas coloridas dentro do card
+    de cada exercício: o músculo principal preenchido, os auxiliares
+    contornados.
 
   Exercícios de **cardio** registram, além da carga, **tempo (min)** e **BPM
   médio** — a biblioteca já marca isso sozinha para os aparelhos de cardio, e
