@@ -35,6 +35,8 @@ const Sugestao = (() => {
     gord: { macro: 'g', min: 0.3, max: 1.8, rotulo: 'gordura boa' },
     veg: { macro: null, min: 0.8, max: 1.6, rotulo: 'vegetal' },
     bebida: { macro: null, min: 0.5, max: 1.5, rotulo: 'bebida' },
+    // sem macro que mande: sobremesa leve, gelatina, algo para fechar a refeição
+    extra: { macro: null, min: 0.5, max: 2, rotulo: 'extra' },
   };
 
   // Catálogo por refeição: [termo de busca, quantidade, medida, papel, fibra].
@@ -153,7 +155,7 @@ const Sugestao = (() => {
       F('Iogurte grego Danone tradicional', 1, 'pote', 'prot'),
       F('Leite desnatado', 200, null, 'bebida'),
       F('Chá de camomila', 200, null, 'bebida'),
-      F('Gelatina diet preparada', 200, null, 'fruta'),
+      F('Gelatina diet preparada', 200, null, 'extra'),
       F('Maçã, Fuji, com casca, crua', 1, 'unidade', 'fruta', 1),
       F('Castanha de caju', 15, null, 'gord', 1),
     ],
@@ -168,11 +170,14 @@ const Sugestao = (() => {
     almoco: { papeis: ['prot', 'carb', 'leg', 'veg', 'gord'], min: 3 },
     'lanche-tarde': { papeis: ['prot', 'carb', 'fruta'], min: 2 },
     jantar: { papeis: ['prot', 'carb', 'veg', 'gord'], min: 2 },
-    ceia: { papeis: ['prot', 'fruta'], min: 1 },
+    ceia: { papeis: ['prot', 'fruta', 'extra'], min: 1 },
     madrugada: { papeis: ['prot'], min: 1 },
   };
 
   /* ---- Utilidades ---- */
+
+  const fmt = (v, casas = 1) =>
+    Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: casas });
 
   const chaveDia = (d) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
 
@@ -185,21 +190,35 @@ const Sugestao = (() => {
     return 0.45 * prot + 0.4 * leveza + (fibra ? 0.15 : 0);
   }
 
-  // Papel de um alimento que veio do histórico (o catálogo já traz o seu)
+  // Que vaga um alimento do histórico pode ocupar. Aqui só entra o que dá para
+  // afirmar pelos números: qual macro domina as calorias dele. O que é salada,
+  // fruta ou leguminosa só sai do catálogo, onde isso está escrito à mão —
+  // adivinhar pelo perfil de macro dizia que temaki era leguminosa e que
+  // iogurte era vegetal.
   function papelDe(f) {
     const kcal = Math.max(f.kcal, 1);
     const p = (f.p * 4) / kcal;
     const c = (f.c * 4) / kcal;
     const g = (f.g * 9) / kcal;
-    if (f.l && kcal <= 80) return 'bebida';
-    // pouca caloria por 100 g é acompanhamento, não fonte de macro: uma salada
-    // com azeite tem a gordura dominando a fatia de kcal e ainda é salada
-    if (kcal <= 70) return 'veg';
-    if (p >= 0.3) return 'prot';
-    if (g >= 0.5) return 'gord';
-    if (c >= 0.6) return kcal <= 110 ? 'fruta' : 'carb';
-    if (c >= 0.4 && p >= 0.18) return 'leg';
-    return 'carb';
+    // além de dominar as calorias, precisa ter o macro em quantidade que
+    // sustente a vaga: uma salada com azeite tem 62% das calorias em gordura e
+    // 2,9 g por 100 g — não é a gordura do prato
+    if (p >= 0.3 && p >= c && p >= g && f.p >= 8) return 'prot';
+    if (g >= 0.45 && g >= c && f.kcal >= 150) return 'gord';
+    if (c >= 0.45 && f.c >= 12) return 'carb';
+    // nenhum macro manda com folga: fica de fora em vez de virar palpite
+    return null;
+  }
+
+  // O que aquela porção entrega, em números — é o que a sugestão diz sobre o
+  // alimento, em vez de classificá-lo
+  function destaqueDe(cand) {
+    const macros = [
+      { k: 'p', kcal: cand.p * 4, txt: `${fmt(cand.p)} g de proteína` },
+      { k: 'c', kcal: cand.c * 4, txt: `${fmt(cand.c)} g de carboidrato` },
+      { k: 'g', kcal: cand.g * 9, txt: `${fmt(cand.g)} g de gordura` },
+    ].sort((a, b) => b.kcal - a.kcal);
+    return macros[0].kcal > 0 ? macros[0].txt : `${fmt(cand.kcal, 0)} kcal`;
   }
 
   const medidaDe = (food, med) => {
@@ -220,7 +239,7 @@ const Sugestao = (() => {
       medida: medida ? medida[0] : 'g',
       porUn,
       base: qtd,
-      papel: extra.papel || papelDe(food),
+      papel: extra.papel || papelDe(food) || 'carb',
       fibra: !!extra.fibra,
       origem: extra.origem || 'catalogo',
       ...extra,
@@ -362,8 +381,11 @@ const Sugestao = (() => {
     for (const [foodId] of ctx.naRefeicao.entries()) {
       const food = await MacroDB.getFood(foodId);
       if (!food || !(food.kcal > 0)) continue;
+      const papel = papelDe(food);
+      if (!papel) continue;
       const p = ctx.porcao.get(foodId);
       const cand = montar(food, p ? p.qtd : 100, p && p.medida !== 'g' ? p.medida.toLowerCase() : null, {
+        papel,
         origem: 'historico',
       });
       if (cand) saida.push(cand);
@@ -467,9 +489,10 @@ const Sugestao = (() => {
   /* ---- Montagem do prato ---- */
 
   function motivoDe(item, ctx) {
-    const papel = (PAPEIS[item.papel] || {}).rotulo || 'complemento';
-    if (item.origem === 'historico') return `${papel} · você come isto ${ctx.ref.art} ${ctx.ref.nome.toLowerCase()}`;
-    return papel;
+    const destaque = destaqueDe(item);
+    if (item.origem === 'historico')
+      return `${destaque} · você come isto ${ctx.ref.art} ${ctx.ref.nome.toLowerCase()}`;
+    return destaque;
   }
 
   async function sugerir(quando, opcoes = {}) {
@@ -489,8 +512,19 @@ const Sugestao = (() => {
     const prato = [];
     const falta = { kcal: ctx.alvo.kcal, p: ctx.alvo.p, c: ctx.alvo.c, g: ctx.alvo.g };
     for (const papel of papeis.length ? papeis : ['prot']) {
+      // "Feijão carioca" e "Feijão preto" no mesmo prato é o mesmo item duas
+      // vezes: a primeira palavra do nome já separa arroz de arroz, feijão de
+      // feijão
+      const raiz = (n) => n.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(/[\s,(]+/)[0];
+      const raizes = new Set(prato.map((x) => raiz(x.food.n)));
       const opcoesPapel = disponiveis
-        .filter((c) => c.papel === papel && !prato.some((x) => x.food.i === c.food.i) && !evitar.has(c.food.i))
+        .filter(
+          (c) =>
+            c.papel === papel &&
+            !prato.some((x) => x.food.i === c.food.i) &&
+            !raizes.has(raiz(c.food.n)) &&
+            !evitar.has(c.food.i)
+        )
         .map((c) => ({ ...c, placar: pontuar(c, ctx, falta, (PAPEIS[papel] || {}).macro) }))
         .sort((a, b) => b.placar - a.placar);
       const escolhido = sortear(opcoesPapel);

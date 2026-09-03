@@ -58,7 +58,18 @@ python3 -m http.server 8000
   pessoa** naquela refeição (na porção que ela usa) somado a um catálogo por
   refeição — não é repetir um prato do passado, é remontar um novo com o que
   ela come. A escolha de cada vaga é **sorteada** entre os melhores colocados,
-  então "Trocar" traz outro prato; o que já foi comido hoje quase não volta.
+  então "Trocar" traz outro prato; o que já foi comido hoje quase não volta, e
+  dois alimentos da mesma família (arroz branco e integral, feijão carioca e
+  preto) não caem no mesmo prato.
+
+  O que a sugestão **afirma sobre cada alimento é só o que os números dizem**:
+  "50 g de proteína", "53 g de carboidrato" — nunca uma categoria inventada.
+  Vaga de vegetal, fruta ou leguminosa só é preenchida pelo catálogo, onde isso
+  está escrito à mão; o que vem do histórico entra pelo macro que domina as
+  calorias dele, e ainda precisa ter o macro em quantidade que sustente a vaga
+  (uma salada com azeite tem 62% das calorias em gordura e 2,9 g por 100 g —
+  não é a gordura do prato). Alimento que não se encaixa em nenhuma vaga fica
+  de fora, em vez de virar palpite.
   O painel mostra **o prato contra o alvo da refeição** e **como o dia fica
   depois dela** (barra por macro, com a parte já consumida e a que o prato
   acrescenta), e **Montar refeição** joga todos os itens de uma vez na cesta do
