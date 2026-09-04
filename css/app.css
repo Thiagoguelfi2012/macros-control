@@ -456,6 +456,9 @@ main { max-width: 860px; margin: 0 auto; padding: 20px 16px 110px; }
 
 /* ---- Refeição (vários itens de uma vez) ---- */
 .btn-incluir { width: 100%; margin-bottom: 14px; font-size: 14px; color: var(--accent); border-color: var(--accent); }
+/* editando um item da refeição o botão fica preenchido: sem isto o texto azul
+   sumia no fundo azul */
+.btn-incluir.btn-primary { color: var(--accent-ink); }
 .cesta {
   background: var(--page); border: 1px solid var(--grid); border-radius: 8px;
   padding: 10px 12px; margin-bottom: 16px;
