@@ -695,4 +695,28 @@ export const CURADOS = [
   { n: 'Hambúrguer artesanal de frango grelhado', kcal: 210, p: 15, c: 20, g: 7.5, m: [['unidade (280 g)', 280]] },
   { n: 'Batata rústica de hamburgueria', kcal: 290, p: 3.5, c: 38, g: 14, m: [['porção (150 g)', 150], ['porção grande (250 g)', 250]] },
   { n: 'Batata frita com cheddar e bacon', kcal: 330, p: 8, c: 30, g: 20, m: [['porção (250 g)', 250]] },
+
+  // ---- Cookies: o caseiro de gotas de chocolate e a leva de recheados
+  // "estilo americano" das cookerias, que as tabelas não cobrem. Unidade de
+  // 100 g é o tamanho padrão do recheado; o caseiro fica em 40 g.
+  { n: 'Cookie caseiro com gotas de chocolate', kcal: 470, p: 5.5, c: 60, g: 23, m: [['unidade (40 g)', 40], ['unidade grande (60 g)', 60]] },
+  { n: 'Cookie caseiro de aveia com passas', kcal: 440, p: 6, c: 65, g: 17, m: [['unidade (40 g)', 40]] },
+  { n: 'Cookie caseiro integral de aveia com mel', kcal: 420, p: 7, c: 62, g: 15, m: [['unidade (40 g)', 40]] },
+  { n: 'Cookie caseiro de castanhas', kcal: 490, p: 7, c: 55, g: 26, m: [['unidade (40 g)', 40]] },
+  { n: 'Cookie caseiro de chocolate branco com macadâmia', kcal: 500, p: 6, c: 55, g: 28, m: [['unidade (40 g)', 40]] },
+  { n: 'Cookie proteico (com whey)', kcal: 400, p: 20, c: 45, g: 14, m: [['unidade (60 g)', 60]] },
+  { n: 'Cookie vegano de cacau', kcal: 450, p: 6, c: 60, g: 20, m: [['unidade (40 g)', 40]] },
+  { n: 'Massa de cookie (cookie dough)', kcal: 450, p: 5, c: 58, g: 22, m: [['porção (50 g)', 50]] },
+  { n: 'Cookie recheado com Nutella (estilo americano)', kcal: 480, p: 6, c: 57, g: 25, m: [['unidade (100 g)', 100], ['metade (50 g)', 50]] },
+  { n: 'Cookie recheado com doce de leite', kcal: 465, p: 6, c: 62, g: 21, m: [['unidade (100 g)', 100], ['metade (50 g)', 50]] },
+  { n: 'Cookie recheado com leite Ninho', kcal: 490, p: 7, c: 58, g: 25, m: [['unidade (100 g)', 100], ['metade (50 g)', 50]] },
+  { n: 'Cookie recheado com brigadeiro', kcal: 470, p: 6, c: 61, g: 22, m: [['unidade (100 g)', 100], ['metade (50 g)', 50]] },
+  { n: 'Cookie recheado com pistache', kcal: 500, p: 8, c: 52, g: 28, m: [['unidade (100 g)', 100], ['metade (50 g)', 50]] },
+  { n: 'Cookie recheado com Ovomaltine', kcal: 480, p: 6.5, c: 60, g: 23.5, m: [['unidade (100 g)', 100], ['metade (50 g)', 50]] },
+  { n: 'Cookie recheado com paçoca (amendoim)', kcal: 500, p: 9, c: 52, g: 27, m: [['unidade (100 g)', 100], ['metade (50 g)', 50]] },
+  { n: 'Cookie recheado cookies & cream (Oreo)', kcal: 475, p: 5.5, c: 62, g: 23, m: [['unidade (100 g)', 100], ['metade (50 g)', 50]] },
+  { n: 'Cookie recheado red velvet com cream cheese', kcal: 460, p: 5.5, c: 60, g: 22, m: [['unidade (100 g)', 100], ['metade (50 g)', 50]] },
+  { n: 'Cookie recheado com Kinder Bueno', kcal: 495, p: 7, c: 56, g: 26.5, m: [['unidade (100 g)', 100], ['metade (50 g)', 50]] },
+  { n: 'Cookie gigante recheado (cookeria)', kcal: 480, p: 6, c: 58, g: 24.5, m: [['unidade (150 g)', 150]] },
+  { n: 'Cookie Mr. Cheney (unidade)', kcal: 470, p: 5.5, c: 59, g: 23, m: [['unidade (60 g)', 60]] },
 ];

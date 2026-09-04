@@ -70,6 +70,20 @@ const FoodSearch = (() => {
     'em', 'no', 'na', 'nos', 'nas', 'com', 'para', 'mini',
   ]);
 
+  // Plural digitado → singular guardado nas tabelas. Cobre o "s" comum e as
+  // formas que mudam a palavra: pães → pao, pastéis → pastel, animais → animal.
+  // (os acentos já saíram na normalização)
+  const singular = (t) => {
+    if (t.length < 4) return null;
+    if (t.endsWith('oes') || t.endsWith('aes')) return `${t.slice(0, -3)}ao`;
+    if (t.endsWith('ais')) return `${t.slice(0, -3)}al`;
+    if (t.endsWith('eis')) return `${t.slice(0, -3)}el`;
+    if (t.endsWith('ois')) return `${t.slice(0, -3)}ol`;
+    if (t.endsWith('ns')) return `${t.slice(0, -2)}m`;
+    if (t.endsWith('s')) return t.slice(0, -1);
+    return null;
+  };
+
   let indexed = null;
 
   function buildIndex(foods) {
@@ -95,16 +109,24 @@ const FoodSearch = (() => {
       let score = 0;
       let casados = 0;
       for (const t of tokens) {
-        // cada token da consulta precisa ser prefixo de alguma palavra do nome
+        // cada token da consulta precisa ser prefixo de alguma palavra do nome.
+        // O plural digitado também vale: as tabelas guardam "cookie" e
+        // "recheado", e ninguém escreve no singular ao procurar "cookies
+        // recheados"
+        const formas = [t];
+        const sing = singular(t);
+        if (sing) formas.push(sing);
         let best = -1;
         let exato = false;
-        for (let w = 0; w < item.words.length; w++) {
-          if (item.words[w] === t) {
-            best = w;
-            exato = true;
-            break; // palavra idêntica vale mais que prefixo ("bis" ≠ "biscoito")
+        for (let w = 0; w < item.words.length && !exato; w++) {
+          for (const f of formas) {
+            if (item.words[w] === f) {
+              best = w;
+              exato = true;
+              break; // palavra idêntica vale mais que prefixo ("bis" ≠ "biscoito")
+            }
+            if (best === -1 && item.words[w].startsWith(f)) best = w;
           }
-          if (best === -1 && item.words[w].startsWith(t)) best = w;
         }
         if (best === -1) continue;
         casados++;
