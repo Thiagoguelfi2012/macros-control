@@ -66,8 +66,9 @@ python3 -m http.server 8000
   dia** você faz (3 a 6, configurável em **Ajustes**; com 4 o almoço leva uma
   fatia maior do que com 6). A escolha entre as montagens é **sorteada** entre
   as melhores colocadas (as que a pessoa mais come pesam mais, o que já foi
-  comido hoje pesa menos), então "Trocar" traz outro prato — e nunca o mesmo de
-  novo em seguida.
+  comido hoje pesa menos), e **"Trocar" percorre as montagens**: as últimas seis
+  mostradas ficam de fora da próxima escolha, então cada toque traz uma opção
+  nova até a rodada recomeçar.
 
   O que a sugestão **afirma sobre cada alimento é só o que os números dizem**:
   "50 g de proteína", "53 g de carboidrato" — nunca uma categoria inventada. O

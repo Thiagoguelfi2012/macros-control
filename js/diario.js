@@ -757,10 +757,13 @@
     }
   }
 
-  // "Trocar" não devolve o mesmo prato: a montagem anterior fica de fora
-  let ultimaMontagem = null;
+  // "Trocar" percorre as montagens em vez de alternar entre duas: as últimas
+  // mostradas ficam de fora da próxima escolha
+  let ultimasMontagens = [];
+  const LEMBRAR_MONTAGENS = 6;
 
   function fecharSugestoes() {
+    ultimasMontagens = [];
     const box = $('#sug-box');
     box.hidden = true;
     box.innerHTML = '';
@@ -773,13 +776,16 @@
     const quando = inpDataHora.value ? new Date(inpDataHora.value) : new Date();
     let dados;
     try {
-      dados = await Sugestao.sugerir(quando, { evitar: ultimaMontagem ? [ultimaMontagem] : [] });
+      dados = await Sugestao.sugerir(quando, { evitar: ultimasMontagens });
     } catch {
       box.innerHTML = '<p class="sug-carregando">Não consegui montar uma sugestão agora.</p>';
       return;
     }
     const { ctx, alvo, itens, total, modo } = dados;
-    ultimaMontagem = dados.montagem ? dados.montagem.nome : null;
+    if (dados.montagem) {
+      ultimasMontagens = [dados.montagem.nome, ...ultimasMontagens.filter((n) => n !== dados.montagem.nome)]
+        .slice(0, LEMBRAR_MONTAGENS);
+    }
     if (!itens.length) {
       box.innerHTML = '<p class="sug-carregando">Sem sugestões para este horário.</p>';
       return;

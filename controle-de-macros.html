@@ -4040,11 +4040,11 @@ const Sugestao = (() => {
   // sem cair no pior deles
   function sortear(lista) {
     if (!lista.length) return null;
-    const pool = lista.slice(0, Math.min(6, lista.length));
+    const pool = lista.slice(0, Math.min(7, lista.length));
     // softmax: o melhor colocado ganha na maioria das vezes, mas quem está
     // perto dele tem chance de verdade — senão "Trocar" devolve sempre o mesmo
     const topo = Math.max(...pool.map((c) => c.placar));
-    const pesos = pool.map((c) => Math.exp((c.placar - topo) * 1.6));
+    const pesos = pool.map((c) => Math.exp((c.placar - topo) * 1.1));
     const total = pesos.reduce((a, b) => a + b, 0);
     let r = Math.random() * total;
     for (let i = 0; i < pool.length; i++) {
@@ -4073,7 +4073,10 @@ const Sugestao = (() => {
     ctx.alvo = alvo;
 
     const brutos = [...(await pratosDoHistorico(ctx)), ...pratosDoCatalogo(ctx)];
-    const evitar = new Set(opcoes.evitar || []);
+    // "Trocar" percorre as montagens: as últimas mostradas ficam de fora até
+    // acabarem as opções, e aí a rodada recomeça
+    let evitar = new Set(opcoes.evitar || []);
+    if (brutos.length && brutos.every((x) => evitar.has(x.nome))) evitar = new Set();
     const pratos = [];
     for (const prato of brutos) {
       if (evitar.has(prato.nome)) continue;
@@ -5113,10 +5116,13 @@ if (typeof window !== 'undefined') window.Barras = Barras;
     }
   }
 
-  // "Trocar" não devolve o mesmo prato: a montagem anterior fica de fora
-  let ultimaMontagem = null;
+  // "Trocar" percorre as montagens em vez de alternar entre duas: as últimas
+  // mostradas ficam de fora da próxima escolha
+  let ultimasMontagens = [];
+  const LEMBRAR_MONTAGENS = 6;
 
   function fecharSugestoes() {
+    ultimasMontagens = [];
     const box = $('#sug-box');
     box.hidden = true;
     box.innerHTML = '';
@@ -5129,13 +5135,16 @@ if (typeof window !== 'undefined') window.Barras = Barras;
     const quando = inpDataHora.value ? new Date(inpDataHora.value) : new Date();
     let dados;
     try {
-      dados = await Sugestao.sugerir(quando, { evitar: ultimaMontagem ? [ultimaMontagem] : [] });
+      dados = await Sugestao.sugerir(quando, { evitar: ultimasMontagens });
     } catch {
       box.innerHTML = '<p class="sug-carregando">Não consegui montar uma sugestão agora.</p>';
       return;
     }
     const { ctx, alvo, itens, total, modo } = dados;
-    ultimaMontagem = dados.montagem ? dados.montagem.nome : null;
+    if (dados.montagem) {
+      ultimasMontagens = [dados.montagem.nome, ...ultimasMontagens.filter((n) => n !== dados.montagem.nome)]
+        .slice(0, LEMBRAR_MONTAGENS);
+    }
     if (!itens.length) {
       box.innerHTML = '<p class="sug-carregando">Sem sugestões para este horário.</p>';
       return;
