@@ -64,6 +64,25 @@
     </div>
 
     <div class="settings-card">
+      <h3>Refeições por dia</h3>
+      <p class="sub">Quantas refeições você costuma fazer. É assim que a <b>Sugestão</b> divide o que falta da meta entre as refeições que ainda vêm no dia — com 4 refeições o almoço leva uma fatia maior do que com 6.</p>
+      <div class="settings-row">
+        <div class="field">
+          <label for="sel-refeicoes">Refeições no dia</label>
+          <select id="sel-refeicoes">
+            <option value="3">3 — café, almoço e jantar</option>
+            <option value="4">4 — café, almoço, lanche da tarde e jantar</option>
+            <option value="5">5 — com lanche da manhã</option>
+            <option value="6">6 — com lanche da manhã e ceia</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" id="btn-salvar-refeicoes">Salvar</button>
+        <span class="save-ok" id="save-ok-refeicoes" hidden>✓ salvo</span>
+      </div>
+      <p class="cad-hint" id="refeicoes-hint" style="margin-top:10px"></p>
+    </div>
+
+    <div class="settings-card">
       <h3>Backup e transferência</h3>
       <p class="sub">Seus dados ficam somente neste navegador. Exporte um arquivo com registros, alimentos próprios e configurações — para guardar de segurança ou levar a outro aparelho, onde basta importar. A importação soma com o que já existe: nada é apagado e registros repetidos são ignorados.</p>
       <div class="settings-row">
@@ -123,9 +142,10 @@
 
   </main>
 
-  <script src="js/db.js?v=b3161568"></script>
+  <script src="js/db.js?v=f9d328d6"></script>
   <script src="js/sync.js?v=bc4146c6"></script>
-  <script src="js/config.js?v=70821c5a"></script>
+  <script src="js/sugestao.js?v=5c873e97"></script>
+  <script src="js/config.js?v=6d4228d4"></script>
   <script src="js/refresh.js?v=5d27466c"></script>
 </body>
 </html>

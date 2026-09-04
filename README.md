@@ -49,33 +49,33 @@ python3 -m http.server 8000
   encontrado **offline**, na busca normal, sem nova consulta à rede. Porção e
   tamanho da embalagem do rótulo viram medidas caseiras.
 - **Sugestão de refeição**: o botão **✨ Sugestão** monta um **prato inteiro**
-  para o horário — proteína, carboidrato, leguminosa, vegetal e gordura boa,
-  cada um com a sua porção. O alvo da refeição é **o que ainda falta hoje de
-  cada macro dividido entre as refeições que ainda vêm** (às 11h o almoço leva
-  a fatia dele, não o dia inteiro), e as **porções são calculadas** para bater
-  nesse alvo: a proteína manda no prato, a gordura entra depois e o
-  carboidrato fecha a conta. Os alimentos saem do **histórico da própria
-  pessoa** naquela refeição (na porção que ela usa) somado a um catálogo por
-  refeição — não é repetir um prato do passado, é remontar um novo com o que
-  ela come. A escolha de cada vaga é **sorteada** entre os melhores colocados,
-  então "Trocar" traz outro prato; o que já foi comido hoje quase não volta, e
-  dois alimentos da mesma família (arroz branco e integral, feijão carioca e
-  preto) não caem no mesmo prato.
+  para o horário. O prato nunca é combinado item a item — sai de uma
+  **montagem**: ou uma **combinação típica brasileira** escrita à mão (PF de
+  arroz, feijão, carne e salada; arroz com feijão e ovo frito; macarrão com
+  carne moída; strogonoff; tapioca com queijo; cuscuz com ovo; pão com ovo e
+  café; japonês; sopa com frango…), ou uma **refeição que a própria pessoa já
+  fez naquele horário**, tirada do histórico pelos alimentos que ela registrou
+  juntos no mesmo dia e na mesma janela. É por isso que temaki não aparece com
+  feijão: ninguém nunca comeu os dois juntos, e nenhuma receita típica os
+  combina.
+
+  Escolhida a montagem, as **porções são calculadas** para bater no alvo da
+  refeição: a proteína manda, a gordura entra depois e o carboidrato fecha a
+  conta. O alvo é **o que ainda falta hoje de cada macro dividido entre as
+  refeições que ainda vêm** — e quantas vêm depende de **quantas refeições por
+  dia** você faz (3 a 6, configurável em **Ajustes**; com 4 o almoço leva uma
+  fatia maior do que com 6). A escolha entre as montagens é **sorteada** entre
+  as melhores colocadas (as que a pessoa mais come pesam mais, o que já foi
+  comido hoje pesa menos), então "Trocar" traz outro prato — e nunca o mesmo de
+  novo em seguida.
 
   O que a sugestão **afirma sobre cada alimento é só o que os números dizem**:
-  "50 g de proteína", "53 g de carboidrato" — nunca uma categoria inventada.
-  Vaga de vegetal, fruta ou leguminosa só é preenchida pelo catálogo, onde isso
-  está escrito à mão; o que vem do histórico entra pelo macro que domina as
-  calorias dele, e ainda precisa ter o macro em quantidade que sustente a vaga
-  (uma salada com azeite tem 62% das calorias em gordura e 2,9 g por 100 g —
-  não é a gordura do prato). Alimento que não se encaixa em nenhuma vaga fica
-  de fora, em vez de virar palpite.
-  O painel mostra **o prato contra o alvo da refeição** e **como o dia fica
-  depois dela** (barra por macro, com a parte já consumida e a que o prato
-  acrescenta), e **Montar refeição** joga todos os itens de uma vez na cesta do
-  modal. Quando o dia já estourou (ou está perto), entra o **modo saciedade**:
-  prato curto, com o que enche mais por caloria — proteína alta e densidade
-  baixa — estourando o mínimo possível.
+  "50 g de proteína", "53 g de carboidrato" — nunca uma categoria inventada. O
+  painel mostra **o prato contra o alvo da refeição** e **como o dia fica depois
+  dela** (barra por macro, com a parte já consumida e a que o prato acrescenta),
+  e **Montar refeição** joga todos os itens de uma vez na cesta do modal. Quando
+  o dia já estourou (ou está perto), entra o **modo saciedade**: o prato encurta
+  e vale o que enche mais por caloria, estourando o mínimo possível.
 - **Relatório para o médico**: o botão **PDF** na barra de filtros abre uma prévia
   com duas saídas. **Baixar PDF** gera o arquivo para impressão (jsPDF, com os
   gráficos como imagem). **Enviar HTML** gera um **arquivo HTML interativo e
@@ -196,7 +196,10 @@ python3 -m http.server 8000
   intervalo de cada exercício — é só ajustar ou trocar.
 - **Ajustes** (`config.html`): tela própria com gasto energético (TMB/TDEE),
   **dieta alvo** (alvos diários de calorias e macros, com as kcal implícitas
-  calculadas), **backup e transferência** e **conta e sincronização**. A dieta alvo
+  calculadas), **refeições por dia** (3 a 6 — a divisão que a Sugestão usa para
+  repartir o que falta da meta entre as refeições que ainda vêm, com a prévia
+  de quantas kcal cabem em cada uma), **backup e transferência** e **conta e
+  sincronização**. A dieta alvo
   alimenta o card "Dieta alvo × consumo" e o anel do gráfico de distribuição nos
   Relatórios, além das barras de progresso do card "Meta de hoje" no Diário.
 - **Alimentos próprios**: no modal de adição, "Não encontrou? Cadastre um alimento
@@ -340,7 +343,7 @@ css/app.css                    estilos (tokens de tema claro/escuro)
 js/db.js                       camada IndexedDB + localStorage (+ backup/merge)
 js/busca.js                    busca tokenizada sem acentos, TACO/IBGE priorizados
 js/diario.js                   tela Diário
-js/sugestao.js                 monta o prato: papéis, alvo por refeição e porções
+js/sugestao.js                 monta o prato: montagens típicas, histórico e porções
 js/barras.js                   leitor de código de barras + Open Food Facts
 js/relatorios.js               tela Relatórios (Chart.js)
 js/treinos.js                  treinos, execução com carga e evolução (Chart.js)

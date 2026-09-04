@@ -350,10 +350,11 @@ const MacroDB = (() => {
       metaP: n('metaP'),
       metaC: n('metaC'),
       metaG: n('metaG'),
+      refeicoesDia: n('refeicoesDia') || 4,
     };
   }
 
-  function saveSettings({ gastoBasal, gastoDiario, metaKcal, metaP, metaC, metaG }) {
+  function saveSettings({ gastoBasal, gastoDiario, metaKcal, metaP, metaC, metaG, refeicoesDia }) {
     const set = (k, v) => {
       if (v != null) localStorage.setItem(k, String(v));
     };
@@ -363,6 +364,7 @@ const MacroDB = (() => {
     set('metaP', metaP);
     set('metaC', metaC);
     set('metaG', metaG);
+    set('refeicoesDia', refeicoesDia);
     notifyChange('settings');
   }
 
@@ -401,7 +403,7 @@ const MacroDB = (() => {
 
   /* ---- Limpeza local (troca de usuário no mesmo aparelho) ---- */
 
-  const CHAVES_CONFIG = ['gastoBasal', 'gastoDiario', 'metaKcal', 'metaP', 'metaC', 'metaG'];
+  const CHAVES_CONFIG = ['gastoBasal', 'gastoDiario', 'metaKcal', 'metaP', 'metaC', 'metaG', 'refeicoesDia'];
 
   // Apaga registros, alimentos próprios e configurações DESTE aparelho. Usado ao
   // entrar com outra conta ou sair: os dados de quem saiu permanecem na nuvem.

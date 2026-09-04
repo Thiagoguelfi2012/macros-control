@@ -68,6 +68,33 @@
     avisarTelas();
   });
 
+  /* ---- Refeições por dia (usado pela sugestão de refeição) ---- */
+
+  const { refeicoesDia } = MacroDB.getSettings();
+  $('#sel-refeicoes').value = String(refeicoesDia || 4);
+
+  function atualizarHintRefeicoes() {
+    const n = Number($('#sel-refeicoes').value) || 4;
+    const nomes = (window.Sugestao ? Sugestao.planoDe(n) : []).map((r) => r.nome);
+    const { metaKcal, gastoDiario } = MacroDB.getSettings();
+    const kcal = metaKcal || gastoDiario;
+    const partes = window.Sugestao
+      ? Sugestao.planoDe(n).map((r) => `${r.nome} ${kcal ? `${fmt(kcal * r.peso, 0)} kcal` : `${fmt(r.peso * 100, 0)}%`}`)
+      : nomes;
+    $('#refeicoes-hint').textContent = partes.length
+      ? `Divisão de um dia cheio: ${partes.join(' · ')}.`
+      : '';
+  }
+  $('#sel-refeicoes').addEventListener('change', atualizarHintRefeicoes);
+  atualizarHintRefeicoes();
+  $('#btn-salvar-refeicoes').addEventListener('click', () => {
+    MacroDB.saveSettings({ refeicoesDia: Number($('#sel-refeicoes').value) || 4 });
+    const ok = $('#save-ok-refeicoes');
+    ok.hidden = false;
+    setTimeout(() => (ok.hidden = true), 2000);
+    avisarTelas();
+  });
+
   /* ---- Lista de alimentos: versão e atualização forçada ---- */
 
   (async () => {

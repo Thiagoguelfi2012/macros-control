@@ -757,6 +757,9 @@
     }
   }
 
+  // "Trocar" não devolve o mesmo prato: a montagem anterior fica de fora
+  let ultimaMontagem = null;
+
   function fecharSugestoes() {
     const box = $('#sug-box');
     box.hidden = true;
@@ -770,12 +773,13 @@
     const quando = inpDataHora.value ? new Date(inpDataHora.value) : new Date();
     let dados;
     try {
-      dados = await Sugestao.sugerir(quando, {});
+      dados = await Sugestao.sugerir(quando, { evitar: ultimaMontagem ? [ultimaMontagem] : [] });
     } catch {
       box.innerHTML = '<p class="sug-carregando">Não consegui montar uma sugestão agora.</p>';
       return;
     }
     const { ctx, alvo, itens, total, modo } = dados;
+    ultimaMontagem = dados.montagem ? dados.montagem.nome : null;
     if (!itens.length) {
       box.innerHTML = '<p class="sug-carregando">Sem sugestões para este horário.</p>';
       return;
@@ -819,7 +823,7 @@
     box.innerHTML = `
       <div class="sug-head">
         <div>
-          <b>Prato sugerido</b>
+          <b>Prato sugerido${dados.montagem ? ` · ${esc(dados.montagem.nome)}` : ''}</b>
           <span class="sug-sub">${esc(ctx.ref.nome)} · ${esc(cabecalho)}</span>
         </div>
         <div class="sug-acoes">
