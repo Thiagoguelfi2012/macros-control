@@ -205,4 +205,13 @@ export const CHOCOLATES = [
   { n: 'Chocolate Diletto (barra)', kcal: 545, p: 7, c: 55, g: 32.5, m: [['tablete (80 g)', 80]] },
   { n: 'Ovomaltine crocante (barra)', kcal: 520, p: 6.5, c: 62, g: 27, m: [['unidade (25 g)', 25]] },
   { n: 'Creme de avelã Ovomaltine', kcal: 545, p: 6, c: 58, g: 31, m: [['colher de sopa (15 g)', 15], ['pote (300 g)', 300]] },
+
+  // ---- Arcor: a linha de chocolate que faltava (o Block é o tablete de
+  // chocolate ao leite com amendoim, valores do rótulo de 140 g) ----
+  { n: 'Chocolate Block ao leite com amendoim (Arcor)', kcal: 556, p: 13, c: 44.5, g: 36, m: [['barra (140 g)', 140], ['barra pequena (38 g)', 38], ['pedaço (17 g)', 17]] },
+  { n: 'Bombom Bon o Bon ao leite (Arcor)', kcal: 547, p: 8, c: 50, g: 34, m: [['unidade (15 g)', 15], ['caixa 6 un (90 g)', 90]] },
+  { n: 'Bombom Bon o Bon branco (Arcor)', kcal: 555, p: 7.5, c: 52, g: 34.5, m: [['unidade (15 g)', 15], ['caixa 6 un (90 g)', 90]] },
+  { n: 'Bombom Bon o Bon amargo (Arcor)', kcal: 540, p: 8, c: 48, g: 34, m: [['unidade (15 g)', 15], ['caixa 6 un (90 g)', 90]] },
+  { n: 'Chocolate Tortuguita branco (Arcor)', kcal: 545, p: 6, c: 56, g: 32, m: [['unidade (18 g)', 18]] },
+  { n: 'Chocolate Tortuguita com doce de leite (Arcor)', kcal: 530, p: 6, c: 58, g: 30, m: [['unidade (18 g)', 18]] },
 ];

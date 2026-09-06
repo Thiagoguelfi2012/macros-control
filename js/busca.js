@@ -42,6 +42,8 @@ const FoodSearch = (() => {
       .replace(/\bbatata (smile|smiles)\b/g, 'batata sorriso')
       .replace(/\bnutel+a\b/g, 'nutella') // "nutela" com um L só é o mais digitado
       .replace(/\bbavarian ?nuts?\b/g, 'bavarian nuts')
+      .replace(/\bbon ?o ?bon\b/g, 'bon o bon')
+      .replace(/\bbonbon\b/g, 'bon o bon')
       // sorvetes: nomes regionais do picolé e grafias da marca
       .replace(/\b(geladinho|sacole|dindin|din din|chup ?chup)\b/g, 'picole')
       .replace(/\bsorvete de palito\b/g, 'picole')

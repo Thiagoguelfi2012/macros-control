@@ -825,5 +825,19 @@ export const MARCAS = [
   { n: "Biscoito Papapá maçã com canela", kcal: 435, p: 6, c: 68, g: 15, m: [["pacote (30 g)", 30], ["unidade (8 g)", 8]] },
   { n: "Biscoito Papapá coco", kcal: 450, p: 6, c: 65, g: 18, m: [["pacote (30 g)", 30], ["unidade (8 g)", 8]] },
   { n: "Biscoito integral de cacau com banana (média)", kcal: 440, p: 6.5, c: 67, g: 15.5, m: [["pacote (30 g)", 30], ["unidade (8 g)", 8]] },
-  // ---- Cacau Show ----
+  // ---- Cacau Show ----,
+
+  // ---- Arcor: guloseimas e a linha de biscoitos Aymoré/Triunfo ----
+  { n: 'Bala 7Belo (Arcor)', kcal: 380, p: 0, c: 90, g: 1, m: [['unidade (5 g)', 5], ['pacote (100 g)', 100]] },
+  { n: 'Bala Poosh recheada (Arcor)', kcal: 370, p: 0, c: 90, g: 0.5, m: [['unidade (5 g)', 5]] },
+  { n: 'Big Big chiclete (Arcor)', kcal: 360, p: 0, c: 89, g: 0.3, m: [['unidade (4,5 g)', 4.5]] },
+  { n: 'Biscoito Aymoré maisena (Arcor)', kcal: 440, p: 7, c: 75, g: 12, m: [['unidade (6 g)', 6], ['pacote (200 g)', 200]] },
+  { n: 'Biscoito Aymoré cream cracker (Arcor)', kcal: 430, p: 9, c: 68, g: 13, m: [['unidade (7 g)', 7], ['pacote (200 g)', 200]] },
+  { n: 'Biscoito Aymoré água e sal (Arcor)', kcal: 435, p: 9, c: 69, g: 13.5, m: [['unidade (7 g)', 7], ['pacote (200 g)', 200]] },
+  { n: 'Rosquinha Aymoré chocolate (Arcor)', kcal: 450, p: 6, c: 74, g: 14, m: [['unidade (6 g)', 6], ['pacote (100 g)', 100]] },
+  { n: 'Rosquinha Aymoré coco (Arcor)', kcal: 455, p: 6, c: 73, g: 15, m: [['unidade (6 g)', 6], ['pacote (100 g)', 100]] },
+  { n: 'Biscoito recheado Aymoré chocolate (Arcor)', kcal: 470, p: 5.5, c: 68, g: 19, m: [['unidade (12 g)', 12], ['pacote (100 g)', 100]] },
+  { n: 'Wafer Aymoré chocolate (Arcor)', kcal: 500, p: 5, c: 65, g: 24, m: [['unidade (12 g)', 12], ['pacote (100 g)', 100]] },
+  { n: 'Biscoito Triunfo recheado chocolate (Arcor)', kcal: 470, p: 5.5, c: 68, g: 19, m: [['unidade (12 g)', 12], ['pacote (130 g)', 130]] },
+  { n: 'Biscoito Triunfo maria (Arcor)', kcal: 435, p: 7, c: 76, g: 11, m: [['unidade (6 g)', 6], ['pacote (200 g)', 200]] },
 ];
