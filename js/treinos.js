@@ -1580,7 +1580,7 @@
         // barra clara = repetições supostas pelo mínimo previsto no treino
         const supostas = comReps.length - anotadas.length;
         const semReps = supostas
-          ? `${supostas} ${supostas === 1 ? 'dia sem reps anotadas' : 'dias sem reps anotadas'} (barra clara: mínimo previsto)`
+          ? `${supostas} ${supostas === 1 ? 'dia sem reps anotadas' : 'dias sem reps anotadas'} (trecho pontilhado: mínimo previsto)`
           : '';
         const resumoForca = e.forca
           ? `Força estimada ${fmt(e.forca.ini)} → ${fmt(e.forca.fim)} kg`
@@ -1836,33 +1836,42 @@
           order: 2,
         });
       }
-      // As repetições viram barras atrás da linha da carga: escrever "8 reps"
-      // colado no ponto embaralhava os dois números, e a barra mostra de longe
-      // se o volume caiu quando a carga subiu. Barra clara = repetição suposta
-      // pelo mínimo previsto no treino, porque naquele dia ninguém anotou.
+      // As repetições são uma linha própria, no eixo da direita: escrever
+      // "8 reps" colado no ponto embaralhava os dois números, e a linha mostra
+      // de longe se a repetição caiu quando a carga subiu. Trecho pontilhado e
+      // ponto vazado = repetição suposta pelo mínimo previsto no treino,
+      // porque naquele dia ninguém anotou.
       const corBarra = cssVar('--s2');
       if (e.temBarras) {
         const maxRep = Math.max(...e.pontos.map((p) => p.repSerie || 0));
+        const suposto = (i) => !!(e.pontos[i] || {}).repsEstimado;
         linhas.push({
-          type: 'bar',
+          type: 'line',
           label: 'Reps por série',
           data: e.pontos.map((p) => p.repSerie),
           yAxisID: 'yReps',
           sufixoRotulo: 'reps',
           semRotulo: true,
-          backgroundColor: e.pontos.map((p) =>
-            p.repsEstimado ? corComAlfa(corBarra, 0.18) : corComAlfa(corBarra, 0.55)
+          borderColor: corComAlfa(corBarra, 0.85),
+          backgroundColor: corComAlfa(corBarra, 0.85),
+          pointBackgroundColor: e.pontos.map((p) =>
+            p.repsEstimado ? corComAlfa(corBarra, 0.15) : corComAlfa(corBarra, 0.85)
           ),
-          borderColor: e.pontos.map((p) =>
-            p.repsEstimado ? corComAlfa(corBarra, 0.35) : corComAlfa(corBarra, 0.75)
-          ),
-          borderWidth: 1,
-          borderRadius: 3,
-          barPercentage: 0.55,
-          categoryPercentage: 0.8,
+          pointBorderColor: corComAlfa(corBarra, 0.85),
+          pointBorderWidth: 1,
+          borderWidth: 1.8,
+          pointRadius: e.pontos.map((p) => (p.repsEstimado ? 2.5 : 3.5)),
+          pointHoverRadius: 6,
+          tension: 0,
+          spanGaps: true,
+          fill: false,
+          segment: {
+            borderDash: (ctx) => (suposto(ctx.p0DataIndex) || suposto(ctx.p1DataIndex) ? [4, 3] : undefined),
+          },
           order: 3,
         });
-        // a barra ocupa só a parte de baixo: o topo fica livre para a linha
+        // a linha das repetições fica na parte de baixo: o topo do gráfico
+        // continua reservado para a carga
         escalas.yReps = {
           position: 'right',
           beginAtZero: true,
@@ -1884,7 +1893,7 @@
       }
       chartsEvo.push(
         new Chart(cv, {
-          type: 'bar',
+          type: 'line',
           data: { labels: e.pontos.map((p) => dataCurta(p.ts)), datasets: linhas },
           options: {
             responsive: true,

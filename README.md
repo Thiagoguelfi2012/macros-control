@@ -142,11 +142,12 @@ python3 -m http.server 8000
     semana e uma barra por semana), **duração dos treinos** em barras (com tempo
     total e média) e um gráfico de linha por exercício com a **progressão de
     carga** ao longo das execuções, com o **valor escrito em cada ponto**, e as
-    **repetições como barras** atrás da linha, no eixo da direita — é assim que
-    dá para ler 120 kg em 12 reps virando 140 kg em 8 sem os dois números se
-    embaralharem. A barra é a **média de repetições por série** daquele dia; nos
-    dias sem nada anotado ela fica **clara** e assume o **mínimo previsto no
-    treino** (3x10-12 → 10), com o tooltip avisando que é suposição. Ao iniciar
+    **repetições numa linha própria**, no eixo da direita — é assim que dá para
+    ler 120 kg em 12 reps virando 140 kg em 8 sem os dois números se
+    embaralharem. A linha é a **média de repetições por série** daquele dia; nos
+    dias sem nada anotado o trecho fica **pontilhado** e assume o **mínimo
+    previsto no treino** (3x10-12 → 10), com o tooltip avisando que é
+    suposição. Ao iniciar
     o treino o campo de repetições já vem preenchido com o último registro, ou
     com o previsto do plano, para o dado não faltar. O subtítulo fecha a conta
     com o **volume** (carga × repetições) do primeiro ao último registro.
