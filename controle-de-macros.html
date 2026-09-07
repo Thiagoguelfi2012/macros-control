@@ -1649,7 +1649,7 @@ main { max-width: 860px; margin: 0 auto; padding: 20px 16px 110px; }
 
       <label class="check-row" for="mt-ativo">
         <input type="checkbox" id="mt-ativo" checked />
-        Ativo na rotação — entra no “Treino de hoje”
+        Ativo na rotação — entra no “Próximo treino”
       </label>
 
       <div class="imp-title">Exercícios</div>
@@ -7911,7 +7911,7 @@ function abrirTudo(abrir){document.querySelectorAll('details').forEach(function(
     return `
       <div class="proximo-treino">
         <div class="pt-info">
-          <span class="pt-rotulo">Treino de hoje</span>
+          <span class="pt-rotulo">Próximo treino</span>
           <b>${esc(t.nome)}${t.foco ? ` · ${esc(t.foco)}` : ''}</b>
           <span class="pt-sub">${desdeQuando(quando)}</span>
         </div>

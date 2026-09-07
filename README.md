@@ -97,7 +97,7 @@ python3 -m http.server 8000
     anteriores logo abaixo. Dá para **andar pelas semanas passadas** arrastando
     o cartão para o lado (ou pelas setas ‹ ›), até a semana do primeiro
     registro — o histórico importado entra nessa conta. No mesmo cartão vem o
-    **treino de hoje**: o app escolhe sozinho o treino **ativo que está há mais
+    **próximo treino**: o app escolhe sozinho o treino **ativo que está há mais
     tempo sem ser executado** (nunca executado vem primeiro) e oferece o botão
     para começar. Um treino pode ser tirado da rotação pelo editor (caixa "ativo
     na rotação"): ele continua na lista, marcado como **fora da rotação**, e

@@ -441,7 +441,7 @@
     return `
       <div class="proximo-treino">
         <div class="pt-info">
-          <span class="pt-rotulo">Treino de hoje</span>
+          <span class="pt-rotulo">Próximo treino</span>
           <b>${esc(t.nome)}${t.foco ? ` · ${esc(t.foco)}` : ''}</b>
           <span class="pt-sub">${desdeQuando(quando)}</span>
         </div>
