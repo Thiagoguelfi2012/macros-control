@@ -157,6 +157,14 @@ python3 -m http.server 8000
     "Com evolução". Em hipertrofia a carga pesa mais que o número de repetições,
     e a fórmula respeita isso: subir a carga vale mais do que repetir mais.
 
+    Máquinas de **assistência** (gráviton, barra fixa assistida) contam ao
+    contrário: o peso é contrapeso, e tirar peso é que é progresso. A
+    biblioteca marca esses exercícios sozinha (dá para ligar a caixa "carga de
+    assistência" em qualquer outro no editor do treino), o campo passa a se
+    chamar **Assistência (kg)**, o indicador do card inverte o sinal, o eixo do
+    gráfico vira de cabeça para baixo — a linha sobe quando o contrapeso cai —
+    e a dica de progressão sugere **tirar** peso, não pôr.
+
     A **carga de aquecimento** tem campo próprio na execução (e no editor do
     treino), fica guardada em cada registro, entra no "última vez", vira o
     padrão da próxima vez e aparece no gráfico como uma linha discreta — sem se

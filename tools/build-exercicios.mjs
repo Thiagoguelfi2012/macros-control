@@ -283,18 +283,27 @@ const semAcento = (t) =>
 const idDe = (nome) =>
   semAcento(nome).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
+// Máquinas de assistência (gráviton e afins): a carga é contrapeso — quanto
+// MENOS peso, mais difícil o exercício e maior a progressão. O gráfico e o
+// indicador de evolução precisam saber disso para não ler tudo ao contrário.
+const ASSISTIDOS = [/graviton|gráviton/i, /assistid/i];
+const ehAssistido = (nome) => ASSISTIDOS.some((re) => re.test(nome));
+
 const vistos = new Set();
 const exercicios = LISTA.map(([nome, grupo, equipamento]) => {
   const id = idDe(nome);
   if (vistos.has(id)) throw new Error(`exercício duplicado: ${nome}`);
   vistos.add(id);
   const sec = ajudantesDe(nome, grupo);
-  return sec.length ? { id, nome, grupo, equipamento, sec } : { id, nome, grupo, equipamento };
+  const base = { id, nome, grupo, equipamento };
+  if (sec.length) base.sec = sec;
+  if (ehAssistido(nome)) base.assistida = true;
+  return base;
 });
 
 const js = `/* Biblioteca de exercícios (Smart Fit) — gerado por tools/build-exercicios.mjs. Não editar à mão. */
 window.EXERCICIOS = ${JSON.stringify(exercicios)};
-window.EXERCICIOS_VERSAO = 3;
+window.EXERCICIOS_VERSAO = 4;
 `;
 writeFileSync(join(ROOT, 'js/exercicios.js'), js);
 const grupos = [...new Set(exercicios.map((e) => e.grupo))];
@@ -303,3 +312,5 @@ console.log(grupos.join(' · '));
 const semSec = exercicios.filter((e) => !e.sec);
 console.log(`com músculos auxiliares: ${exercicios.length - semSec.length} · só o principal: ${semSec.length}`);
 console.log(semSec.map((e) => e.nome).join(' | '));
+const assistidos = exercicios.filter((e) => e.assistida);
+console.log(`carga de assistência: ${assistidos.length} — ${assistidos.map((e) => e.nome).join(' | ')}`);

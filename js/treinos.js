@@ -187,8 +187,15 @@
   const UNIDADES_CARGA = { kg: 'kg', seg: 'seg', min: 'min', nivel: 'nível' };
   const unCarga = (e) => UNIDADES_CARGA[e.unidadeCarga] || 'kg';
   const comCarga = (e, valor) => `${fmt(valor)} ${unCarga(e)}`;
+  // Treinos criados antes desta marca existir não trazem o campo: nesse caso a
+  // biblioteca responde se aquele exercício é de máquina de assistência.
+  const assistidaDe = (e) =>
+    e.cargaAssistida ?? !!(BIBLIOTECA().find((x) => x.id === e.exercicioId) || {}).assistida;
+
   const rotuloCampoCarga = (e) =>
-    ({ seg: 'Tempo (seg)', min: 'Tempo (min)', nivel: 'Nível' })[e.unidadeCarga] || 'Carga (kg)';
+    e.cargaAssistida
+      ? 'Assistência (kg)'
+      : ({ seg: 'Tempo (seg)', min: 'Tempo (min)', nivel: 'Nível' })[e.unidadeCarga] || 'Carga (kg)';
   const rotuloSerie = (e) => {
     const faixa = e.repMin === e.repMax ? `${e.repMin}` : `${e.repMin}-${e.repMax}`;
     const un = e.unidadeRep && e.unidadeRep !== 'rep' ? ` ${UNIDADES[e.unidadeRep]}` : '';
@@ -207,6 +214,8 @@
     return {
       registraTempo: cardio,
       registraBpm: cardio,
+      // gráviton e afins: a carga é assistência, então menos peso é progressão
+      cargaAssistida: !!(base && base.assistida),
       id: MacroDB.novoId(),
       exercicioId,
       nome: base ? base.nome : exercicioId,
@@ -716,7 +725,10 @@
 
   // Próximo degrau plausível: os saltos que existem de fato na academia
   // (anilhas de 1, 2 e 2,5 kg; pinos de máquina; tempo de isometria).
-  function proximoPasso(carga, unidade) {
+  function proximoPasso(carga, unidade, assistida) {
+    // na máquina de assistência o passo é para baixo: tirar contrapeso é o que
+    // deixa o exercício mais difícil
+    if (assistida) return Math.max(0, carga - (carga <= 10 ? 2.5 : 5));
     if (unidade === 'seg') return carga + 5;
     if (unidade === 'min') return carga + 2;
     if (unidade === 'nivel') return carga + 1;
@@ -759,6 +771,7 @@
         intervalo: e.intervalo,
         registraTempo: !!e.registraTempo,
         registraBpm: !!e.registraBpm,
+        cargaAssistida: assistidaDe(e),
         carga: ultimaCarga(e.exercicioId) ?? e.carga ?? null,
         aquecimento: ultimoValor(e.exercicioId, 'aquecimento') ?? e.cargaAquecimento ?? null,
         tempoMin: e.registraTempo
@@ -880,9 +893,9 @@
           ${(() => {
             const parada = it.carga != null ? cargaParada(it.exercicioId, execucao.id) : null;
             if (!parada) return '';
-            const sugestao = proximoPasso(parada.carga, it.unidadeCarga || 'kg');
+            const sugestao = proximoPasso(parada.carga, it.unidadeCarga || 'kg', it.cargaAssistida);
             return `<div class="exec-dica">
-              <span>Mesma carga nos últimos <b>${parada.repeticoes}</b> registros. Que tal tentar ${comCarga(it, sugestao)}?</span>
+              <span>${it.cargaAssistida ? 'Mesma assistência' : 'Mesma carga'} nos últimos <b>${parada.repeticoes}</b> registros. Que tal tentar ${comCarga(it, sugestao)}${it.cargaAssistida ? ' de contrapeso' : ''}?</span>
               <button class="btn ex-subir" type="button" data-valor="${sugestao}">Usar ${fmt(sugestao)}</button>
             </div>`;
           })()}
@@ -931,6 +944,7 @@
         nome: i.nome,
         grupo: i.grupo,
         unidadeCarga: i.unidadeCarga || 'kg',
+        assistida: !!i.cargaAssistida,
         carga: i.feito ? valor : null,
         cargaAnotada: valor,
         aquecimento: i.feito && i.aquecimento != null && i.aquecimento !== '' ? Number(i.aquecimento) : null,
@@ -1078,6 +1092,7 @@
           <span>Registrar também:</span>
           <label><input type="checkbox" class="c-reg-tempo" ${e.registraTempo ? 'checked' : ''} /> tempo (min)</label>
           <label><input type="checkbox" class="c-reg-bpm" ${e.registraBpm ? 'checked' : ''} /> BPM</label>
+          <label title="Máquinas de assistência (gráviton): menos peso é mais difícil"><input type="checkbox" class="c-assist" ${assistidaDe(e) ? 'checked' : ''} /> carga de assistência</label>
         </div>
       </div>`
       )
@@ -1109,6 +1124,8 @@
       if (cTempo) ex.registraTempo = cTempo.checked;
       const cBpm = $('.c-reg-bpm', el);
       if (cBpm) ex.registraBpm = cBpm.checked;
+      const cAssist = $('.c-assist', el);
+      if (cAssist) ex.cargaAssistida = cAssist.checked;
     });
     emEdicao.nome = $('#mt-nome').value.trim();
     emEdicao.foco = $('#mt-foco').value.trim();
@@ -1323,7 +1340,7 @@
   function seriesDe(e, un) {
     const cardio = e.grupo === 'Cardio' || e.pontos.some((p) => p.bpm != null);
     const DEF = {
-      carga: { campo: 'carga', rotulo: 'Carga', sufixo: un },
+      carga: { campo: 'carga', rotulo: e.assistida ? 'Assistência' : 'Carga', sufixo: un },
       repsTotal: { campo: 'repsTotal', rotulo: 'Reps', sufixo: 'reps' },
       tempoMin: { campo: 'tempoMin', rotulo: 'Tempo', sufixo: 'min' },
       bpm: { campo: 'bpm', rotulo: 'BPM', sufixo: 'bpm' },
@@ -1339,16 +1356,16 @@
 
   // Carga × repetições: o número que diz se 140 kg em 8 reps é mais ou menos
   // trabalho do que 120 kg em 12. Só faz sentido quando a carga é peso.
-  const volumeDe = (p, un) =>
-    un === 'kg' && p.carga != null && p.repsTotal ? Math.round(p.carga * p.repsTotal) : null;
+  const volumeDe = (p, un, assistida) =>
+    un === 'kg' && !assistida && p.carga != null && p.repsTotal ? Math.round(p.carga * p.repsTotal) : null;
 
   // Força estimada (Epley): a carga que sairia numa repetição só, a partir do
   // peso e das repetições feitas. É o número que enxerga a progressão quando a
   // carga sobe e a repetição cai — 20 kg × 10 dá ≈27 kg, 40 kg × 6 dá ≈48 —,
   // e é ele que manda no indicador do card, porque em hipertrofia a carga pesa
   // mais do que o total de repetições.
-  const forcaDe = (p, un) => {
-    if (un !== 'kg' || p.carga == null || !(p.repSerie > 0)) return null;
+  const forcaDe = (p, un, assistida) => {
+    if (un !== 'kg' || assistida || p.carga == null || !(p.repSerie > 0)) return null;
     return Math.round(p.carga * (1 + Math.min(p.repSerie, 20) / 30) * 10) / 10;
   };
 
@@ -1383,11 +1400,14 @@
         if (!porExercicio.has(it.exercicioId))
           porExercicio.set(it.exercicioId, {
             nome: it.nome, grupo: it.grupo || '', unidadeCarga: it.unidadeCarga || 'kg',
+            // gráviton e afins: menos carga é mais progressão
+            assistida: it.assistida ?? !!(BIBLIOTECA().find((x) => x.id === it.exercicioId) || {}).assistida,
             prev: prev || null, pontos: [],
           });
         const alvo = porExercicio.get(it.exercicioId);
         if (it.unidadeCarga) alvo.unidadeCarga = it.unidadeCarga;
         if (it.grupo) alvo.grupo = it.grupo;
+        if (it.assistida) alvo.assistida = true;
         alvo.pontos.push({
           ts: s.ts,
           carga: it.carga,
@@ -1408,11 +1428,14 @@
     // anotadas, a carga sozinha decide
     const progrediu = (e) => {
       const un = unCarga(e);
-      const comForca = e.pontos.filter((p) => forcaDe(p, un) != null);
+      const comForca = e.pontos.filter((p) => forcaDe(p, un, e.assistida) != null);
       if (comForca.length > 1)
-        return forcaDe(comForca[comForca.length - 1], un) > forcaDe(comForca[0], un);
+        return forcaDe(comForca[comForca.length - 1], un, e.assistida) > forcaDe(comForca[0], un, e.assistida);
       const comCarga = e.pontos.filter((p) => p.carga != null);
-      return comCarga.length > 1 && comCarga[comCarga.length - 1].carga > comCarga[0].carga;
+      if (comCarga.length < 2) return false;
+      const primeiro = comCarga[0].carga;
+      const ultimo = comCarga[comCarga.length - 1].carga;
+      return e.assistida ? ultimo < primeiro : ultimo > primeiro;
     };
     const evoluiram = [...porExercicio.values()].filter((e) => e.pontos.length > 1 && progrediu(e)).length;
     // duração: execuções esquecidas abertas (> 4 h) ficam fora das contas
@@ -1509,20 +1532,27 @@
         // Indicador do card: quando dá para estimar a força (carga em kg com
         // repetições), é ela que decide se houve progressão — assim 20 kg × 10
         // virando 40 kg × 6 aparece como avanço, e o contrário como recuo.
-        const comForca = e.pontos.filter((p) => forcaDe(p, un) != null);
+        const comForca = e.pontos.filter((p) => forcaDe(p, un, e.assistida) != null);
         e.forca = comForca.length > 1 && principal.campo === 'carga'
-          ? { ini: forcaDe(comForca[0], un), fim: forcaDe(comForca[comForca.length - 1], un) }
+          ? { ini: forcaDe(comForca[0], un, e.assistida), fim: forcaDe(comForca[comForca.length - 1], un, e.assistida) }
           : null;
         const dif = e.forca ? e.forca.fim - e.forca.ini : fim - ini;
-        const sinal = dif > 0.05 ? 'sobe' : dif < -0.05 ? 'desce' : 'igual';
+        // no gráviton a carga é contrapeso: tirar peso é que é progresso, então
+        // o sinal do indicador se inverte
+        const avanco = e.assistida ? -dif : dif;
+        const sinal = avanco > 0.05 ? 'sobe' : avanco < -0.05 ? 'desce' : 'igual';
         const pct = e.forca && e.forca.ini > 0 ? Math.round((dif / e.forca.ini) * 100) : null;
-        const rotulo = e.forca
-          ? sinal === 'igual'
-            ? 'sem mudança'
-            : `${dif > 0 ? '+' : '−'}${fmt(Math.abs(dif))} kg de força${pct ? ` (${dif > 0 ? '+' : '−'}${Math.abs(pct)}%)` : ''}`
-          : dif === 0
-            ? 'mantida'
-            : `${dif > 0 ? '+' : '−'}${fmt(Math.abs(dif))} ${principal.sufixo}`;
+        const rotulo = e.assistida
+          ? dif === 0
+            ? 'mesma assistência'
+            : `${dif > 0 ? '+' : '−'}${fmt(Math.abs(dif))} kg de assistência`
+          : e.forca
+            ? sinal === 'igual'
+              ? 'sem mudança'
+              : `${dif > 0 ? '+' : '−'}${fmt(Math.abs(dif))} kg de força${pct ? ` (${dif > 0 ? '+' : '−'}${Math.abs(pct)}%)` : ''}`
+            : dif === 0
+              ? 'mantida'
+              : `${dif > 0 ? '+' : '−'}${fmt(Math.abs(dif))} ${principal.sufixo}`;
         const resumoOutras = series
           .slice(1)
           .map((sr) => {
@@ -1542,10 +1572,10 @@
             ? `Reps por série ${fmt(anotadas[0].repSerie)} → ${fmt(anotadas[anotadas.length - 1].repSerie)}`
             : `Reps por série ${fmt(comReps[comReps.length - 1].repSerie)}`
           : '';
-        const comVol = e.pontos.filter((p) => volumeDe(p, un) != null);
+        const comVol = e.pontos.filter((p) => volumeDe(p, un, e.assistida) != null);
         const resumoVol =
           comVol.length > 1
-            ? `Volume ${fmt(volumeDe(comVol[0], un))} → ${fmt(volumeDe(comVol[comVol.length - 1], un))} ${un}`
+            ? `Volume ${fmt(volumeDe(comVol[0], un, e.assistida))} → ${fmt(volumeDe(comVol[comVol.length - 1], un, e.assistida))} ${un}`
             : '';
         // barra clara = repetições supostas pelo mínimo previsto no treino
         const supostas = comReps.length - anotadas.length;
@@ -1564,7 +1594,8 @@
                 : `${fmt(comAquec[comAquec.length - 1].aquecimento)} kg`
             }`
           : '';
-        const extras = [resumoOutras, resumoReps, resumoForca, resumoVol, resumoAquec, semReps]
+        const notaAssist = e.assistida ? 'máquina de assistência: menos peso é mais forte' : '';
+        const extras = [resumoOutras, resumoReps, resumoForca, resumoVol, resumoAquec, notaAssist, semReps]
           .filter(Boolean)
           .join(' · ');
         return `
@@ -1721,9 +1752,12 @@
       // eixo da carga cobre também a força estimada e o aquecimento
       const valoresY = [
         ...e.pontos.map((p) => p.carga),
-        ...(e.forca ? e.pontos.map((p) => forcaDe(p, un)) : []),
+        ...(e.forca ? e.pontos.map((p) => forcaDe(p, un, e.assistida)) : []),
         ...(e.temAquecimento ? e.pontos.map((p) => p.aquecimento) : []),
       ].filter((v) => v != null);
+      // gráviton: o eixo da carga vira de cabeça para baixo, para a linha subir
+      // quando o contrapeso cai — que é a direção do progresso
+      if (escalas.y && e.assistida) escalas.y = { ...escalas.y, reverse: true };
       // com três linhas no mesmo eixo (carga, força e aquecimento), uma marca
       // por valor registrado vira uma parede de números: aí o eixo volta a ser
       // automático, cobrindo o intervalo das três
@@ -1766,7 +1800,7 @@
         linhas.push({
           type: 'line',
           label: 'Força estimada (kg)',
-          data: e.pontos.map((p) => forcaDe(p, un)),
+          data: e.pontos.map((p) => forcaDe(p, un, e.assistida)),
           yAxisID: 'y',
           sufixoRotulo: un,
           semRotulo: true,
@@ -1875,8 +1909,8 @@
                   },
                   afterBody: (itens) => {
                     const p = e.pontos[itens[0].dataIndex];
-                    const vol = volumeDe(p, un);
-                    const forca = forcaDe(p, un);
+                    const vol = volumeDe(p, un, e.assistida);
+                    const forca = forcaDe(p, un, e.assistida);
                     return [
                       forca != null ? `Força estimada: ${fmt(forca)} ${un}` : '',
                       vol != null ? `Volume: ${fmt(vol)} ${un}${p.repsEstimado ? ' (estimado)' : ''}` : '',
