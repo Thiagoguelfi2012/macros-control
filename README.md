@@ -150,7 +150,21 @@ python3 -m http.server 8000
     o treino o campo de repetições já vem preenchido com o último registro, ou
     com o previsto do plano, para o dado não faltar. O subtítulo fecha a conta
     com o **volume** (carga × repetições) do primeiro ao último registro.
-    Uma marca no eixo X por execução e no eixo Y por carga registrada. Filtros
+    O card marca a **progressão pela força estimada** (fórmula de Epley: carga ×
+    repetições numa conta só), que é o que enxerga 20 kg × 10 virando 40 kg × 6
+    como avanço de **+80%** — e o caminho inverso como recuo. Ela também vai ao
+    gráfico como **linha tracejada**, no mesmo eixo da carga, e decide o card
+    "Com evolução". Em hipertrofia a carga pesa mais que o número de repetições,
+    e a fórmula respeita isso: subir a carga vale mais do que repetir mais.
+
+    A **carga de aquecimento** tem campo próprio na execução (e no editor do
+    treino), fica guardada em cada registro, entra no "última vez", vira o
+    padrão da próxima vez e aparece no gráfico como uma linha discreta — sem se
+    misturar com a carga de trabalho na conta da progressão.
+
+    Uma marca no eixo X por execução e no eixo Y por carga registrada (com as
+    linhas de força e aquecimento o eixo passa a ser automático, para não virar
+    uma parede de números). Filtros
     por treino e por período (7, 15, 30, 90, 180 dias, 1 ano ou tudo); execuções
     com mais de 4 h ficam fora das contas de tempo. No fim da aba, depois de
     todos os gráficos, vem a **lista das execuções** do período — data, treino e

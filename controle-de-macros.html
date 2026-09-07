@@ -7688,6 +7688,9 @@ function abrirTudo(abrir){document.querySelectorAll('details').forEach(function(
       unidadeRep: unidadeRep || 'rep',
       unidadeCarga: unidadeCarga || 'kg',
       carga: carga ?? null,
+      // carga de aquecimento: a série que prepara o movimento, registrada
+      // separada para não se misturar com a carga de trabalho na progressão
+      cargaAquecimento: null,
       intervalo: intervalo ?? 60,
       obs: '',
     };
@@ -8144,6 +8147,7 @@ function abrirTudo(abrir){document.querySelectorAll('details').forEach(function(
   const resumoRegistro = (it, reg) =>
     [
       reg.carga != null ? comCarga(it, reg.carga) : '',
+      reg.aquecimento != null ? `aquec. ${fmt(reg.aquecimento)} kg` : '',
       reg.reps ? `${reg.reps} reps` : '',
       reg.tempoMin != null ? `${fmt(reg.tempoMin)} min` : '',
       reg.bpm != null ? `${fmt(reg.bpm)} bpm` : '',
@@ -8162,16 +8166,22 @@ function abrirTudo(abrir){document.querySelectorAll('details').forEach(function(
       const it = (s.itens || []).find(
         (x) => x.exercicioId === exercicioId && x.carga != null && x.feito !== false
       );
-      if (it) vals.push(it.carga);
+      if (it) {
+        const rep = repsDoRegistro(it.reps, null);
+        vals.push({ carga: it.carga, reps: rep ? rep.porSerie : null });
+      }
     }
     if (vals.length < 3) return null;
     const atual = vals[0];
+    // parado é ficar na mesma carga *sem* ganhar repetição: subir de 8 para 12
+    // reps com o mesmo peso é progressão, e aí não cabe cutucar
     let n = 0;
     for (const v of vals) {
-      if (v !== atual) break;
+      if (v.carga !== atual.carga) break;
+      if (atual.reps != null && v.reps != null && atual.reps > v.reps) break;
       n++;
     }
-    return n >= 3 ? { repeticoes: n, carga: atual } : null;
+    return n >= 3 ? { repeticoes: n, carga: atual.carga } : null;
   }
 
   // Próximo degrau plausível: os saltos que existem de fato na academia
@@ -8220,6 +8230,7 @@ function abrirTudo(abrir){document.querySelectorAll('details').forEach(function(
         registraTempo: !!e.registraTempo,
         registraBpm: !!e.registraBpm,
         carga: ultimaCarga(e.exercicioId) ?? e.carga ?? null,
+        aquecimento: ultimoValor(e.exercicioId, 'aquecimento') ?? e.cargaAquecimento ?? null,
         tempoMin: e.registraTempo
           ? ultimoValor(e.exercicioId, 'tempoMin') ?? (e.unidadeRep === 'min' ? e.repMax : null)
           : null,
@@ -8303,6 +8314,10 @@ function abrirTudo(abrir){document.querySelectorAll('details').forEach(function(
           </div>
           ${chipsMusculos(it)}
           <div class="exec-campos">
+            ${(it.unidadeCarga || 'kg') === 'kg' ? `<div class="field">
+              <label>Aquecimento (kg)</label>
+              <input type="number" class="ex-aquec" min="0" step="0.5" value="${it.aquecimento ?? ''}" inputmode="decimal" placeholder="—" />
+            </div>` : ''}
             <div class="field">
               <label>${rotuloCampoCarga(it)}</label>
               <input type="number" class="ex-carga" min="0" step="${it.unidadeCarga && it.unidadeCarga !== 'kg' ? '1' : '0.5'}" value="${it.carga ?? ''}" inputmode="decimal" placeholder="—" />
@@ -8388,6 +8403,7 @@ function abrirTudo(abrir){document.querySelectorAll('details').forEach(function(
         unidadeCarga: i.unidadeCarga || 'kg',
         carga: i.feito ? valor : null,
         cargaAnotada: valor,
+        aquecimento: i.feito && i.aquecimento != null && i.aquecimento !== '' ? Number(i.aquecimento) : null,
         tempoMin: i.feito && i.tempoMin != null && i.tempoMin !== '' ? Number(i.tempoMin) : null,
         bpm: i.feito && i.bpm != null && i.bpm !== '' ? Number(i.bpm) : null,
         reps: i.reps || '',
@@ -8451,6 +8467,12 @@ function abrirTudo(abrir){document.querySelectorAll('details').forEach(function(
           ex.carga = feito.carga;
           mudou = true;
         }
+        // o aquecimento do dia também vira o padrão da próxima vez
+        const aquec = itens.find((i) => i.exercicioId === ex.exercicioId && i.feito && i.aquecimento != null);
+        if (aquec && aquec.aquecimento !== ex.cargaAquecimento) {
+          ex.cargaAquecimento = aquec.aquecimento;
+          mudou = true;
+        }
       }
       if (mudou) await MacroDB.saveTreino(treino);
     }
@@ -8511,6 +8533,7 @@ function abrirTudo(abrir){document.querySelectorAll('details').forEach(function(
             </select>
           </div>
           <div class="field"><label>Carga</label><input type="number" class="c-carga" min="0" step="${(e.unidadeCarga || 'kg') === 'kg' ? '0.5' : '1'}" value="${e.carga ?? ''}" /></div>
+          <div class="field"><label>Aquecimento</label><input type="number" class="c-aquec" min="0" step="${(e.unidadeCarga || 'kg') === 'kg' ? '0.5' : '1'}" value="${e.cargaAquecimento ?? ''}" placeholder="—" /></div>
           <div class="field"><label>Un. da carga</label>
             <select class="c-uncarga">
               <option value="kg"${(e.unidadeCarga || 'kg') === 'kg' ? ' selected' : ''}>kg</option>
@@ -8546,6 +8569,8 @@ function abrirTudo(abrir){document.querySelectorAll('details').forEach(function(
       ex.intervalo = num('.c-intervalo', ex.intervalo);
       const campoCarga = $('.c-carga', el);
       if (campoCarga) ex.carga = campoCarga.value === '' ? null : Number(campoCarga.value);
+      const campoAquec = $('.c-aquec', el);
+      if (campoAquec) ex.cargaAquecimento = campoAquec.value === '' ? null : Number(campoAquec.value);
       const campoUn = $('.c-unidade', el);
       if (campoUn) ex.unidadeRep = campoUn.value;
       const campoUnCarga = $('.c-uncarga', el);
@@ -8787,6 +8812,16 @@ function abrirTudo(abrir){document.querySelectorAll('details').forEach(function(
   const volumeDe = (p, un) =>
     un === 'kg' && p.carga != null && p.repsTotal ? Math.round(p.carga * p.repsTotal) : null;
 
+  // Força estimada (Epley): a carga que sairia numa repetição só, a partir do
+  // peso e das repetições feitas. É o número que enxerga a progressão quando a
+  // carga sobe e a repetição cai — 20 kg × 10 dá ≈27 kg, 40 kg × 6 dá ≈48 —,
+  // e é ele que manda no indicador do card, porque em hipertrofia a carga pesa
+  // mais do que o total de repetições.
+  const forcaDe = (p, un) => {
+    if (un !== 'kg' || p.carga == null || !(p.repSerie > 0)) return null;
+    return Math.round(p.carga * (1 + Math.min(p.repSerie, 20) / 30) * 10) / 10;
+  };
+
   function renderEvolucao() {
     destruirCharts();
     const treinoId = $('#sel-evo-treino').value;
@@ -8826,6 +8861,7 @@ function abrirTudo(abrir){document.querySelectorAll('details').forEach(function(
         alvo.pontos.push({
           ts: s.ts,
           carga: it.carga,
+          aquecimento: it.aquecimento ?? null,
           reps: it.reps || '',
           repSerie: rep ? rep.porSerie : null,
           repSeries: rep ? rep.series : null,
@@ -8838,9 +8874,17 @@ function abrirTudo(abrir){document.querySelectorAll('details').forEach(function(
     }
 
     const totalSessoes = relevantes.length;
-    const evoluiram = [...porExercicio.values()].filter(
-      (e) => e.pontos.length > 1 && e.pontos[e.pontos.length - 1].carga > e.pontos[0].carga
-    ).length;
+    // progrediu = ganhou força estimada (carga e repetições juntas); sem reps
+    // anotadas, a carga sozinha decide
+    const progrediu = (e) => {
+      const un = unCarga(e);
+      const comForca = e.pontos.filter((p) => forcaDe(p, un) != null);
+      if (comForca.length > 1)
+        return forcaDe(comForca[comForca.length - 1], un) > forcaDe(comForca[0], un);
+      const comCarga = e.pontos.filter((p) => p.carga != null);
+      return comCarga.length > 1 && comCarga[comCarga.length - 1].carga > comCarga[0].carga;
+    };
+    const evoluiram = [...porExercicio.values()].filter((e) => e.pontos.length > 1 && progrediu(e)).length;
     // duração: execuções esquecidas abertas (> 4 h) ficam fora das contas
     const LIMITE_DUR = 4 * 3600;
     const comDuracao = relevantes.filter((x) => x.duracaoSeg > 0 && x.duracaoSeg <= LIMITE_DUR);
@@ -8852,7 +8896,7 @@ function abrirTudo(abrir){document.querySelectorAll('details').forEach(function(
         <div class="tile"><div class="t-label">Execuções</div><div class="t-value">${totalSessoes}</div><div class="t-sub">no período</div></div>
         <div class="tile"><div class="t-label">Tempo treinado</div><div class="t-value">${tempoTotal}</div><div class="t-sub">${comDuracao.length ? `média de ${tempoMedio} por treino` : 'sem tempo registrado'}</div></div>
         <div class="tile"><div class="t-label">Exercícios com carga</div><div class="t-value">${porExercicio.size}</div><div class="t-sub">registrados</div></div>
-        <div class="tile"><div class="t-label">Com evolução</div><div class="t-value">${evoluiram}</div><div class="t-sub">carga maior que a primeira</div></div>
+        <div class="tile"><div class="t-label">Com evolução</div><div class="t-value">${evoluiram}</div><div class="t-sub">força estimada maior que a primeira</div></div>
       </div>`;
 
     // dias distintos com treino no período, e o ritmo por semana
@@ -8932,9 +8976,23 @@ function abrirTudo(abrir){document.querySelectorAll('details').forEach(function(
         const comValor = e.pontos.filter((p) => p[principal.campo] != null);
         const ini = comValor[0][principal.campo];
         const fim = comValor[comValor.length - 1][principal.campo];
-        const dif = fim - ini;
-        const sinal = dif > 0 ? 'sobe' : dif < 0 ? 'desce' : 'igual';
-        const rotulo = dif === 0 ? 'mantida' : `${dif > 0 ? '+' : '−'}${fmt(Math.abs(dif))} ${principal.sufixo}`;
+        // Indicador do card: quando dá para estimar a força (carga em kg com
+        // repetições), é ela que decide se houve progressão — assim 20 kg × 10
+        // virando 40 kg × 6 aparece como avanço, e o contrário como recuo.
+        const comForca = e.pontos.filter((p) => forcaDe(p, un) != null);
+        e.forca = comForca.length > 1 && principal.campo === 'carga'
+          ? { ini: forcaDe(comForca[0], un), fim: forcaDe(comForca[comForca.length - 1], un) }
+          : null;
+        const dif = e.forca ? e.forca.fim - e.forca.ini : fim - ini;
+        const sinal = dif > 0.05 ? 'sobe' : dif < -0.05 ? 'desce' : 'igual';
+        const pct = e.forca && e.forca.ini > 0 ? Math.round((dif / e.forca.ini) * 100) : null;
+        const rotulo = e.forca
+          ? sinal === 'igual'
+            ? 'sem mudança'
+            : `${dif > 0 ? '+' : '−'}${fmt(Math.abs(dif))} kg de força${pct ? ` (${dif > 0 ? '+' : '−'}${Math.abs(pct)}%)` : ''}`
+          : dif === 0
+            ? 'mantida'
+            : `${dif > 0 ? '+' : '−'}${fmt(Math.abs(dif))} ${principal.sufixo}`;
         const resumoOutras = series
           .slice(1)
           .map((sr) => {
@@ -8964,7 +9022,21 @@ function abrirTudo(abrir){document.querySelectorAll('details').forEach(function(
         const semReps = supostas
           ? `${supostas} ${supostas === 1 ? 'dia sem reps anotadas' : 'dias sem reps anotadas'} (barra clara: mínimo previsto)`
           : '';
-        const extras = [resumoOutras, resumoReps, resumoVol, semReps].filter(Boolean).join(' · ');
+        const resumoForca = e.forca
+          ? `Força estimada ${fmt(e.forca.ini)} → ${fmt(e.forca.fim)} kg`
+          : '';
+        const comAquec = e.pontos.filter((p) => p.aquecimento != null);
+        e.temAquecimento = comAquec.length > 0;
+        const resumoAquec = comAquec.length
+          ? `Aquecimento ${
+              comAquec.length > 1 && comAquec[0].aquecimento !== comAquec[comAquec.length - 1].aquecimento
+                ? `${fmt(comAquec[0].aquecimento)} → ${fmt(comAquec[comAquec.length - 1].aquecimento)} kg`
+                : `${fmt(comAquec[comAquec.length - 1].aquecimento)} kg`
+            }`
+          : '';
+        const extras = [resumoOutras, resumoReps, resumoForca, resumoVol, resumoAquec, semReps]
+          .filter(Boolean)
+          .join(' · ');
         return `
         <div class="chart-card">
           <div class="evo-head">
@@ -9116,6 +9188,32 @@ function abrirTudo(abrir){document.querySelectorAll('details').forEach(function(
           ticks: { ...base.ticks, color: series.length > 1 ? CORES[sr.campo] : base.ticks.color },
         };
       }
+      // eixo da carga cobre também a força estimada e o aquecimento
+      const valoresY = [
+        ...e.pontos.map((p) => p.carga),
+        ...(e.forca ? e.pontos.map((p) => forcaDe(p, un)) : []),
+        ...(e.temAquecimento ? e.pontos.map((p) => p.aquecimento) : []),
+      ].filter((v) => v != null);
+      // com três linhas no mesmo eixo (carga, força e aquecimento), uma marca
+      // por valor registrado vira uma parede de números: aí o eixo volta a ser
+      // automático, cobrindo o intervalo das três
+      if (escalas.y && valoresY.length && (e.forca || e.temAquecimento)) {
+        const min = Math.min(...valoresY);
+        const max = Math.max(...valoresY);
+        const folga = Math.max((max - min) * 0.12, max * 0.04, 0.5);
+        escalas.y = {
+          ...escalas.y,
+          min: Math.max(0, min - folga),
+          max: max + folga,
+          afterBuildTicks: undefined,
+          ticks: {
+            ...escalas.y.ticks,
+            autoSkip: true,
+            maxTicksLimit: 6,
+            callback: (v) => `${fmt(v)} ${un}`,
+          },
+        };
+      }
       const linhas = series.map((sr) => ({
         type: 'line',
         label: `${sr.rotulo} (${sr.sufixo})`,
@@ -9132,6 +9230,48 @@ function abrirTudo(abrir){document.querySelectorAll('details').forEach(function(
         fill: false,
         order: 0,
       }));
+      // Força estimada: a linha tracejada que junta carga e repetições. É ela
+      // que mostra progressão quando o peso sobe e a repetição cai.
+      if (e.forca) {
+        linhas.push({
+          type: 'line',
+          label: 'Força estimada (kg)',
+          data: e.pontos.map((p) => forcaDe(p, un)),
+          yAxisID: 'y',
+          sufixoRotulo: un,
+          semRotulo: true,
+          borderColor: cssVar('--alvo-line'),
+          backgroundColor: cssVar('--alvo-line'),
+          borderWidth: 2,
+          borderDash: [6, 4],
+          pointRadius: 2,
+          pointHoverRadius: 5,
+          tension: 0,
+          spanGaps: true,
+          fill: false,
+          order: 1,
+        });
+      }
+      // Aquecimento: fica discreto, embaixo — é registro, não progressão
+      if (e.temAquecimento) {
+        linhas.push({
+          type: 'line',
+          label: 'Aquecimento (kg)',
+          data: e.pontos.map((p) => p.aquecimento),
+          yAxisID: 'y',
+          sufixoRotulo: un,
+          semRotulo: true,
+          borderColor: corComAlfa(cssVar('--muted'), 0.8),
+          backgroundColor: corComAlfa(cssVar('--muted'), 0.8),
+          borderWidth: 1.5,
+          pointRadius: 2,
+          pointHoverRadius: 5,
+          tension: 0,
+          spanGaps: true,
+          fill: false,
+          order: 2,
+        });
+      }
       // As repetições viram barras atrás da linha da carga: escrever "8 reps"
       // colado no ponto embaralhava os dois números, e a barra mostra de longe
       // se o volume caiu quando a carga subiu. Barra clara = repetição suposta
@@ -9206,9 +9346,11 @@ function abrirTudo(abrir){document.querySelectorAll('details').forEach(function(
                   afterBody: (itens) => {
                     const p = e.pontos[itens[0].dataIndex];
                     const vol = volumeDe(p, un);
-                    return vol != null
-                      ? [`Volume: ${fmt(vol)} ${un}${p.repsEstimado ? ' (estimado)' : ''}`]
-                      : [];
+                    const forca = forcaDe(p, un);
+                    return [
+                      forca != null ? `Força estimada: ${fmt(forca)} ${un}` : '',
+                      vol != null ? `Volume: ${fmt(vol)} ${un}${p.repsEstimado ? ' (estimado)' : ''}` : '',
+                    ].filter(Boolean);
                   },
                 },
               },
@@ -9486,6 +9628,7 @@ function abrirTudo(abrir){document.querySelectorAll('details').forEach(function(
       if (!bloco) return;
       const it = execucao.itens[Number(bloco.dataset.i)];
       if (ev.target.classList.contains('ex-carga')) it.carga = ev.target.value === '' ? null : Number(ev.target.value);
+      if (ev.target.classList.contains('ex-aquec')) it.aquecimento = ev.target.value === '' ? null : Number(ev.target.value);
       if (ev.target.classList.contains('ex-tempo')) it.tempoMin = ev.target.value === '' ? null : Number(ev.target.value);
       if (ev.target.classList.contains('ex-bpm')) it.bpm = ev.target.value === '' ? null : Number(ev.target.value);
       if (ev.target.classList.contains('ex-reps')) it.reps = ev.target.value;
