@@ -214,4 +214,13 @@ export const CHOCOLATES = [
   { n: 'Bombom Bon o Bon amargo (Arcor)', kcal: 540, p: 8, c: 48, g: 34, m: [['unidade (15 g)', 15], ['caixa 6 un (90 g)', 90]] },
   { n: 'Chocolate Tortuguita branco (Arcor)', kcal: 545, p: 6, c: 56, g: 32, m: [['unidade (18 g)', 18]] },
   { n: 'Chocolate Tortuguita com doce de leite (Arcor)', kcal: 530, p: 6, c: 58, g: 30, m: [['unidade (18 g)', 18]] },
+
+  // ---- Dois Frades (Nestlé): o "chocolate do padre", apelido que pegou antes
+  // do nome oficial. A linha é de confeitaria — chocolate em pó e cobertura.
+  // O 50% cacau tem rótulo declarado (20 g = 73 kcal); o resto é estimado pela
+  // composição da linha.
+  { n: 'Chocolate em pó Dois Frades 32% cacau (chocolate do padre)', kcal: 380, p: 5, c: 76, g: 4, m: [['colher de sopa (10 g)', 10], ['porção 2 colheres (20 g)', 20], ['pacote (200 g)', 200]] },
+  { n: 'Chocolate em pó Dois Frades 50% cacau (chocolate do padre)', kcal: 365, p: 8, c: 58, g: 11, m: [['colher de sopa (10 g)', 10], ['porção 2 colheres (20 g)', 20], ['pacote (200 g)', 200]] },
+  { n: 'Cobertura de chocolate Dois Frades ao leite (chocolate do padre)', kcal: 530, p: 7, c: 57, g: 30, m: [['quadrado (10 g)', 10], ['barra (1 kg)', 1000]] },
+  { n: 'Cobertura de chocolate Dois Frades meio amargo (chocolate do padre)', kcal: 500, p: 5.5, c: 55, g: 29, m: [['quadrado (10 g)', 10], ['barra (1 kg)', 1000]] },
 ];
