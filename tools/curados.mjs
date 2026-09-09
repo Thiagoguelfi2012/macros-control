@@ -459,6 +459,9 @@ export const CURADOS = [
   { n: "McDonald's Quarteirão com Queijo", kcal: 244, p: 14, c: 18, g: 13, m: [['unidade (215 g)', 215]] },
   { n: "McDonald's Quarteirão Duplo", kcal: 262, p: 17, c: 14, g: 16, m: [['unidade (280 g)', 280]] },
   { n: "McDonald's McFish (filé de peixe)", kcal: 240, p: 10, c: 26, g: 11, m: [['unidade (140 g)', 140]] },
+  // o Duplo McFish tem 512 kcal no sanduíche (dois filés e dois queijos)
+  { n: "McDonald's Duplo McFish (McFish duplo)", kcal: 244, p: 12.4, c: 21, g: 12.4, m: [['unidade (210 g)', 210]] },
+  { n: "McDonald's McChicken Duplo", kcal: 242, p: 12, c: 21.5, g: 12, m: [['unidade (260 g)', 260]] },
   { n: "McDonald's McChicken Bacon", kcal: 255, p: 10, c: 24, g: 13, m: [['unidade (190 g)', 190]] },
   { n: "McDonald's hambúrguer simples", kcal: 255, p: 13, c: 30, g: 9, m: [['unidade (100 g)', 100]] },
   { n: "McDonald's McMuffin ovo com bacon", kcal: 245, p: 14, c: 23, g: 11, m: [['unidade (135 g)', 135]] },
