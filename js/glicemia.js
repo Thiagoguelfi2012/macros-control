@@ -122,50 +122,112 @@ const Glicemia = (() => {
     const temProteina = total.p >= 15;
     const temGordura = total.g >= 10;
     const temVegetal = lista.some((i) => /salada|alface|rucula|couve|brocolis|legume|verdura|pepino|tomate|abobrinha|repolho|espinafre|cenoura/.test(norm(i.nome)));
-    const amortecida = [temProteina, temGordura, temVegetal].filter(Boolean).length;
+    // as tabelas não trazem fibra, mas leguminosa, aveia e semente no prato são
+    // fibra de fato — e é fibra que segura a curva junto com proteína e gordura
+    const temFibra =
+      temVegetal ||
+      lista.some((i) => /feijao|lentilha|grao de bico|ervilha|soja|aveia|chia|linhaca|psyllium|integral/.test(norm(i.nome)));
+    const amortecida = [temProteina, temGordura, temFibra].filter(Boolean).length;
     // carga alta num prato sem proteína, gordura nem vegetal é o caso que
     // realmente pede ajuste; com o prato equilibrado o aviso vira nota de rodapé
     const aviso = nivel === 'alta' ? (amortecida <= 1 ? 'forte' : 'leve') : null;
-    return { cg: Math.round(cg), nivel, aviso, total, porItem, temProteina, temGordura, temVegetal, amortecida };
+    return {
+      cg: Math.round(cg), nivel, aviso, total, porItem,
+      temProteina, temGordura, temVegetal, temFibra, amortecida,
+      perfil: perfilDe(lista),
+    };
   }
 
   /* ---- O que diluir a refeição sem pesar nas calorias ----
-     Ordem por custo calórico. As duas primeiras não são alimentos: são jeitos
-     de comer o mesmo prato, e custam zero. */
+     A sugestão precisa combinar com o que está no prato: vinagre e salada num
+     lanche de iogurte com granola não faz sentido. Cada opção declara em quais
+     perfis de refeição ela cabe. */
+
+  // Perfil da refeição, pelo que já está nela
+  function perfilDe(itens) {
+    const nomes = itens.map((i) => norm(i.nome)).join(' | ');
+    const salgado = /arroz|feijao|macarrao|carne|frango|peixe|salada|legume|batata|farofa|strogonoff|lasanha|pizza|hamburguer|sanduiche|esfiha|coxinha|sopa|omelete|ovo/.test(nomes);
+    // leite e café não fazem uma refeição ser doce; iogurte, fruta e granola sim
+    const doce = /iogurte|whey|granola|aveia|fruta|banana|morango|mamao|abacaxi|manga|bolo|torta|doce|chocolate|acai|sorvete|\bmel\b|geleia|vitamina|smoothie|shake|pudim|mousse|cookie|biscoito|pacoca|barra de/.test(nomes);
+    const pao = /\bpao\b|torrada|bisnaguinha|baguete|croissant|cuscuz|tapioca|crepioca/.test(nomes);
+    if (salgado) return 'salgado';
+    if (doce) return 'doce';
+    if (pao) return 'pao';
+    return 'salgado';
+  }
+
+  // `perfis` diz onde a opção cabe; `precisa` só a mostra quando aquilo falta
   const DILUENTES = [
-    { tipo: 'ordem', titulo: 'Comece pela salada e pela proteína', detalhe: 'deixe o arroz, a massa ou o pão para o fim do prato', kcal: 0 },
-    { tipo: 'tempero', busca: 'Vinagre', qtd: 15, med: null, titulo: 'Vinagre ou limão na salada', detalhe: 'ácido junto da refeição segura a subida', kcal: 3 },
-    { tipo: 'vegetal', busca: 'Salada de alface e tomate', qtd: 120, med: null, precisa: 'vegetal' },
-    { tipo: 'vegetal', busca: 'Pepino, cru', qtd: 100, med: null, precisa: 'vegetal' },
-    { tipo: 'vegetal', busca: 'Brócolis cozido', qtd: 100, med: null, precisa: 'vegetal' },
-    { tipo: 'proteina', busca: 'Ovo de galinha, cozido', qtd: 1, med: 'unidade', precisa: 'proteina' },
-    { tipo: 'proteina', busca: 'Iogurte, natural, desnatado', qtd: 100, med: null, precisa: 'proteina' },
-    { tipo: 'proteina', busca: 'Queijo cottage', qtd: 50, med: null, precisa: 'proteina' },
-    { tipo: 'proteina', busca: 'Frango, peito, sem pele, grelhado', qtd: 60, med: null, precisa: 'proteina' },
-    { tipo: 'gordura', busca: 'Azeite, de oliva, extra virgem', qtd: 1, med: 'colher de cha', precisa: 'gordura' },
-    { tipo: 'gordura', busca: 'Castanha de caju', qtd: 10, med: null, precisa: 'gordura' },
-    { tipo: 'gordura', busca: 'Abacate, cru', qtd: 40, med: null, precisa: 'gordura' },
+    // --- jeitos de comer, custo zero ---
+    {
+      tipo: 'ordem', perfis: ['salgado'], kcalPorcao: 0,
+      titulo: 'Comece pela salada e pela proteína',
+      detalhe: 'deixe o arroz, a massa ou o pão para o fim do prato',
+    },
+    {
+      tipo: 'ordem', perfis: ['doce'], kcalPorcao: 0,
+      titulo: 'Coma a parte proteica antes da doce',
+      detalhe: 'iogurte, whey ou queijo primeiro; a fruta, a granola e o doce depois',
+    },
+    {
+      tipo: 'ordem', perfis: ['pao'], kcalPorcao: 0,
+      titulo: 'Coma o recheio junto, não o pão sozinho',
+      detalhe: 'ovo, queijo ou pasta de amendoim na mesma garfada seguram a subida',
+    },
+    // --- salgado ---
+    { tipo: 'tempero', perfis: ['salgado'], busca: 'Vinagre, maçã', qtd: 15, titulo: 'Vinagre de maçã na salada', detalhe: 'ácido junto da refeição segura a subida' },
+    { tipo: 'tempero', perfis: ['salgado'], busca: 'Limão, cravo, suco', qtd: 20, titulo: 'Suco de limão', detalhe: 'ácido junto da refeição segura a subida' },
+    { tipo: 'vegetal', perfis: ['salgado'], busca: 'Salada de alface e tomate', qtd: 120, precisa: 'vegetal' },
+    { tipo: 'vegetal', perfis: ['salgado'], busca: 'Pepino, cru', qtd: 100, precisa: 'vegetal' },
+    { tipo: 'vegetal', perfis: ['salgado'], busca: 'Brócolis cozido', qtd: 100, precisa: 'vegetal' },
+    { tipo: 'proteina', perfis: ['salgado', 'pao'], busca: 'Ovo de galinha, cozido', qtd: 1, med: 'unidade', precisa: 'proteina' },
+    { tipo: 'proteina', perfis: ['salgado'], busca: 'Frango, peito, sem pele, grelhado', qtd: 60, precisa: 'proteina' },
+    { tipo: 'gordura', perfis: ['salgado'], busca: 'Azeite, de oliva, extra virgem', qtd: 1, med: 'colher de cha', precisa: 'gordura' },
+    // --- pão / café da manhã ---
+    { tipo: 'proteina', perfis: ['pao'], busca: 'Queijo, minas, frescal', qtd: 40, precisa: 'proteina' },
+    { tipo: 'gordura', perfis: ['pao', 'doce'], busca: 'Pasta de amendoim integral', qtd: 10, precisa: 'gordura' },
+    { tipo: 'gordura', perfis: ['pao'], busca: 'Abacate, cru', qtd: 40, precisa: 'gordura' },
+    // --- doce / lácteo ---
+    { tipo: 'fibra', perfis: ['doce'], busca: 'Chia, semente, seca', qtd: 10, detalhe: 'fibra que engrossa e retarda a absorção' },
+    { tipo: 'fibra', perfis: ['doce', 'pao'], busca: 'Linhaça, semente', qtd: 10, detalhe: 'fibra que retarda a absorção' },
+    { tipo: 'proteina', perfis: ['doce'], busca: 'Iogurte, natural, desnatado', qtd: 100, precisa: 'proteina' },
+    { tipo: 'proteina', perfis: ['doce'], busca: 'Queijo cottage', qtd: 50, precisa: 'proteina' },
+    { tipo: 'proteina', perfis: ['doce'], busca: 'Whey protein concentrado', qtd: 15, precisa: 'proteina' },
+    { tipo: 'gordura', perfis: ['doce'], busca: 'Castanha de caju', qtd: 10, precisa: 'gordura' },
   ];
 
-  // Monta a lista de sugestões para aquela refeição: primeiro o que falta
-  // (proteína, vegetal, gordura), sempre do mais barato em calorias para o
-  // mais caro, e no máximo quatro.
+  const DETALHE_PADRAO = {
+    proteina: 'proteína segura a curva',
+    vegetal: 'fibra e volume, quase sem caloria',
+    gordura: 'gordura boa retarda a absorção',
+    fibra: 'fibra retarda a absorção',
+    tempero: 'quase sem caloria',
+  };
+
+  // Monta a lista para aquela refeição: só o que combina com o perfil, só o
+  // que ainda falta, sem repetir o que já está no prato, do mais barato em
+  // calorias para o mais caro.
   function sugestoes(aval, quantos = 4) {
+    const perfil = aval.perfil || 'salgado';
     const falta = {
       proteina: !aval.temProteina,
       vegetal: !aval.temVegetal,
       gordura: !aval.temGordura,
     };
+    const jaTem = (nome) => {
+      const raiz = norm(nome).split(' ')[0];
+      return (aval.porItem || []).some((i) => norm(i.nome).includes(raiz));
+    };
     const saida = [];
     for (const d of DILUENTES) {
-      if (saida.length >= quantos * 3) break;
+      if (!d.perfis.includes(perfil)) continue;
       if (d.precisa && !falta[d.precisa]) continue;
       if (!d.busca) {
         saida.push({ ...d, kcalPorcao: 0 });
         continue;
       }
       const food = typeof FoodSearch !== 'undefined' ? FoodSearch.search(d.busca, 1)[0] : null;
-      if (!food) continue;
+      if (!food || jaTem(food.n)) continue;
       const medida = d.med && food.m ? (food.m || []).find(([r]) => norm(r).includes(d.med)) : null;
       const gramas = medida ? d.qtd * medida[1] : d.qtd;
       const k = gramas / 100;
@@ -180,15 +242,14 @@ const Glicemia = (() => {
         c: food.c * k,
         g: food.g * k,
         titulo: d.titulo || food.n,
-        detalhe: d.detalhe || (d.tipo === 'proteina' ? 'proteína segura a curva' : d.tipo === 'vegetal' ? 'fibra e volume, quase sem caloria' : 'gordura boa retarda a absorção'),
+        detalhe: d.detalhe || DETALHE_PADRAO[d.tipo] || '',
       });
     }
-    // as de custo zero primeiro; depois as mais baratas
     saida.sort((a, b) => a.kcalPorcao - b.kcalPorcao);
     return saida.slice(0, quantos);
   }
 
-  return { avaliar, sugestoes, igDe, TABELA };
+  return { avaliar, sugestoes, igDe, perfilDe, TABELA };
 })();
 
 if (typeof window !== 'undefined') window.Glicemia = Glicemia;

@@ -44,12 +44,18 @@ python3 -m http.server 8000
   palpite pela composição quando nada casa — é estimativa, e o aviso diz isso.
   O tom muda conforme o prato: **carga alta e desamparada** (sem proteína,
   gordura nem vegetal junto) recebe o alerta cheio; **carga alta mas amortecida**
-  vira nota de rodapé, porque a proteína e os vegetais do prato já seguram a
-  subida. Junto vêm as **formas de diluir sem pesar na conta**, da mais barata
-  para a mais cara: comer na ordem certa (salada e proteína primeiro, o
-  carboidrato por último — custa zero), vinagre ou limão na salada (+4 kcal),
-  pepino ou brócolis (+10 a +25 kcal), ovo, iogurte natural ou cottage, e uma
-  colher de chá de azeite. Cada uma entra na refeição com um toque.
+  vira nota de rodapé, porque a proteína, a gordura e a fibra do prato já
+  seguram a subida — e leguminosa, aveia e semente contam como fibra, já que
+  as tabelas não trazem esse dado. Junto vêm as **formas de diluir sem pesar na conta**, da mais barata
+  para a mais cara — e **combinando com o que está no prato**: o app separa a
+  refeição em salgada, doce/láctea ou pão, e não oferece salada para um lanche
+  de iogurte com granola. No prato salgado: comer na ordem (salada e proteína
+  primeiro, carboidrato por último — custa zero), limão ou vinagre (+3 a +4
+  kcal), pepino ou brócolis, ovo, frango, azeite. No lanche doce: comer a parte
+  proteica antes da doce (zero), chia ou linhaça (+44), cottage, iogurte
+  natural, whey, castanhas. No pão: comer o recheio junto em vez do pão sozinho
+  (zero), abacate, pasta de amendoim, ovo, queijo. Nada que já esteja na
+  refeição é sugerido de novo, e cada opção entra na cesta com um toque.
 - **Gramas por 100 kcal**: cada alimento mostra, na busca, na prévia, na cesta
   e nas sugestões, **quantas gramas dele cabem em 100 kcal** — 407 g de
   brócolis contra 19 g de chocolate ao leite. A etiqueta é colorida pela

@@ -536,6 +536,8 @@
     }
     const forte = aval.aviso === 'forte';
     const sugs = Glicemia.sugestoes(aval, forte ? 4 : 2);
+    // nome curto: sem a explicação entre parênteses nem a segunda vírgula
+    const curto = (n) => esc(String(n).split(/[,(]/)[0].trim().toLowerCase());
     const topo = aval.porItem.filter((x) => x.carga >= 5).slice(0, 2);
     box.className = `glic ${forte ? 'forte' : 'leve'}`;
     box.innerHTML = `
@@ -545,7 +547,7 @@
       </div>
       <p class="glic-sub">${
         forte
-          ? `Puxada por ${topo.map((x) => esc(x.nome.split(',')[0].toLowerCase())).join(' e ')}, com pouca proteína, gordura ou fibra no mesmo prato para segurar a subida.`
+          ? `Puxada por ${topo.map((x) => curto(x.nome)).join(' e ')}, com pouca proteína, gordura ou fibra no mesmo prato para segurar a subida.`
           : (() => {
               const segura = [
                 aval.temProteina ? 'a proteína' : '',
@@ -553,7 +555,7 @@
                 aval.temGordura ? 'a gordura' : '',
               ].filter(Boolean);
               const verbo = segura.length > 1 || aval.temVegetal ? 'ajudam' : 'ajuda';
-              return `Puxada por ${topo.map((x) => esc(x.nome.split(',')[0].toLowerCase())).join(' e ')} — ${segura.join(' e ')} do prato já ${verbo} a segurar.`;
+              return `Puxada por ${topo.map((x) => curto(x.nome)).join(' e ')} — ${segura.join(' e ')} do prato já ${verbo} a segurar.`;
             })()
       }</p>
       <div class="glic-lista">
