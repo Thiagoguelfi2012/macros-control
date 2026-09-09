@@ -114,6 +114,9 @@ ${read('js/sync.js')}
 ${read('js/sugestao.js')}
 </script>
 <script>
+${read('js/glicemia.js')}
+</script>
+<script>
 ${read('js/barras.js')}
 </script>
 <script>

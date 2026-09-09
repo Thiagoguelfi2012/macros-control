@@ -36,6 +36,20 @@ python3 -m http.server 8000
   cabeçalho (ou no ícone de lápis) abre a **refeição inteira para editar** — os
   itens voltam para a cesta do modal, onde dá para trocar quantidades, remover,
   acrescentar alimentos e mudar o horário de todos de uma vez.
+- **Aviso de carga glicêmica**: enquanto a refeição é montada, o app estima a
+  **carga glicêmica** dela (índice glicêmico × carboidrato ÷ 100, item a item) e
+  avisa quando ela fica alta. O índice sai de uma tabela por tipo de alimento
+  com os valores clássicos das tabelas internacionais (arroz branco ~73, pão
+  francês ~73, tapioca ~85, feijão ~32, salada ~15), casada pelo nome, com um
+  palpite pela composição quando nada casa — é estimativa, e o aviso diz isso.
+  O tom muda conforme o prato: **carga alta e desamparada** (sem proteína,
+  gordura nem vegetal junto) recebe o alerta cheio; **carga alta mas amortecida**
+  vira nota de rodapé, porque a proteína e os vegetais do prato já seguram a
+  subida. Junto vêm as **formas de diluir sem pesar na conta**, da mais barata
+  para a mais cara: comer na ordem certa (salada e proteína primeiro, o
+  carboidrato por último — custa zero), vinagre ou limão na salada (+4 kcal),
+  pepino ou brócolis (+10 a +25 kcal), ovo, iogurte natural ou cottage, e uma
+  colher de chá de azeite. Cada uma entra na refeição com um toque.
 - **Gramas por 100 kcal**: cada alimento mostra, na busca, na prévia, na cesta
   e nas sugestões, **quantas gramas dele cabem em 100 kcal** — 407 g de
   brócolis contra 19 g de chocolate ao leite. A etiqueta é colorida pela
@@ -372,6 +386,7 @@ js/busca.js                    busca tokenizada sem acentos, TACO/IBGE priorizad
 js/diario.js                   tela Diário
 js/sugestao.js                 monta o prato: montagens típicas, histórico e porções
 js/barras.js                   leitor de código de barras + Open Food Facts
+js/glicemia.js                 carga glicêmica estimada da refeição e o que dilui
 js/relatorios.js               tela Relatórios (Chart.js)
 js/treinos.js                  treinos, execução com carga e evolução (Chart.js)
 js/exercicios.js               biblioteca de exercícios da academia (gerado)

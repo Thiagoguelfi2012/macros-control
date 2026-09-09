@@ -516,6 +516,87 @@
     impacto.hidden = false;
   }
 
+  // Aviso de carga glicêmica: olha a refeição inteira (cesta + item atual) e,
+  // quando a carga está alta, oferece o que dilui a curva sem pesar na conta —
+  // começando pelo que custa zero caloria.
+  function renderGlicemia(r) {
+    const box = $('#glic');
+    if (!box) return;
+    const itens = [...ativos()];
+    if (foodSelecionado && r && r.kcal > 0)
+      itens.push({ nome: foodSelecionado.n, gramas: r.gramas, kcal: r.kcal, p: r.p, c: r.c, g: r.g });
+    if (!itens.length || typeof Glicemia === 'undefined') {
+      box.hidden = true;
+      return;
+    }
+    const aval = Glicemia.avaliar(itens);
+    if (!aval.aviso) {
+      box.hidden = true;
+      return;
+    }
+    const forte = aval.aviso === 'forte';
+    const sugs = Glicemia.sugestoes(aval, forte ? 4 : 2);
+    const topo = aval.porItem.filter((x) => x.carga >= 5).slice(0, 2);
+    box.className = `glic ${forte ? 'forte' : 'leve'}`;
+    box.innerHTML = `
+      <div class="glic-head">
+        <b>${forte ? 'Carga glicêmica alta' : 'Carga glicêmica alta, mas amortecida'}</b>
+        <span class="glic-cg">CG ≈ ${aval.cg}</span>
+      </div>
+      <p class="glic-sub">${
+        forte
+          ? `Puxada por ${topo.map((x) => esc(x.nome.split(',')[0].toLowerCase())).join(' e ')}, com pouca proteína, gordura ou fibra no mesmo prato para segurar a subida.`
+          : (() => {
+              const segura = [
+                aval.temProteina ? 'a proteína' : '',
+                aval.temVegetal ? 'os vegetais' : '',
+                aval.temGordura ? 'a gordura' : '',
+              ].filter(Boolean);
+              const verbo = segura.length > 1 || aval.temVegetal ? 'ajudam' : 'ajuda';
+              return `Puxada por ${topo.map((x) => esc(x.nome.split(',')[0].toLowerCase())).join(' e ')} — ${segura.join(' e ')} do prato já ${verbo} a segurar.`;
+            })()
+      }</p>
+      <div class="glic-lista">
+        ${sugs
+          .map(
+            (x, i) => `
+          <div class="glic-item">
+            <div>
+              <b>${esc(x.titulo)}</b>
+              <span class="glic-det">${esc(x.detalhe)}${x.food ? ` · ${fmt(x.qtd, 2)} ${esc(x.medida === 'g' ? 'g' : x.medida)}` : ''}</span>
+            </div>
+            <span class="glic-kcal">${x.kcalPorcao ? `+${x.kcalPorcao} kcal` : 'sem caloria'}</span>
+            ${x.food ? `<button class="btn btn-mini glic-add" type="button" data-i="${i}">Adicionar</button>` : ''}
+          </div>`
+          )
+          .join('')}
+      </div>
+      <p class="glic-nota">Índice glicêmico estimado pela composição de cada alimento — serve para comparar refeições, não substitui medir.</p>`;
+    box.querySelectorAll('.glic-add').forEach((b) => {
+      b.onclick = () => {
+        const x = sugs[Number(b.dataset.i)];
+        if (!x || !x.food) return;
+        const item = {
+          foodId: x.food.i,
+          nome: x.food.n,
+          qtd: x.qtd,
+          medida: x.medida,
+          gramas: Math.round(x.gramas * 10) / 10,
+          kcal: Math.round(x.kcalPorcao * 10) / 10,
+          p: Math.round(x.p * 10) / 10,
+          c: Math.round(x.c * 10) / 10,
+          g: Math.round(x.g * 10) / 10,
+        };
+        if (x.food.l) item.ml = 1;
+        cesta.push(item);
+        salvarCesta();
+        renderCesta();
+        atualizarPreview();
+      };
+    });
+    box.hidden = false;
+  }
+
   function atualizarPreview() {
     atualizarBotaoSalvar();
     atualizarBotaoIncluir();
@@ -523,8 +604,13 @@
       preview.hidden = true;
       $('#btn-incluir').hidden = true;
       // com refeição montada, o impacto continua visível (soma da cesta)
-      if (cesta.length && editandoId == null) renderImpacto({ kcal: 0, p: 0, c: 0, g: 0 });
-      else $('#impacto').hidden = true;
+      if (cesta.length && editandoId == null) {
+        renderImpacto({ kcal: 0, p: 0, c: 0, g: 0 });
+        renderGlicemia(null);
+      } else {
+        $('#impacto').hidden = true;
+        $('#glic').hidden = true;
+      }
       return;
     }
     $('#btn-incluir').hidden = editandoId != null;
@@ -543,6 +629,7 @@
     $('#pv-dens').innerHTML = chipDensidade(foodSelecionado, true);
     preview.hidden = false;
     renderImpacto(r);
+    renderGlicemia(r);
   }
 
   async function salvar() {
