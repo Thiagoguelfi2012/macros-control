@@ -131,6 +131,19 @@ const Sugestao = (() => {
       { nome: 'Chá com castanhas', itens: [I('Chá de camomila', 200, null, 'bebida'), I('Castanha de caju', 15, null, 'gord')] },
     ],
   };
+  // Pré-treino: carboidrato de digestão fácil com um pouco de proteína, pouca
+  // gordura e pouca fibra — o que costuma cair bem 1h a 2h antes de treinar.
+  MONTAGENS.pretreino = [
+    { nome: 'Banana com aveia e whey', itens: [I('Banana prata', 1, 'unidade', 'fruta'), I('Aveia em flocos', 40, null, 'carb'), I('Whey protein concentrado', 25, null, 'prot')] },
+    { nome: 'Pão com mel e whey', itens: [I('Pão de forma integral', 2, 'fatia', 'carb'), I('Mel, de abelha', 15, null, 'fruta'), I('Whey protein concentrado', 25, null, 'prot')] },
+    { nome: 'Tapioca com queijo', itens: [I('Tapioca goma hidratada', 60, null, 'carb'), I('Queijo, minas, frescal', 40, null, 'prot')] },
+    { nome: 'Batata doce com frango', itens: [I('Batata doce cozida', 150, null, 'carb'), I('Frango, peito, sem pele, grelhado', 100, null, 'prot')] },
+    { nome: 'Iogurte com banana e mel', itens: [I('Iogurte natural desnatado', 170, null, 'prot'), I('Banana prata', 1, 'unidade', 'fruta'), I('Mel, de abelha', 10, null, 'carb', 1)] },
+    { nome: 'Sanduíche natural', itens: [I('Sanduíche natural de frango', 1, 'unidade', 'prot'), I('Suco de laranja natural', 200, null, 'fruta', 1)] },
+    { nome: 'Cuscuz com ovo', itens: [I('Cuscuz de milho cozido', 120, null, 'carb'), I('Ovo de galinha cozido', 2, 'unidade', 'prot')] },
+    { nome: 'Fruta com rapadura', itens: [I('Banana prata', 1, 'unidade', 'fruta'), I('Rapadura', 20, null, 'carb')] },
+  ];
+
   MONTAGENS.madrugada = MONTAGENS.ceia;
 
   const montagensDe = (chave) =>
@@ -255,12 +268,49 @@ const Sugestao = (() => {
     return macros[0].kcal > 0 ? macros[0].txt : `${fmt(cand.kcal, 0)} kcal`;
   }
 
+  /* ---- Treino: a que horas a pessoa costuma treinar naquele dia ---- */
+
+  // Mediana do horário de início dos treinos naquele dia da semana, das últimas
+  // semanas. Dois treinos já formam um hábito reconhecível; menos que isso é
+  // coincidência, e aí o app não sugere pré-treino.
+  async function horarioDeTreino(diaSemana, agora) {
+    if (typeof MacroDB === 'undefined' || !MacroDB.getSessoes) return null;
+    let sessoes = [];
+    try {
+      sessoes = await MacroDB.getSessoes();
+    } catch {
+      return null;
+    }
+    const limite = (agora || new Date()).getTime() - 70 * 86400000;
+    const horas = sessoes
+      .filter((x) => !x.emAndamento && x.ts)
+      .map((x) => new Date(x.ts))
+      .filter((d) => d.getDay() === diaSemana && d.getTime() >= limite)
+      .map((d) => d.getHours() + d.getMinutes() / 60)
+      .sort((a, b) => a - b);
+    if (horas.length < 2) return null;
+    const meio = Math.floor(horas.length / 2);
+    const mediana = horas.length % 2 ? horas[meio] : (horas[meio - 1] + horas[meio]) / 2;
+    return { hora: Math.round(mediana * 4) / 4, vezes: horas.length };
+  }
+
+  const rotuloHora = (h) => {
+    const hh = Math.floor(h);
+    const mm = Math.round((h - hh) * 60);
+    return mm ? `${hh}h${String(mm).padStart(2, '0')}` : `${hh}h`;
+  };
+
   /* ---- Contexto: metas, consumo do dia e histórico ---- */
 
   const chaveDia = (d) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
 
   async function contexto(quando) {
     const data = quando || new Date();
+    // pré-treino: entre 2h30 e 30 min antes do horário habitual de treino
+    // daquele dia da semana
+    const treino = await horarioDeTreino(data.getDay(), data);
+    const hAgora = data.getHours() + data.getMinutes() / 60;
+    const preTreino = !!treino && hAgora >= treino.hora - 2.5 && hAgora <= treino.hora - 0.5;
     const s = MacroDB.getSettings();
     const plano = planoDe(s.refeicoesDia);
     const ref = refeicaoDe(data, plano);
@@ -331,7 +381,7 @@ const Sugestao = (() => {
       estourou || (metas.kcal && restante.kcal < Math.max(0.12 * metas.kcal, alvoKcal * 0.5));
     return {
       data, plano, ref, metas, consumido, restante, alvo, alvoKcal, fatia, apertado, estourou,
-      comidosHoje, recentes, frequencia, refeicoes,
+      comidosHoje, recentes, frequencia, refeicoes, treino, preTreino,
     };
   }
 
@@ -340,7 +390,9 @@ const Sugestao = (() => {
   // Montagens do catálogo, resolvidas na base de alimentos
   function pratosDoCatalogo(ctx) {
     const saida = [];
-    for (const m of montagensDe(ctx.ref.chave)) {
+    // perto do treino, o prato é o pré-treino, não o lanche comum
+    const lista = ctx.preTreino ? MONTAGENS.pretreino : montagensDe(ctx.ref.chave);
+    for (const m of lista) {
       const itens = [];
       for (const it of m.itens) {
         const food = FoodSearch.search(it.b, 1)[0];
@@ -459,7 +511,9 @@ const Sugestao = (() => {
       : ctx.alvo;
     ctx.alvo = alvo;
 
-    const brutos = [...(await pratosDoHistorico(ctx)), ...pratosDoCatalogo(ctx)];
+    const brutos = ctx.preTreino
+      ? pratosDoCatalogo(ctx)
+      : [...(await pratosDoHistorico(ctx)), ...pratosDoCatalogo(ctx)];
     // "Trocar" percorre as montagens: as últimas mostradas ficam de fora até
     // acabarem as opções, e aí a rodada recomeça
     let evitar = new Set(opcoes.evitar || []);
@@ -491,7 +545,7 @@ const Sugestao = (() => {
     };
   }
 
-  return { sugerir, contexto, refeicaoDe, planoDe, PLANOS, MONTAGENS, PAPEIS };
+  return { sugerir, contexto, refeicaoDe, planoDe, horarioDeTreino, rotuloHora, PLANOS, MONTAGENS, PAPEIS };
 })();
 
 if (typeof window !== 'undefined') window.Sugestao = Sugestao;

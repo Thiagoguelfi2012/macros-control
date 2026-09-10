@@ -32,6 +32,8 @@
     }</span>`;
   };
 
+  const DIA_SEMANA_LONGO = ['aos domingos', 'às segundas', 'às terças', 'às quartas', 'às quintas', 'às sextas', 'aos sábados'];
+
   const esc = (t) =>
     String(t ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
@@ -920,8 +922,12 @@
     box.innerHTML = `
       <div class="sug-head">
         <div>
-          <b>Prato sugerido${dados.montagem ? ` · ${esc(dados.montagem.nome)}` : ''}</b>
-          <span class="sug-sub">${esc(ctx.ref.nome)} · ${esc(cabecalho)}</span>
+          <b>${ctx.preTreino ? 'Pré-treino' : 'Prato sugerido'}${dados.montagem ? ` · ${esc(dados.montagem.nome)}` : ''}</b>
+          <span class="sug-sub">${
+            ctx.preTreino
+              ? `você costuma treinar às ${esc(Sugestao.rotuloHora(ctx.treino.hora))} ${esc(DIA_SEMANA_LONGO[ctx.data.getDay()])} · ${esc(cabecalho)}`
+              : `${esc(ctx.ref.nome)} · ${esc(cabecalho)}`
+          }</span>
         </div>
         <div class="sug-acoes">
           <button class="btn btn-mini" id="btn-sug-outra" type="button">Trocar</button>

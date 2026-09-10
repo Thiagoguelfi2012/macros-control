@@ -68,14 +68,24 @@
 
   /* ---- Agregação ---- */
 
+  const fmtVol = (ml) =>
+    ml >= 1000 ? `${fmt(ml / 1000, 2)} L` : `${fmt(ml, 0)} ml`;
+
+  // mesma régua do Diário: registro de água é líquido, sem caloria, chamado água
+  const ehAgua = (e) =>
+    typeof AguaAviso !== 'undefined'
+      ? AguaAviso.ehAgua(e)
+      : !!e.ml && (e.kcal || 0) <= 2 && /^agua( |,|$)/.test(String(e.nome || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''));
+
   function agregar(entries, inicio, fim, granularidade) {
     const soma = (b, e) => {
       b.kcal += e.kcal;
       b.p += e.p;
       b.c += e.c;
       b.g += e.g;
+      if (ehAgua(e)) b.agua += e.gramas || 0;
     };
-    const vazio = { kcal: 0, p: 0, c: 0, g: 0 };
+    const vazio = { kcal: 0, p: 0, c: 0, g: 0, agua: 0 };
     let buckets = [];
     if (granularidade === 'hora') {
       buckets = Array.from({ length: 24 }, (_, h) => ({ label: `${String(h).padStart(2, '0')}h`, ...vazio }));
@@ -396,6 +406,87 @@
 
   /* ---- Gráficos ---- */
 
+  let chartAgua = null;
+
+  // Água por período: barras do que foi bebido e a linha da meta. Em janelas
+  // maiores que o dia a meta da barra é a meta diária vezes os dias do balde.
+  function renderAgua(buckets, granularidade, entries, dias) {
+    const { metaAgua } = MacroDB.getSettings();
+    const total = entries.reduce((n, e) => (ehAgua(e) ? n + (e.gramas || 0) : n), 0);
+    const card = $('#card-agua');
+    if (!total && !metaAgua) {
+      card.hidden = true;
+      if (chartAgua) {
+        chartAgua.destroy();
+        chartAgua = null;
+      }
+      return;
+    }
+    card.hidden = false;
+    const media = total / Math.max(dias, 1);
+    // dias que bateram a meta (só faz sentido na granularidade de dia)
+    let cumpridos = null;
+    if (metaAgua && granularidade === 'dia') {
+      cumpridos = buckets.filter((b) => b.agua >= metaAgua).length;
+    }
+    $('#agua-sub').textContent =
+      `${fmtVol(total)} no período · média de ${fmtVol(media)} por dia` +
+      (metaAgua ? ` · meta de ${fmtVol(metaAgua)}` : '') +
+      (cumpridos != null ? ` · ${cumpridos} de ${buckets.length} ${buckets.length === 1 ? 'dia bateu' : 'dias bateram'} a meta` : '');
+
+    const azul = '#2aa5d6';
+    const datasets = [
+      {
+        label: 'Água',
+        data: buckets.map((b) => Math.round(b.agua)),
+        backgroundColor: buckets.map((b) =>
+          metaAgua && b.agua >= metaAgua * (b.dias || 1) ? azul : `${azul}88`
+        ),
+        borderColor: azul,
+        borderWidth: 1,
+        maxBarThickness: 26,
+        barPercentage: 0.65,
+        categoryPercentage: 0.8,
+      },
+    ];
+    if (metaAgua && granularidade !== 'hora') {
+      datasets.push({
+        type: 'line',
+        label: 'Meta',
+        data: buckets.map((b) => metaAgua * (b.dias || 1)),
+        borderColor: cssVar('--alvo-line'),
+        borderWidth: 2,
+        borderDash: [4, 4],
+        pointRadius: 0,
+        pointHoverRadius: 4,
+        fill: false,
+      });
+    }
+    if (chartAgua) chartAgua.destroy();
+    chartAgua = new Chart($('#chart-agua'), {
+      type: 'bar',
+      data: { labels: buckets.map((b) => b.label), datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: !!metaAgua, labels: { color: cssVar('--ink-2'), usePointStyle: true, pointStyleWidth: 10, boxHeight: 8, font: { size: 11 } } },
+          tooltip: { callbacks: { label: (ctx) => ` ${ctx.dataset.label}: ${fmtVol(ctx.parsed.y)}` } },
+        },
+        scales: {
+          x: { grid: { color: cssVar('--grid'), drawTicks: false }, border: { display: false }, ticks: { color: cssVar('--muted'), font: { size: 10 }, maxRotation: 60 } },
+          y: {
+            beginAtZero: true,
+            grid: { color: cssVar('--grid'), drawTicks: false },
+            border: { display: false },
+            ticks: { color: cssVar('--muted'), font: { size: 10 }, callback: (v) => fmtVol(v) },
+          },
+        },
+      },
+    });
+  }
+
   function renderCharts(buckets, granularidade, tot, dias) {
     const { gastoDiario } = MacroDB.getSettings();
     const ink2 = cssVar('--ink-2');
@@ -614,7 +705,9 @@
     renderTiles(tot, dias, diasReais);
     renderAcumulado(entries, inicio, fim);
     renderAlvo(tot, dias);
-    renderCharts(agregar(entries, inicio, fim, granularidade), granularidade, tot, dias);
+    const buckets = agregar(entries, inicio, fim, granularidade);
+    renderCharts(buckets, granularidade, tot, dias);
+    renderAgua(buckets, granularidade, entries, dias);
   }
 
 

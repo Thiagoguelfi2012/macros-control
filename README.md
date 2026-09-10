@@ -116,6 +116,16 @@ python3 -m http.server 8000
   clara, a que o prato acrescenta —, e **Montar refeição** joga todos os itens de uma vez na cesta do modal. Quando
   o dia já estourou (ou está perto), entra o **modo saciedade**: o prato encurta
   e vale o que enche mais por caloria, estourando o mínimo possível.
+
+  Nas horas que antecedem o treino a sugestão vira **pré-treino**. O horário não
+  é configurado: sai dos **treinos já feitos**, pela **mediana da hora de início
+  naquele dia da semana** nos últimos 70 dias (a partir de dois treinos
+  registrados no dia, arredondada em 15 min) — quem treina às quintas às 19h
+  recebe pré-treino entre 16h30 e 18h30. Aí o prato sai de um conjunto próprio
+  de montagens, de carboidrato acessível e gordura baixa (banana com aveia e
+  whey, pão com mel e whey, tapioca com queijo, batata doce com frango, cuscuz
+  com ovo…), e o cabeçalho diz de onde veio o palpite: "você costuma treinar às
+  19h às quintas".
 - **Relatório para o médico**: o botão **PDF** na barra de filtros abre uma prévia
   com duas saídas. **Baixar PDF** gera o arquivo para impressão (jsPDF, com os
   gráficos como imagem). **Enviar HTML** gera um **arquivo HTML interativo e
@@ -128,7 +138,11 @@ python3 -m http.server 8000
   navegação entre janelas); gráfico de calorias por dia/mês com linha do gasto
   estimado e da dieta alvo; déficit calórico acumulado; distribuição dos macros;
   **déficit/superávit calórico** do período, calculado a partir do gasto médio
-  diário definido em Configurações.
+  diário definido em Configurações. Tem também um **gráfico de água**: uma barra
+  por dia (ou por mês, na janela de 1 ano), **cheia nos dias em que a meta foi
+  batida** e vazada nos outros, com a linha da meta por cima e, embaixo, o total
+  do período, a média por dia e **quantos dias bateram a meta**. O cartão só
+  aparece quando há água registrada na janela.
 - **Treinos** (`treinos.html`, área Treino): três abas.
   - **Treinos** — no topo, a **frequência da semana**: um círculo por dia
     (segunda a domingo), marcado nos dias em que houve treino (com o número
