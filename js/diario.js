@@ -1032,6 +1032,88 @@
     return `${fmt(e.qtd)} × ${e.medida} (${e.ml ? fmtVol(e.gramas) : `${fmt(e.gramas)} g`})`;
   }
 
+  // Água do dia: soma o que foi registrado como água (0 kcal, medido em ml) e
+  // oferece os atalhos de copo e garrafa. Registrar pelo atalho cria um
+  // registro normal — dá para editar e apagar como qualquer outro.
+  const ehAgua = (e) =>
+    !!e.ml &&
+    (e.kcal || 0) <= 2 &&
+    /^agua( |,|$)/.test(
+      String(e.nome || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+    );
+
+  const ATALHOS_AGUA = [
+    ['copo (200 ml)', 200],
+    ['garrafinha (330 ml)', 330],
+    ['garrafa (500 ml)', 500],
+  ];
+
+  async function registrarAgua(rotulo, ml) {
+    const foods = await MacroDB.ensureFoods();
+    const food = foods.find((f) => f.n === 'Água') || foods.find((f) => /^Água( |$)/.test(f.n));
+    if (!food) return;
+    const medida = (food.m || []).find(([r]) => r === rotulo);
+    await MacroDB.addEntry({
+      ts: new Date().toISOString(),
+      foodId: food.i,
+      nome: food.n,
+      qtd: medida ? 1 : ml,
+      medida: medida ? rotulo : 'g',
+      gramas: ml,
+      ml: 1,
+      kcal: 0,
+      p: 0,
+      c: 0,
+      g: 0,
+    });
+    await render();
+  }
+
+  async function desfazerAgua(entries) {
+    const doDia = entries.filter(ehAgua);
+    const ultimo = doDia[doDia.length - 1];
+    if (!ultimo) return;
+    await MacroDB.deleteEntry(ultimo.id);
+    await render();
+  }
+
+  function cardAgua(doDia) {
+    const { metaAgua } = MacroDB.getSettings();
+    const bebido = doDia.filter(ehAgua).reduce((n, e) => n + (e.gramas || 0), 0);
+    const card = document.createElement('section');
+    card.className = 'agua-card';
+    const meta = metaAgua || 0;
+    const pct = meta ? Math.min(100, (bebido / meta) * 100) : 0;
+    card.innerHTML = `
+      <div class="agua-top">
+        <span class="agua-label">Água de hoje</span>
+        <span class="agua-val"><b>${fmtVol(bebido)}</b>${meta ? ` / ${fmtVol(meta)}` : ''}</span>
+      </div>
+      ${
+        meta
+          ? `<div class="agua-bar"><div style="width:${pct.toFixed(1)}%"></div></div>
+             <div class="agua-saldo">${
+               bebido >= meta
+                 ? 'meta do dia batida ✓'
+                 : `faltam ${fmtVol(meta - bebido)} — cerca de ${Math.max(1, Math.round((meta - bebido) / 200))} ${Math.round((meta - bebido) / 200) === 1 ? 'copo' : 'copos'}`
+             }</div>`
+          : `<div class="agua-config">Defina sua meta de água em <a href="config.html">Ajustes</a> para acompanhar aqui.</div>`
+      }
+      <div class="agua-acoes">
+        ${ATALHOS_AGUA.map(([rot, ml]) => `<button class="btn btn-mini agua-add" type="button" data-rot="${esc(rot)}" data-ml="${ml}">+ ${fmtVol(ml)}</button>`).join('')}
+        ${bebido > 0 ? '<button class="btn btn-mini btn-ghost agua-undo" type="button">desfazer</button>' : ''}
+      </div>`;
+    card.querySelectorAll('.agua-add').forEach((b) => {
+      b.addEventListener('click', () => registrarAgua(b.dataset.rot, Number(b.dataset.ml)));
+    });
+    const undo = card.querySelector('.agua-undo');
+    if (undo) undo.addEventListener('click', () => desfazerAgua(doDia));
+    return card;
+  }
+
   function renderHoje(entries) {
     const hoje = new Date();
     const keyHoje = `${hoje.getFullYear()}-${pad(hoje.getMonth() + 1)}-${pad(hoje.getDate())}`;
@@ -1129,6 +1211,13 @@
     const entries = await MacroDB.getAllEntries();
     historico.innerHTML = '';
     historico.appendChild(renderHoje(entries));
+    const agoraDia = new Date();
+    const chaveHoje = `${agoraDia.getFullYear()}-${pad(agoraDia.getMonth() + 1)}-${pad(agoraDia.getDate())}`;
+    const doDiaHoje = entries.filter((e) => {
+      const d = new Date(e.ts);
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` === chaveHoje;
+    });
+    historico.appendChild(cardAgua(doDiaHoje));
     if (!entries.length) {
       historico.insertAdjacentHTML(
         'beforeend',

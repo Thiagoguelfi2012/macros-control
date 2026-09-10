@@ -3,7 +3,7 @@ const MacroDB = (() => {
   const DB_NAME = 'macros-db';
   const DB_VERSION = 3;
   const FOODS_URL = 'data/foods.json';
-  const FOODS_VERSION = 48; // deve acompanhar o campo v de data/foods.json
+  const FOODS_VERSION = 49; // deve acompanhar o campo v de data/foods.json
   let dbPromise = null;
   let foodsCache = null; // array em memória para busca instantânea
   let versaoCarregada = null; // versão que de fato entrou na busca
@@ -351,10 +351,11 @@ const MacroDB = (() => {
       metaC: n('metaC'),
       metaG: n('metaG'),
       refeicoesDia: n('refeicoesDia') || 4,
+      metaAgua: n('metaAgua'),
     };
   }
 
-  function saveSettings({ gastoBasal, gastoDiario, metaKcal, metaP, metaC, metaG, refeicoesDia }) {
+  function saveSettings({ gastoBasal, gastoDiario, metaKcal, metaP, metaC, metaG, refeicoesDia, metaAgua }) {
     const set = (k, v) => {
       if (v != null) localStorage.setItem(k, String(v));
     };
@@ -365,6 +366,7 @@ const MacroDB = (() => {
     set('metaC', metaC);
     set('metaG', metaG);
     set('refeicoesDia', refeicoesDia);
+    set('metaAgua', metaAgua);
     notifyChange('settings');
   }
 
@@ -403,7 +405,7 @@ const MacroDB = (() => {
 
   /* ---- Limpeza local (troca de usuário no mesmo aparelho) ---- */
 
-  const CHAVES_CONFIG = ['gastoBasal', 'gastoDiario', 'metaKcal', 'metaP', 'metaC', 'metaG', 'refeicoesDia'];
+  const CHAVES_CONFIG = ['gastoBasal', 'gastoDiario', 'metaKcal', 'metaP', 'metaC', 'metaG', 'refeicoesDia', 'metaAgua'];
 
   // Apaga registros, alimentos próprios e configurações DESTE aparelho. Usado ao
   // entrar com outra conta ou sair: os dados de quem saiu permanecem na nuvem.

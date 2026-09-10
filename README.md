@@ -36,6 +36,13 @@ python3 -m http.server 8000
   cabeçalho (ou no ícone de lápis) abre a **refeição inteira para editar** — os
   itens voltam para a cesta do modal, onde dá para trocar quantidades, remover,
   acrescentar alimentos e mudar o horário de todos de uma vez.
+- **Meta de água**: um cartão no Diário mostra quanto você já bebeu hoje contra
+  a meta, com **atalhos de um toque** — +200 ml (copo), +330 ml (garrafinha) e
+  +500 ml (garrafa) — e um "desfazer" para o último registro. A meta é definida
+  em **Ajustes** (a tela mostra a conversão em copos e garrafas; a referência
+  comum é ~35 ml por quilo de peso). Cada toque cria um **registro normal** de
+  água, de 0 kcal: aparece no histórico, pode ser editado ou apagado como
+  qualquer outro item, entra no backup e não mexe em caloria nem macro.
 - **Aviso de carga glicêmica**: enquanto a refeição é montada, o app estima a
   **carga glicêmica** dela (índice glicêmico × carboidrato ÷ 100, item a item) e
   avisa quando ela fica alta. O índice sai de uma tabela por tipo de alimento
@@ -240,7 +247,7 @@ python3 -m http.server 8000
   intervalo de cada exercício — é só ajustar ou trocar.
 - **Ajustes** (`config.html`): tela própria com gasto energético (TMB/TDEE),
   **dieta alvo** (alvos diários de calorias e macros, com as kcal implícitas
-  calculadas), **refeições por dia** (3 a 6 — a divisão que a Sugestão usa para
+  calculadas), **meta de água**, **refeições por dia** (3 a 6 — a divisão que a Sugestão usa para
   repartir o que falta da meta entre as refeições que ainda vêm, com a prévia
   de quantas kcal cabem em cada uma), **backup e transferência** e **conta e
   sincronização**. A dieta alvo
@@ -327,7 +334,7 @@ externas — use o app no endereço próprio (GitHub Pages) ou no arquivo standa
 - Biblioteca de exercícios: `js/exercicios.js`, gerado por
   `tools/build-exercicios.mjs` a partir de uma lista curada — não depende de rede.
 - Configurações (TMB/TDEE e dieta alvo): `localStorage`.
-- Banco de alimentos: `data/foods.json` (~2,3 MB, **18.117 itens**, ~10.900 com
+- Banco de alimentos: `data/foods.json` (~2,3 MB, **18.120 itens**, ~10.900 com
   medidas caseiras e ~890 líquidos medidos em ml/L), carregado no IndexedDB na
   primeira visita. Valores por 100 g (ou 100 ml). Fontes, na ordem de prioridade da
   busca:
@@ -340,7 +347,7 @@ externas — use o app no endereço próprio (GitHub Pages) ou no arquivo standa
   | **Chocolates** (`tools/chocolates.mjs`) | 169 | catálogo de chocolates e bombons: Cacau Show (Lacreme, Zero, Mil Folhas, trufas, tabletes, bombons, Lanut), Kopenhagen, Brasil Cacau, Lacta, Garoto, Nestlé, Hershey's, Ferrero/Kinder, Lindt, Arcor, Neugebauer, Havanna, **Arcor** (Block, Bon o Bon, Tortuguita), **Dois Frades** (o "chocolate do padre") e os bean-to-bar brasileiros (Dengo, Amma, Luisa Abram, Nugali, Baianí, Mendoá) |
   | **Pastas** (`tools/pastas.mjs`) | 70 | pastas de amendoim, castanhas e sementes: Dr. Peanut e Vitapower (todos os sabores), Amendocrem, Reese's, Skippy, Jif, as integrais de mercado natural (Mandubim, Pura Vida, Vitao, Jasmine, Mãe Terra), as de marcas de suplemento e as de castanha de caju, amêndoa, pistache, gergelim (tahine) e coco |
   | **Sorvetes** (`tools/sorvetes.mjs`) | 58 | picolés, sorvetes e gelaterias: a linha licenciada de picolé (Prestígio, Sonho de Valsa, Ouro Branco, Diamante Negro, Bis, Laka, Oreo, Nescau, Kit Kat, Moça, Alpino, Brigadeiro, Serenata, Chokito), Kibon (Magnum, Cornetto, Sandubon, Fruttare), os potes de Kibon/Nestlé/Moça e os light, La Frutta, os premium (Häagen-Dazs, Ben & Jerry's, Diletto, paleta mexicana) e as redes de sorveteria (Chiquinho: casquinha, sundae, especial, milk shake, açaí com adicionais) |
-  | **Curados** (`tools/curados.mjs`) | 633 | pratos de vida real ausentes das tabelas: temaki e sushi, esfihas e salgados de festa, docinhos, fast food, frutos do mar, churrasco, bolos de confeitaria, batatas congeladas e o preparo **na airfryer** (sorriso/carinha, palito, noisette, rústica, gomos), granolas de marca (linha Vitalin Granola Whey e as tradicionais), castanhas caramelizadas de quiosque (Bavarian Nuts), esfihas doces de esfiharia (chocolate, Nutella, Sonho de Valsa, Ouro Branco, morango com banana, brigadeiro, Romeu e Julieta…) a mesa de restaurante chinês (banana caramelizada, agridoces, chop suey, yakisoba, bifum, guioza, wonton) e as **hamburguerias artesanais** que as tabelas ignoram — o cardápio da Patties (Original, Big Patties, Fat Greg, Ultra, frango, vegetariano, skinny fries) e os genéricos de smash burger para as outras redes, e a leva de **cookies** (caseiro de gotas de chocolate, aveia com passas, integral, proteico, vegano, e os recheados estilo americano de Nutella, doce de leite, Ninho, brigadeiro, pistache, Ovomaltine, paçoca, Oreo, red velvet, Kinder) |
+  | **Curados** (`tools/curados.mjs`) | 636 | pratos de vida real ausentes das tabelas: temaki e sushi, esfihas e salgados de festa, docinhos, fast food, frutos do mar, churrasco, bolos de confeitaria, batatas congeladas e o preparo **na airfryer** (sorriso/carinha, palito, noisette, rústica, gomos), granolas de marca (linha Vitalin Granola Whey e as tradicionais), castanhas caramelizadas de quiosque (Bavarian Nuts), esfihas doces de esfiharia (chocolate, Nutella, Sonho de Valsa, Ouro Branco, morango com banana, brigadeiro, Romeu e Julieta…) a mesa de restaurante chinês (banana caramelizada, agridoces, chop suey, yakisoba, bifum, guioza, wonton) e as **hamburguerias artesanais** que as tabelas ignoram — o cardápio da Patties (Original, Big Patties, Fat Greg, Ultra, frango, vegetariano, skinny fries) e os genéricos de smash burger para as outras redes, e a leva de **cookies** (caseiro de gotas de chocolate, aveia com passas, integral, proteico, vegano, e os recheados estilo americano de Nutella, doce de leite, Ninho, brigadeiro, pistache, Ovomaltine, paçoca, Oreo, red velvet, Kinder) |
   | **IBGE/POF** | 1.873 | alimentos e preparações, PT nativo |
   | **USDA SR28** | 8.717 | complemento, nomes traduzidos por glossário EN→PT |
 

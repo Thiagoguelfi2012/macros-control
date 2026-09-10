@@ -68,6 +68,31 @@
     avisarTelas();
   });
 
+  /* ---- Meta de água ---- */
+
+  const { metaAgua } = MacroDB.getSettings();
+  if (metaAgua) $('#inp-meta-agua').value = metaAgua;
+
+  function atualizarHintAgua() {
+    const ml = parseFloat($('#inp-meta-agua').value) || 0;
+    if (!ml) {
+      $('#agua-hint').textContent = '';
+      return;
+    }
+    const copos = Math.round(ml / 200);
+    $('#agua-hint').textContent =
+      `${fmt(ml / 1000, 2)} L por dia — cerca de ${copos} ${copos === 1 ? 'copo' : 'copos'} de 200 ml, ou ${fmt(ml / 500, 1)} garrafas de meio litro.`;
+  }
+  $('#inp-meta-agua').addEventListener('input', atualizarHintAgua);
+  atualizarHintAgua();
+  $('#btn-salvar-agua').addEventListener('click', () => {
+    MacroDB.saveSettings({ metaAgua: parseFloat($('#inp-meta-agua').value) || 0 });
+    const ok = $('#save-ok-agua');
+    ok.hidden = false;
+    setTimeout(() => (ok.hidden = true), 2000);
+    avisarTelas();
+  });
+
   /* ---- Refeições por dia (usado pela sugestão de refeição) ---- */
 
   const { refeicoesDia } = MacroDB.getSettings();

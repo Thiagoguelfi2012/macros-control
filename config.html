@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Ajustes — Controle de Macros</title>
   <link rel="icon" href="data:," />
-  <link rel="stylesheet" href="css/app.css?v=3747e8c2" />
+  <link rel="stylesheet" href="css/app.css?v=06728844" />
 </head>
 <body>
   <div class="barras">
@@ -61,6 +61,20 @@
         <span class="save-ok" id="save-ok-alvo" hidden>✓ salvo</span>
       </div>
       <p class="cad-hint" id="alvo-kcal-hint" style="margin-top:10px"></p>
+    </div>
+
+    <div class="settings-card">
+      <h3>Meta de água</h3>
+      <p class="sub">Quanto você quer beber por dia. O Diário mostra o quanto já foi, com botões para registrar um copo ou uma garrafa em um toque. Referência comum: cerca de <b>35 ml por quilo de peso</b> — 2,4 L para 70 kg —, mais em dia quente ou de treino.</p>
+      <div class="settings-row">
+        <div class="field">
+          <label for="inp-meta-agua">Água (ml/dia)</label>
+          <input type="number" id="inp-meta-agua" min="0" step="100" placeholder="ex.: 2500" />
+        </div>
+        <button class="btn btn-primary" id="btn-salvar-agua">Salvar</button>
+        <span class="save-ok" id="save-ok-agua" hidden>✓ salvo</span>
+      </div>
+      <p class="cad-hint" id="agua-hint" style="margin-top:10px"></p>
     </div>
 
     <div class="settings-card">
@@ -142,10 +156,10 @@
 
   </main>
 
-  <script src="js/db.js?v=756d2972"></script>
+  <script src="js/db.js?v=312ec7fd"></script>
   <script src="js/sync.js?v=bc4146c6"></script>
   <script src="js/sugestao.js?v=72e78106"></script>
-  <script src="js/config.js?v=6d4228d4"></script>
+  <script src="js/config.js?v=09d56816"></script>
   <script src="js/refresh.js?v=5d27466c"></script>
 </body>
 </html>

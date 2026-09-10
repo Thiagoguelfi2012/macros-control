@@ -722,4 +722,9 @@ export const CURADOS = [
   { n: 'Cookie recheado com Kinder Bueno', kcal: 495, p: 7, c: 56, g: 26.5, m: [['unidade (100 g)', 100], ['metade (50 g)', 50]] },
   { n: 'Cookie gigante recheado (cookeria)', kcal: 480, p: 6, c: 58, g: 24.5, m: [['unidade (150 g)', 150]] },
   { n: 'Cookie Mr. Cheney (unidade)', kcal: 470, p: 5.5, c: 59, g: 23, m: [['unidade (60 g)', 60]] },
+
+  // ---- Água: o que o app precisa para acompanhar a meta de hidratação ----
+  { n: 'Água', kcal: 0, p: 0, c: 0, g: 0, l: 1, m: [['copo (200 ml)', 200], ['copo grande (300 ml)', 300], ['garrafinha (330 ml)', 330], ['garrafa (500 ml)', 500], ['garrafa (1 L)', 1000], ['garrafa (1,5 L)', 1500], ['garrafa (2 L)', 2000]] },
+  { n: 'Água com gás', kcal: 0, p: 0, c: 0, g: 0, l: 1, m: [['copo (200 ml)', 200], ['garrafa (300 ml)', 300], ['garrafa (500 ml)', 500]] },
+  { n: 'Água mineral sem gás', kcal: 0, p: 0, c: 0, g: 0, l: 1, m: [['copo (200 ml)', 200], ['garrafinha (330 ml)', 330], ['garrafa (500 ml)', 500], ['garrafa (1,5 L)', 1500]] },
 ];
