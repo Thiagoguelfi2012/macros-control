@@ -132,6 +132,9 @@ ${read('js/treinos.js')}
 ${read('js/config.js')}
 </script>
 <script>
+${read('js/agua-aviso.js')}
+</script>
+<script>
 ${read('js/refresh.js')}
 </script>
 <script>

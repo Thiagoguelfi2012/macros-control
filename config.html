@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Ajustes — Controle de Macros</title>
   <link rel="icon" href="data:," />
-  <link rel="stylesheet" href="css/app.css?v=06728844" />
+  <link rel="stylesheet" href="css/app.css?v=10bd52ba" />
 </head>
 <body>
   <div class="barras">
@@ -75,6 +75,18 @@
         <span class="save-ok" id="save-ok-agua" hidden>✓ salvo</span>
       </div>
       <p class="cad-hint" id="agua-hint" style="margin-top:10px"></p>
+      <div class="agua-ritmo">
+        <p class="sub"><b>Ritmo do dia:</b> metade da meta até as <b>13h</b> e o restante até as <b>18h</b>. O Diário mostra se você está em dia, e o app pode avisar nesses horários.</p>
+        <label class="check-linha">
+          <input type="checkbox" id="chk-aviso-agua" checked />
+          Avisar às 13h e às 18h quando faltar água
+        </label>
+        <div class="settings-row" style="margin-top:8px">
+          <button class="btn" id="btn-permitir-aviso" type="button">Permitir notificações</button>
+          <span class="cad-hint" id="aviso-agua-status"></span>
+        </div>
+        <p class="cad-hint">O navegador só deixa um site avisar com o app aberto (aba viva ou em segundo plano recente). Com o app fechado, o aviso aparece assim que você abrir de novo — e o cartão do Diário mostra o atraso de qualquer jeito.</p>
+      </div>
     </div>
 
     <div class="settings-card">
@@ -159,7 +171,8 @@
   <script src="js/db.js?v=312ec7fd"></script>
   <script src="js/sync.js?v=bc4146c6"></script>
   <script src="js/sugestao.js?v=72e78106"></script>
-  <script src="js/config.js?v=09d56816"></script>
+  <script src="js/config.js?v=3baedae4"></script>
+  <script src="js/agua-aviso.js?v=e9d2f26a"></script>
   <script src="js/refresh.js?v=5d27466c"></script>
 </body>
 </html>

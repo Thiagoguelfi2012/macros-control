@@ -36,13 +36,23 @@ python3 -m http.server 8000
   cabeçalho (ou no ícone de lápis) abre a **refeição inteira para editar** — os
   itens voltam para a cesta do modal, onde dá para trocar quantidades, remover,
   acrescentar alimentos e mudar o horário de todos de uma vez.
-- **Meta de água**: um cartão no Diário mostra quanto você já bebeu hoje contra
-  a meta, com **atalhos de um toque** — +200 ml (copo), +330 ml (garrafinha) e
-  +500 ml (garrafa) — e um "desfazer" para o último registro. A meta é definida
-  em **Ajustes** (a tela mostra a conversão em copos e garrafas; a referência
-  comum é ~35 ml por quilo de peso). Cada toque cria um **registro normal** de
-  água, de 0 kcal: aparece no histórico, pode ser editado ou apagado como
-  qualquer outro item, entra no backup e não mexe em caloria nem macro.
+- **Meta de água, com ritmo do dia**: um cartão no Diário mostra quanto você já
+  bebeu hoje contra a meta, com **atalhos de um toque** — +200 ml (copo),
+  +330 ml (garrafinha) e +500 ml (garrafa) — e um "desfazer" para o último
+  registro. A meta é definida em **Ajustes** (a tela mostra a conversão em copos
+  e garrafas; a referência comum é ~35 ml por quilo de peso). Cada toque cria um
+  **registro normal** de água, de 0 kcal: aparece no histórico, pode ser editado
+  ou apagado como qualquer outro item, entra no backup e não mexe em caloria nem
+  macro.
+
+  O dia tem **ritmo**: metade da meta até as **13h** e o restante até as **18h**.
+  A barra marca os dois pontos (verde quando cumprido, vermelho quando passou
+  sem cumprir) e o texto diz o que falta para o próximo — ou avisa o atraso, com
+  o cartão inteiro em vermelho. Nos horários, o app pode **notificar**: a
+  permissão é pedida em Ajustes e o aviso pode ser desligado por lá. O limite é
+  honesto e está escrito na tela — um site estático só dispara a notificação com
+  o app aberto; **fechado, o aviso sai assim que o app é aberto de novo**, e o
+  cartão mostra o atraso de qualquer jeito.
 - **Aviso de carga glicêmica**: enquanto a refeição é montada, o app estima a
   **carga glicêmica** dela (índice glicêmico × carboidrato ÷ 100, item a item) e
   avisa quando ela fica alta. O índice sai de uma tabela por tipo de alimento
@@ -400,6 +410,7 @@ js/diario.js                   tela Diário
 js/sugestao.js                 monta o prato: montagens típicas, histórico e porções
 js/barras.js                   leitor de código de barras + Open Food Facts
 js/glicemia.js                 carga glicêmica estimada da refeição e o que dilui
+js/agua-aviso.js               ritmo da água (13h/18h), alerta e notificação
 js/relatorios.js               tela Relatórios (Chart.js)
 js/treinos.js                  treinos, execução com carga e evolução (Chart.js)
 js/exercicios.js               biblioteca de exercícios da academia (gerado)

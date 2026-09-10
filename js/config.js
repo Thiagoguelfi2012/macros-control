@@ -93,6 +93,39 @@
     avisarTelas();
   });
 
+  /* ---- Aviso do ritmo da água ---- */
+
+  const chkAviso = $('#chk-aviso-agua');
+  chkAviso.checked = localStorage.getItem('avisoAguaLigado') !== '0';
+  const statusAviso = () => {
+    const el = $('#aviso-agua-status');
+    const btn = $('#btn-permitir-aviso');
+    if (typeof AguaAviso === 'undefined' || !AguaAviso.suportado()) {
+      el.textContent = 'Este navegador não permite notificações.';
+      btn.hidden = true;
+      return;
+    }
+    const p = AguaAviso.permissao();
+    el.textContent =
+      p === 'granted'
+        ? 'Notificações permitidas ✓'
+        : p === 'denied'
+          ? 'Notificações bloqueadas nas configurações do navegador.'
+          : 'Ainda não permitido.';
+    btn.hidden = p === 'granted';
+  };
+  statusAviso();
+  chkAviso.addEventListener('change', () => {
+    localStorage.setItem('avisoAguaLigado', chkAviso.checked ? '1' : '0');
+    if (chkAviso.checked && typeof AguaAviso !== 'undefined') AguaAviso.verificar();
+  });
+  $('#btn-permitir-aviso').addEventListener('click', async () => {
+    if (typeof AguaAviso === 'undefined') return;
+    await AguaAviso.pedirPermissao();
+    statusAviso();
+    AguaAviso.verificar();
+  });
+
   /* ---- Refeições por dia (usado pela sugestão de refeição) ---- */
 
   const { refeicoesDia } = MacroDB.getSettings();

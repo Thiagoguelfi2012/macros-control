@@ -1278,3 +1278,24 @@ main { max-width: 860px; margin: 0 auto; padding: 20px 16px 110px; }
 .agua-acoes { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 .agua-acoes .btn-mini { padding: 7px 10px; font-size: 12.5px; }
 .agua-acoes .agua-add { color: #2aa5d6; border-color: color-mix(in srgb, #2aa5d6 45%, transparent); }
+
+/* marcas do ritmo da água (13h e 18h) */
+.agua-bar { position: relative; }
+.agua-marca {
+  position: absolute;
+  top: -2px;
+  width: 2px;
+  height: 12px;
+  margin-left: -1px;
+  background: var(--muted);
+  opacity: 0.65;
+  border-radius: 1px;
+}
+.agua-marca.feito { background: var(--good-text); opacity: 1; }
+.agua-marca.perdida { background: var(--bad-text); opacity: 1; }
+.agua-card.atrasada { border-color: color-mix(in srgb, var(--bad-text) 45%, transparent); }
+.agua-card.atrasada .agua-saldo { color: var(--bad-text); }
+.agua-card.ok .agua-saldo { color: var(--good-text); }
+.agua-ritmo { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--grid); }
+.check-linha { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-top: 6px; }
+.check-linha input { width: 18px; height: 18px; accent-color: var(--accent); }

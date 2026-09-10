@@ -1290,6 +1290,27 @@ main { max-width: 860px; margin: 0 auto; padding: 20px 16px 110px; }
 .agua-acoes .btn-mini { padding: 7px 10px; font-size: 12.5px; }
 .agua-acoes .agua-add { color: #2aa5d6; border-color: color-mix(in srgb, #2aa5d6 45%, transparent); }
 
+/* marcas do ritmo da água (13h e 18h) */
+.agua-bar { position: relative; }
+.agua-marca {
+  position: absolute;
+  top: -2px;
+  width: 2px;
+  height: 12px;
+  margin-left: -1px;
+  background: var(--muted);
+  opacity: 0.65;
+  border-radius: 1px;
+}
+.agua-marca.feito { background: var(--good-text); opacity: 1; }
+.agua-marca.perdida { background: var(--bad-text); opacity: 1; }
+.agua-card.atrasada { border-color: color-mix(in srgb, var(--bad-text) 45%, transparent); }
+.agua-card.atrasada .agua-saldo { color: var(--bad-text); }
+.agua-card.ok .agua-saldo { color: var(--good-text); }
+.agua-ritmo { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--grid); }
+.check-linha { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-top: 6px; }
+.check-linha input { width: 18px; height: 18px; accent-color: var(--accent); }
+
 </style>
 </head>
 <body>
@@ -1640,6 +1661,18 @@ main { max-width: 860px; margin: 0 auto; padding: 20px 16px 110px; }
         <span class="save-ok" id="save-ok-agua" hidden>✓ salvo</span>
       </div>
       <p class="cad-hint" id="agua-hint" style="margin-top:10px"></p>
+      <div class="agua-ritmo">
+        <p class="sub"><b>Ritmo do dia:</b> metade da meta até as <b>13h</b> e o restante até as <b>18h</b>. O Diário mostra se você está em dia, e o app pode avisar nesses horários.</p>
+        <label class="check-linha">
+          <input type="checkbox" id="chk-aviso-agua" checked />
+          Avisar às 13h e às 18h quando faltar água
+        </label>
+        <div class="settings-row" style="margin-top:8px">
+          <button class="btn" id="btn-permitir-aviso" type="button">Permitir notificações</button>
+          <span class="cad-hint" id="aviso-agua-status"></span>
+        </div>
+        <p class="cad-hint">O navegador só deixa um site avisar com o app aberto (aba viva ou em segundo plano recente). Com o app fechado, o aviso aparece assim que você abrir de novo — e o cartão do Diário mostra o atraso de qualquer jeito.</p>
+      </div>
     </div>
 
     <div class="settings-card">
@@ -5849,6 +5882,27 @@ if (typeof window !== 'undefined') window.Barras = Barras;
     card.className = 'agua-card';
     const meta = metaAgua || 0;
     const pct = meta ? Math.min(100, (bebido / meta) * 100) : 0;
+    // ritmo do dia: metade até as 13h, o restante até as 18h
+    const est = meta && typeof AguaAviso !== 'undefined' ? AguaAviso.estado(bebido, meta) : null;
+    if (est && est.atrasado && !est.completo) card.classList.add('atrasada');
+    else if (est && est.completo) card.classList.add('ok');
+    const marcas = est
+      ? AguaAviso.CHECKPOINTS.map((c) => {
+          const alvo = meta * c.fracao;
+          const feito = bebido >= alvo;
+          const passou = new Date().getHours() >= c.hora;
+          return `<span class="agua-marca${feito ? ' feito' : passou ? ' perdida' : ''}" style="left:${(c.fracao * 100).toFixed(0)}%" title="${fmtVol(alvo)} até as ${c.rotulo}"></span>`;
+        }).join('')
+      : '';
+    const ritmo = !est
+      ? ''
+      : est.completo
+        ? 'meta do dia batida ✓'
+        : est.atrasado
+          ? `<b>Atrasada:</b> a meta até as ${est.atrasado.rotulo} era ${fmtVol(est.alvoAgora)} — faltam ${fmtVol(est.falta)}.`
+          : est.proximo
+            ? `Até as ${est.proximo.rotulo}: ${fmtVol(est.alvoAgora)} (faltam ${fmtVol(est.falta)}).`
+            : `Faltam ${fmtVol(meta - bebido)} para fechar o dia.`;
     card.innerHTML = `
       <div class="agua-top">
         <span class="agua-label">Água de hoje</span>
@@ -5856,12 +5910,8 @@ if (typeof window !== 'undefined') window.Barras = Barras;
       </div>
       ${
         meta
-          ? `<div class="agua-bar"><div style="width:${pct.toFixed(1)}%"></div></div>
-             <div class="agua-saldo">${
-               bebido >= meta
-                 ? 'meta do dia batida ✓'
-                 : `faltam ${fmtVol(meta - bebido)} — cerca de ${Math.max(1, Math.round((meta - bebido) / 200))} ${Math.round((meta - bebido) / 200) === 1 ? 'copo' : 'copos'}`
-             }</div>`
+          ? `<div class="agua-bar"><div style="width:${pct.toFixed(1)}%"></div>${marcas}</div>
+             <div class="agua-saldo">${ritmo}</div>`
           : `<div class="agua-config">Defina sua meta de água em <a href="config.html">Ajustes</a> para acompanhar aqui.</div>`
       }
       <div class="agua-acoes">
@@ -10408,6 +10458,39 @@ function abrirTudo(abrir){document.querySelectorAll('details').forEach(function(
     avisarTelas();
   });
 
+  /* ---- Aviso do ritmo da água ---- */
+
+  const chkAviso = $('#chk-aviso-agua');
+  chkAviso.checked = localStorage.getItem('avisoAguaLigado') !== '0';
+  const statusAviso = () => {
+    const el = $('#aviso-agua-status');
+    const btn = $('#btn-permitir-aviso');
+    if (typeof AguaAviso === 'undefined' || !AguaAviso.suportado()) {
+      el.textContent = 'Este navegador não permite notificações.';
+      btn.hidden = true;
+      return;
+    }
+    const p = AguaAviso.permissao();
+    el.textContent =
+      p === 'granted'
+        ? 'Notificações permitidas ✓'
+        : p === 'denied'
+          ? 'Notificações bloqueadas nas configurações do navegador.'
+          : 'Ainda não permitido.';
+    btn.hidden = p === 'granted';
+  };
+  statusAviso();
+  chkAviso.addEventListener('change', () => {
+    localStorage.setItem('avisoAguaLigado', chkAviso.checked ? '1' : '0');
+    if (chkAviso.checked && typeof AguaAviso !== 'undefined') AguaAviso.verificar();
+  });
+  $('#btn-permitir-aviso').addEventListener('click', async () => {
+    if (typeof AguaAviso === 'undefined') return;
+    await AguaAviso.pedirPermissao();
+    statusAviso();
+    AguaAviso.verificar();
+  });
+
   /* ---- Refeições por dia (usado pela sugestão de refeição) ---- */
 
   const { refeicoesDia } = MacroDB.getSettings();
@@ -10653,6 +10736,151 @@ function abrirTudo(abrir){document.querySelectorAll('details').forEach(function(
     document.addEventListener('config:refresh', preencherConfig);
   }
 })();
+
+</script>
+<script>
+/* Ritmo da meta de água: metade até as 13h, o restante até as 18h.
+
+   O aviso tem duas pernas. A primeira é a tela: sempre que o app abre, o
+   cartão do Diário mostra se o ritmo está em dia. A segunda é a notificação do
+   navegador nos horários — e aqui vale ser honesto sobre o limite: um site
+   estático só consegue disparar o alarme com a aba viva. Se o app estiver
+   fechado às 13h, o aviso aparece na primeira vez que ele for aberto depois
+   disso (e a notificação sai nesse momento), em vez de se perder. */
+const AguaAviso = (() => {
+  const CHECKPOINTS = [
+    { hora: 13, fracao: 0.5, rotulo: '13h' },
+    { hora: 18, fracao: 1, rotulo: '18h' },
+  ];
+
+  const chaveDia = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+  const ehAgua = (e) =>
+    !!e.ml &&
+    (e.kcal || 0) <= 2 &&
+    /^agua( |,|$)/.test(
+      String(e.nome || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[̀-ͯ]/g, '')
+    );
+
+  const fmtVol = (ml) =>
+    ml >= 1000
+      ? `${Number(ml / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 2 })} L`
+      : `${Math.round(ml)} ml`;
+
+  async function totalDeHoje(quando) {
+    const agora = quando || new Date();
+    const hoje = chaveDia(agora);
+    const entries = await MacroDB.getAllEntries();
+    return entries
+      .filter((e) => ehAgua(e) && chaveDia(new Date(e.ts)) === hoje)
+      .reduce((n, e) => n + (e.gramas || 0), 0);
+  }
+
+  // Como está o ritmo agora: quanto já deveria ter bebido e o que falta
+  function estado(bebido, meta, quando) {
+    const agora = quando || new Date();
+    const h = agora.getHours() + agora.getMinutes() / 60;
+    if (!meta) return { semMeta: true, bebido };
+    const vencidos = CHECKPOINTS.filter((c) => h >= c.hora);
+    const proximo = CHECKPOINTS.find((c) => h < c.hora) || null;
+    const atrasado = vencidos.filter((c) => bebido < meta * c.fracao).pop() || null;
+    const alvoAgora = atrasado ? meta * atrasado.fracao : proximo ? meta * proximo.fracao : meta;
+    return {
+      bebido,
+      meta,
+      proximo,
+      atrasado,
+      alvoAgora,
+      falta: Math.max(0, alvoAgora - bebido),
+      completo: bebido >= meta,
+      // antes das 13h ainda não há atraso possível: o alvo é só uma referência
+      emDia: !atrasado,
+    };
+  }
+
+  const chaveAviso = (c, agora) => `avisoAgua:${chaveDia(agora)}:${c.hora}`;
+
+  function notificar(c, est) {
+    if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return false;
+    const titulo = c.fracao >= 1 ? 'Meta de água do dia' : 'Metade da água até as 13h';
+    const corpo =
+      c.fracao >= 1
+        ? `Faltam ${fmtVol(est.meta - est.bebido)} para fechar a meta de hoje (${fmtVol(est.bebido)} de ${fmtVol(est.meta)}).`
+        : `Você bebeu ${fmtVol(est.bebido)} de ${fmtVol(est.meta * c.fracao)} até as ${c.rotulo}. Faltam ${fmtVol(est.meta * c.fracao - est.bebido)}.`;
+    try {
+      new Notification(titulo, { body: corpo, tag: `agua-${c.hora}`, icon: 'data:,' });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  let timers = [];
+  const limparTimers = () => {
+    for (const t of timers) clearTimeout(t);
+    timers = [];
+  };
+
+  // Dispara o que estiver vencido e agenda o próximo horário enquanto o app
+  // estiver aberto
+  async function verificar() {
+    const { metaAgua } = MacroDB.getSettings();
+    const ligado = localStorage.getItem('avisoAguaLigado') !== '0';
+    if (!metaAgua || !ligado) return null;
+    const agora = new Date();
+    const bebido = await totalDeHoje(agora);
+    const est = estado(bebido, metaAgua, agora);
+    const h = agora.getHours() + agora.getMinutes() / 60;
+    for (const c of CHECKPOINTS) {
+      if (h < c.hora) continue;
+      if (bebido >= metaAgua * c.fracao) continue;
+      const k = chaveAviso(c, agora);
+      if (localStorage.getItem(k)) continue;
+      if (notificar(c, est)) localStorage.setItem(k, '1');
+    }
+    agendar();
+    return est;
+  }
+
+  function agendar() {
+    limparTimers();
+    const agora = new Date();
+    for (const c of CHECKPOINTS) {
+      const alvo = new Date(agora);
+      alvo.setHours(c.hora, 0, 0, 0);
+      const espera = alvo - agora;
+      // só o que ainda vai acontecer hoje, e dentro do limite do setTimeout
+      if (espera > 0 && espera < 24 * 3600 * 1000) timers.push(setTimeout(verificar, espera + 1000));
+    }
+  }
+
+  async function pedirPermissao() {
+    if (typeof Notification === 'undefined') return 'indisponivel';
+    if (Notification.permission === 'granted') return 'granted';
+    try {
+      return await Notification.requestPermission();
+    } catch {
+      return 'denied';
+    }
+  }
+
+  const suportado = () => typeof Notification !== 'undefined';
+  const permissao = () => (typeof Notification === 'undefined' ? 'indisponivel' : Notification.permission);
+
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) verificar();
+    });
+    if (typeof MacroDB !== 'undefined') setTimeout(verificar, 1500);
+  }
+
+  return { CHECKPOINTS, estado, verificar, totalDeHoje, pedirPermissao, suportado, permissao, ehAgua, fmtVol };
+})();
+
+if (typeof window !== 'undefined') window.AguaAviso = AguaAviso;
 
 </script>
 <script>

@@ -1087,6 +1087,27 @@
     card.className = 'agua-card';
     const meta = metaAgua || 0;
     const pct = meta ? Math.min(100, (bebido / meta) * 100) : 0;
+    // ritmo do dia: metade até as 13h, o restante até as 18h
+    const est = meta && typeof AguaAviso !== 'undefined' ? AguaAviso.estado(bebido, meta) : null;
+    if (est && est.atrasado && !est.completo) card.classList.add('atrasada');
+    else if (est && est.completo) card.classList.add('ok');
+    const marcas = est
+      ? AguaAviso.CHECKPOINTS.map((c) => {
+          const alvo = meta * c.fracao;
+          const feito = bebido >= alvo;
+          const passou = new Date().getHours() >= c.hora;
+          return `<span class="agua-marca${feito ? ' feito' : passou ? ' perdida' : ''}" style="left:${(c.fracao * 100).toFixed(0)}%" title="${fmtVol(alvo)} até as ${c.rotulo}"></span>`;
+        }).join('')
+      : '';
+    const ritmo = !est
+      ? ''
+      : est.completo
+        ? 'meta do dia batida ✓'
+        : est.atrasado
+          ? `<b>Atrasada:</b> a meta até as ${est.atrasado.rotulo} era ${fmtVol(est.alvoAgora)} — faltam ${fmtVol(est.falta)}.`
+          : est.proximo
+            ? `Até as ${est.proximo.rotulo}: ${fmtVol(est.alvoAgora)} (faltam ${fmtVol(est.falta)}).`
+            : `Faltam ${fmtVol(meta - bebido)} para fechar o dia.`;
     card.innerHTML = `
       <div class="agua-top">
         <span class="agua-label">Água de hoje</span>
@@ -1094,12 +1115,8 @@
       </div>
       ${
         meta
-          ? `<div class="agua-bar"><div style="width:${pct.toFixed(1)}%"></div></div>
-             <div class="agua-saldo">${
-               bebido >= meta
-                 ? 'meta do dia batida ✓'
-                 : `faltam ${fmtVol(meta - bebido)} — cerca de ${Math.max(1, Math.round((meta - bebido) / 200))} ${Math.round((meta - bebido) / 200) === 1 ? 'copo' : 'copos'}`
-             }</div>`
+          ? `<div class="agua-bar"><div style="width:${pct.toFixed(1)}%"></div>${marcas}</div>
+             <div class="agua-saldo">${ritmo}</div>`
           : `<div class="agua-config">Defina sua meta de água em <a href="config.html">Ajustes</a> para acompanhar aqui.</div>`
       }
       <div class="agua-acoes">
