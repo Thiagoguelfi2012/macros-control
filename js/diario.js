@@ -897,16 +897,18 @@
         </div>`;
     };
     // previsão do dia com o prato somado ao que já foi consumido
-    const impacto = (rot, atual, add, meta, un) => {
+    // mesma leitura do "Impacto na meta de hoje": o que já foi, o que o prato
+    // acrescenta e onde o dia termina
+    const impacto = (rot, atual, add, meta, un, cor) => {
       const novo = atual + add;
       const base = Math.min(100, (atual / meta) * 100);
       const somado = Math.max(0, Math.min(100 - base, (add / meta) * 100));
       const estoura = novo > meta;
       return `
-        <div class="sug-meta">
+        <div class="sug-meta sug-meta-dia">
           <span class="sug-meta-rot">${rot}</span>
-          <span class="sug-bar"><i style="width:${base.toFixed(0)}%"></i><i class="add" style="width:${somado.toFixed(0)}%"></i></span>
-          <span class="sug-meta-val${estoura ? ' over' : ''}">${fmt(novo, 0)}/${fmt(meta, 0)} ${un} · ${fmt((novo / meta) * 100, 0)}%</span>
+          <span class="sug-meta-val${estoura ? ' over' : ''}">+${fmt(add, 0)} → <b>${fmt(novo, 0)}</b> / ${fmt(meta, 0)} ${un} · ${fmt((novo / meta) * 100, 0)}%</span>
+          <span class="sug-bar"><i style="width:${base.toFixed(1)}%;background:${cor}"></i><i class="add" style="width:${somado.toFixed(1)}%;background:${cor}"></i></span>
         </div>`;
     };
     const sobra = (c, t) => {
@@ -954,10 +956,10 @@
         ctx.metas.kcal
           ? `<div class="sug-metas">
         <div class="sug-titulo">Como o dia fica depois desta refeição</div>
-        ${impacto('Calorias', ctx.consumido.kcal, total.kcal, ctx.metas.kcal, 'kcal')}
-        ${ctx.metas.p ? impacto('Proteínas', ctx.consumido.p, total.p, ctx.metas.p, 'g') : ''}
-        ${ctx.metas.c ? impacto('Carboidratos', ctx.consumido.c, total.c, ctx.metas.c, 'g') : ''}
-        ${ctx.metas.g ? impacto('Gorduras', ctx.consumido.g, total.g, ctx.metas.g, 'g') : ''}
+        ${impacto('Calorias', ctx.consumido.kcal, total.kcal, ctx.metas.kcal, 'kcal', 'var(--accent)')}
+        ${ctx.metas.p ? impacto('Proteínas', ctx.consumido.p, total.p, ctx.metas.p, 'g', 'var(--s1)') : ''}
+        ${ctx.metas.c ? impacto('Carboidratos', ctx.consumido.c, total.c, ctx.metas.c, 'g', 'var(--s2)') : ''}
+        ${ctx.metas.g ? impacto('Gorduras', ctx.consumido.g, total.g, ctx.metas.g, 'g', 'var(--s3)') : ''}
         <p class="sug-legenda">${esc(sobra(ctx, total))}</p>
       </div>`
           : ''

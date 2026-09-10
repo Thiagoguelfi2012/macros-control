@@ -1076,6 +1076,9 @@ main { max-width: 860px; margin: 0 auto; padding: 20px 16px 110px; }
   border-radius: 3px;
   background: var(--grid);
   overflow: hidden;
+  /* os dois trechos (consumido + o que o prato acrescenta) ficam lado a lado;
+     sem o flex o segundo caía para baixo e sumia no overflow */
+  display: flex;
 }
 .sug-bar i {
   display: block;
@@ -1107,9 +1110,9 @@ main { max-width: 860px; margin: 0 auto; padding: 20px 16px 110px; }
   color: var(--muted);
   margin-bottom: 6px;
 }
-.sug-bar i.add {
-  background: color-mix(in srgb, var(--accent) 45%, transparent);
-}
+/* o trecho que o prato acrescenta fica mais claro que o já consumido — pela
+   opacidade, para não brigar com a cor do macro aplicada no estilo inline */
+.sug-bar i.add { opacity: 0.45; }
 .sug-meta-val.over {
   color: var(--bad-text);
 }
@@ -1299,3 +1302,16 @@ main { max-width: 860px; margin: 0 auto; padding: 20px 16px 110px; }
 .agua-ritmo { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--grid); }
 .check-linha { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-top: 6px; }
 .check-linha input { width: 18px; height: 18px; accent-color: var(--accent); }
+
+/* linha do "como o dia fica": rótulo e números em cima, barra embaixo */
+.sug-meta-dia {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: 'rot val' 'bar bar';
+  row-gap: 4px;
+  margin-bottom: 8px;
+}
+.sug-meta-dia .sug-meta-rot { grid-area: rot; width: auto; }
+.sug-meta-dia .sug-meta-val { grid-area: val; }
+.sug-meta-dia .sug-meta-val b { color: var(--ink); }
+.sug-meta-dia .sug-bar { grid-area: bar; }
