@@ -110,8 +110,9 @@ python3 -m http.server 8000
   O que a sugestão **afirma sobre cada alimento é só o que os números dizem**:
   "50 g de proteína", "53 g de carboidrato" — nunca uma categoria inventada. O
   painel mostra **o prato contra o alvo da refeição** e **como o dia fica depois
-  dela** (barra por macro, com a parte já consumida e a que o prato acrescenta),
-  e **Montar refeição** joga todos os itens de uma vez na cesta do modal. Quando
+  dela**, na mesma leitura do "Impacto na meta de hoje" — `+35 → 69 / 153 g ·
+  45%`, com a barra na cor do macro mostrando a parte já consumida e, mais
+  clara, a que o prato acrescenta —, e **Montar refeição** joga todos os itens de uma vez na cesta do modal. Quando
   o dia já estourou (ou está perto), entra o **modo saciedade**: o prato encurta
   e vale o que enche mais por caloria, estourando o mínimo possível.
 - **Relatório para o médico**: o botão **PDF** na barra de filtros abre uma prévia
