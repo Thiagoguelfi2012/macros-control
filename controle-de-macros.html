@@ -494,11 +494,13 @@ main { max-width: 860px; margin: 0 auto; padding: 20px 16px 110px; }
 /* quantidade e calorias dividem a segunda linha, abaixo do nome */
 .cesta-item .ci-qtd {
   grid-area: meta; color: var(--muted); font-size: 12px;
-  min-width: 0; display: flex; align-items: center; gap: 6px;
+  /* quantidade, macros e densidade dividem a linha e quebram junto quando a
+     tela é estreita, em vez de a quantidade ser cortada */
+  min-width: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 2px 6px;
 }
-.cesta-item .ci-qtd-txt {
-  min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
+.cesta-item .ci-qtd-txt { min-width: 0; }
+.cesta-item .ci-macros { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cesta-item .ci-macros::before { content: '· '; }
 .cesta-item .ci-qtd .dens { flex: none; }
 .cesta-item .ci-kcal {
   grid-area: kcal; justify-self: end; font-weight: 600;
@@ -5141,7 +5143,7 @@ if (typeof window !== 'undefined') window.Barras = Barras;
       row.innerHTML = `
         <button class="icon-btn act-toggle" title="${it.off ? 'Voltar para a refeição' : 'Tirar da conta sem remover'}" aria-label="${it.off ? 'Ativar item' : 'Desativar item'}" aria-pressed="${it.off ? 'false' : 'true'}">${it.off ? SVG_OFF : SVG_ON}</button>
         <span class="ci-nome"></span>
-        <span class="ci-qtd"><span class="ci-qtd-txt"></span>${chipDensidade(porCem, false)}</span>
+        <span class="ci-qtd"><span class="ci-qtd-txt"></span><span class="ci-macros">P ${fmt(it.p)} · C ${fmt(it.c)} · G ${fmt(it.g)}</span>${chipDensidade(porCem, false)}</span>
         <span class="ci-kcal">${fmt(it.kcal, 0)} kcal</span>
         <span class="ci-acoes">
           <button class="icon-btn act-editar" title="Editar quantidade ou medida" aria-label="Editar item">${SVG_EDIT}</button>

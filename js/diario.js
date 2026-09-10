@@ -330,7 +330,7 @@
       row.innerHTML = `
         <button class="icon-btn act-toggle" title="${it.off ? 'Voltar para a refeição' : 'Tirar da conta sem remover'}" aria-label="${it.off ? 'Ativar item' : 'Desativar item'}" aria-pressed="${it.off ? 'false' : 'true'}">${it.off ? SVG_OFF : SVG_ON}</button>
         <span class="ci-nome"></span>
-        <span class="ci-qtd"><span class="ci-qtd-txt"></span>${chipDensidade(porCem, false)}</span>
+        <span class="ci-qtd"><span class="ci-qtd-txt"></span><span class="ci-macros">P ${fmt(it.p)} · C ${fmt(it.c)} · G ${fmt(it.g)}</span>${chipDensidade(porCem, false)}</span>
         <span class="ci-kcal">${fmt(it.kcal, 0)} kcal</span>
         <span class="ci-acoes">
           <button class="icon-btn act-editar" title="Editar quantidade ou medida" aria-label="Editar item">${SVG_EDIT}</button>

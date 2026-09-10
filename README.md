@@ -26,7 +26,8 @@ python3 -m http.server 8000
   marcas brasileiras e pratos curados); quantidade em **gramas, mililitros ou
   medidas caseiras** (unidade, fatia, xícara, concha, lata, dose…) com prévia dos
   macros; monta refeição com vários itens de uma vez (com impacto na meta antes de
-  salvar), cada item da refeição pode ser **editado sem sair da tela** (o lápis
+  salvar, e cada linha mostrando **quantidade, macros e gramas por 100 kcal** do
+  item), cada item da refeição pode ser **editado sem sair da tela** (o lápis
   devolve o alimento para o topo do modal com a quantidade e a medida dele, e o
   botão vira "Salvar alteração no item" — antes era preciso excluir e adicionar
   de novo) e a refeição em montagem sobrevive ao app ir para segundo plano; data e
