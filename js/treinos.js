@@ -71,6 +71,14 @@
     Lombar: '#65a30d', 'Corpo inteiro': '#4f46e5', Cardio: '#0ea5e9',
   };
 
+  // Repetições em reserva: quantas ainda dariam para fazer quando a série
+  // parou. É o que separa "série dura" de "série que sobrou muito", e sem ele
+  // nenhum número de carga sabe o quanto o estímulo chegou perto da falha.
+  const OPCOES_RIR = [
+    { v: '', r: '—' }, { v: 0, r: '0 · falha' }, { v: 1, r: '1' }, { v: 2, r: '2' },
+    { v: 3, r: '3' }, { v: 4, r: '4' }, { v: 5, r: '5+' },
+  ];
+
   // Desenhos de linha por tipo de equipamento (viewBox 48x48).
   const DESENHO = {
     Barra: '<path d="M6 24h36M10 17v14M14 19v10M38 17v14M34 19v10"/>',
@@ -688,6 +696,7 @@
       reg.carga != null ? comCarga(it, reg.carga) : '',
       reg.aquecimento != null ? `aquec. ${fmt(reg.aquecimento)} kg` : '',
       reg.reps ? `${reg.reps} reps` : '',
+      reg.rir != null ? `RIR ${fmt(reg.rir)}` : '',
       reg.tempoMin != null ? `${fmt(reg.tempoMin)} min` : '',
       reg.bpm != null ? `${fmt(reg.bpm)} bpm` : '',
     ]
@@ -707,7 +716,7 @@
       );
       if (it) {
         const rep = repsDoRegistro(it.reps, null);
-        vals.push({ carga: it.carga, reps: rep ? rep.porSerie : null });
+        vals.push({ carga: it.carga, reps: rep ? rep.porSerie : null, rir: it.rir ?? null });
       }
     }
     if (vals.length < 3) return null;
@@ -720,7 +729,7 @@
       if (atual.reps != null && v.reps != null && atual.reps > v.reps) break;
       n++;
     }
-    return n >= 3 ? { repeticoes: n, carga: atual.carga } : null;
+    return n >= 3 ? { repeticoes: n, carga: atual.carga, rir: atual.rir } : null;
   }
 
   // Próximo degrau plausível: os saltos que existem de fato na academia
@@ -778,6 +787,7 @@
           ? ultimoValor(e.exercicioId, 'tempoMin') ?? (e.unidadeRep === 'min' ? e.repMax : null)
           : null,
         bpm: e.registraBpm ? ultimoValor(e.exercicioId, 'bpm') ?? null : null,
+        rir: ultimoValor(e.exercicioId, 'rir') ?? null,
         reps: ultimasReps(e.exercicioId) || repsPrevistas(e),
         feito: false,
       })),
@@ -880,6 +890,12 @@
               <input type="text" class="ex-reps" value="${esc(it.reps)}"
                 placeholder="${ultimo && ultimo.reps ? esc(ultimo.reps) : un ? `ex.: ${it.repMax}` : 'ex.: 12/10/8'}" />
             </div>`}
+            ${it.grupo === 'Cardio' ? '' : `<div class="field">
+              <label title="Repetições em reserva: quantas você ainda conseguiria fazer quando parou a série">RIR</label>
+              <select class="ex-rir">
+                ${OPCOES_RIR.map((o) => `<option value="${o.v}"${String(it.rir ?? '') === String(o.v) ? ' selected' : ''}>${o.r}</option>`).join('')}
+              </select>
+            </div>`}
             ${it.intervalo ? `<button class="btn ex-descanso" type="button" data-seg="${it.intervalo}">Descanso ${it.intervalo}s</button>` : ''}
           </div>
           ${ultimo
@@ -894,8 +910,15 @@
             const parada = it.carga != null ? cargaParada(it.exercicioId, execucao.id) : null;
             if (!parada) return '';
             const sugestao = proximoPasso(parada.carga, it.unidadeCarga || 'kg', it.cargaAssistida);
+            const travado = `${it.cargaAssistida ? 'Mesma assistência' : 'Mesma carga'} nos últimos <b>${parada.repeticoes}</b> registros.`;
+            // sobrando repetição na reserva, o caminho é chegar mais perto da
+            // falha antes de mexer no peso: o estímulo está faltando ali, não na carga
+            if (parada.rir != null && parada.rir >= 3)
+              return `<div class="exec-dica">
+                <span>${travado} Mas você parou com <b>${fmt(parada.rir)}</b> repetições na reserva — dá para puxar mais na mesma carga antes de subir.</span>
+              </div>`;
             return `<div class="exec-dica">
-              <span>${it.cargaAssistida ? 'Mesma assistência' : 'Mesma carga'} nos últimos <b>${parada.repeticoes}</b> registros. Que tal tentar ${comCarga(it, sugestao)}${it.cargaAssistida ? ' de contrapeso' : ''}?</span>
+              <span>${travado} Que tal tentar ${comCarga(it, sugestao)}${it.cargaAssistida ? ' de contrapeso' : ''}?</span>
               <button class="btn ex-subir" type="button" data-valor="${sugestao}">Usar ${fmt(sugestao)}</button>
             </div>`;
           })()}
@@ -951,6 +974,7 @@
         tempoMin: i.feito && i.tempoMin != null && i.tempoMin !== '' ? Number(i.tempoMin) : null,
         bpm: i.feito && i.bpm != null && i.bpm !== '' ? Number(i.bpm) : null,
         reps: i.reps || '',
+        rir: i.feito && i.rir != null && i.rir !== '' ? Number(i.rir) : null,
         feito: !!i.feito,
       };
     });
@@ -1361,13 +1385,103 @@
 
   // Força estimada (Epley): a carga que sairia numa repetição só, a partir do
   // peso e das repetições feitas. É o número que enxerga a progressão quando a
-  // carga sobe e a repetição cai — 20 kg × 10 dá ≈27 kg, 40 kg × 6 dá ≈48 —,
-  // e é ele que manda no indicador do card, porque em hipertrofia a carga pesa
-  // mais do que o total de repetições.
+  // carga sobe e a repetição cai — 20 kg × 10 dá ≈27 kg, 40 kg × 6 dá ≈48.
+  //
+  // A fórmula pressupõe série levada à falha, então o RIR anotado entra somando:
+  // 40 kg × 6 parando com 2 na reserva vale o mesmo que 40 kg × 8 até a falha.
+  // Sem RIR anotado o dia entra como se tivesse ido à falha — que é a suposição
+  // que a fórmula já fazia calada —, e o card avisa em quantos dias ela valeu.
+  const repsAteFalha = (p) => (p.repSerie > 0 ? p.repSerie + (p.rir != null ? p.rir : 0) : null);
   const forcaDe = (p, un, assistida) => {
-    if (un !== 'kg' || assistida || p.carga == null || !(p.repSerie > 0)) return null;
-    return Math.round(p.carga * (1 + Math.min(p.repSerie, 20) / 30) * 10) / 10;
+    const reps = repsAteFalha(p);
+    if (un !== 'kg' || assistida || p.carga == null || !(reps > 0)) return null;
+    return Math.round(p.carga * (1 + Math.min(reps, 20) / 30) * 10) / 10;
   };
+
+  /* ---- Séries por músculo por semana ---- */
+
+  // Quantas séries cada músculo levou por semana. É a conta que mais se
+  // aproxima do que a literatura liga ao crescimento: séries duras por músculo
+  // por semana, não quilos na barra nem tonelagem.
+  //
+  // Convenções, para o número ser lido pelo que ele é:
+  // • o músculo principal do exercício leva a série inteira, os auxiliares
+  //   levam meia (a "série fracionada", que é como se costuma contar);
+  // • cardio fica de fora;
+  // • série é a quantidade anotada em "12/10/8" (três) ou, sem anotação, o
+  //   número de séries previsto no treino.
+  const REF_SERIES = { min: 10, bom: 20 };
+
+  function volumePorMusculo(sessoes, previstos) {
+    const mapa = new Map();
+    let series = 0;
+    let comRir = 0;
+    let duras = 0;
+    const soma = (g, qtd) => {
+      if (!g) return;
+      mapa.set(g, (mapa.get(g) || 0) + qtd);
+    };
+    for (const s of sessoes) {
+      for (const it of s.itens || []) {
+        if (it.feito === false) continue;
+        const { principal, sec } = musculosDe(it);
+        if (principal === 'Cardio') continue;
+        const prev = previstos.get(it.exercicioId);
+        const rep = repsDoRegistro(it.reps, prev);
+        const qtd = (rep && rep.series) || (prev && prev.series) || 3;
+        series += qtd;
+        if (it.rir != null) {
+          comRir += qtd;
+          if (it.rir <= 2) duras += qtd;
+        }
+        soma(principal, qtd);
+        for (const g of sec) soma(g, qtd / 2);
+      }
+    }
+    return { mapa, series, comRir, duras };
+  }
+
+  function renderVolumeMuscular(sessoes, previstos, diasJanela) {
+    const alvo = $('#evo-volume');
+    const { mapa, series, comRir, duras } = volumePorMusculo(sessoes, previstos);
+    if (!mapa.size) {
+      alvo.innerHTML = '';
+      return;
+    }
+    const semanas = Math.max(1, diasJanela / 7);
+    const lista = [...mapa.entries()]
+      .map(([grupo, total]) => ({ grupo, total, semana: Math.round((total / semanas) * 10) / 10 }))
+      .sort((a, b) => b.semana - a.semana);
+    const teto = Math.max(REF_SERIES.bom, ...lista.map((x) => x.semana));
+    const pct = (v) => Math.round((v / teto) * 100);
+    const faixa = (v) => (v >= REF_SERIES.min ? 'na-faixa' : 'baixo');
+    const abaixo = lista.filter((x) => x.semana < REF_SERIES.min).length;
+    const notaRir = comRir
+      ? `${Math.round((duras / comRir) * 100)}% das séries com RIR anotado pararam a 2 ou menos da falha`
+      : 'nenhuma série com RIR anotado ainda';
+    alvo.innerHTML = `
+      <div class="chart-card vol-card">
+        <h3>Séries por músculo por semana</h3>
+        <p class="sub">${fmt(Math.round((series / semanas) * 10) / 10)} séries por semana no total · ${notaRir}</p>
+        <div class="vol-lista">
+          ${lista.map((x) => `
+            <div class="vol-linha" title="${esc(x.grupo)}: ${fmt(x.total)} séries no período">
+              <span class="vol-nome">${esc(x.grupo)}</span>
+              <span class="vol-barra">
+                <i class="vol-fill ${faixa(x.semana)}" style="width:${pct(x.semana)}%;--cor-mus:${COR_GRUPO[x.grupo] || '#8a8a8a'}"></i>
+                <i class="vol-marca" style="left:${pct(REF_SERIES.min)}%"></i>
+              </span>
+              <span class="vol-qtd">${fmt(x.semana)}</span>
+            </div>`).join('')}
+        </div>
+        <p class="vol-legenda">
+          A marca é a referência de <b>${REF_SERIES.min} séries semanais</b> por músculo, a partir da qual a
+          literatura costuma ver ganho consistente — ${abaixo ? `${abaixo} ${abaixo === 1 ? 'grupo está' : 'grupos estão'} abaixo dela` : 'todos os grupos estão nela ou acima'}.
+          O músculo principal do exercício leva a série inteira e os auxiliares levam meia; cardio fica de fora.
+          A referência é uma faixa grosseira, não uma meta: quem responde bem com menos não precisa subir.
+        </p>
+      </div>`;
+  }
 
   function renderEvolucao() {
     destruirCharts();
@@ -1381,6 +1495,7 @@
     if (!relevantes.length) {
       $('#evo-resumo').innerHTML = '';
       $('#evo-frequencia').innerHTML = '';
+      $('#evo-volume').innerHTML = '';
       $('#evo-execucoes').innerHTML = '';
       $('#evo-graficos').innerHTML =
         '<div class="empty-state"><p>Nenhuma execução registrada neste período.</p><p class="sub">Inicie um treino e informe a carga de cada exercício para ver a progressão aqui.</p></div>';
@@ -1412,6 +1527,7 @@
           ts: s.ts,
           carga: it.carga,
           aquecimento: it.aquecimento ?? null,
+          rir: it.rir ?? null,
           reps: it.reps || '',
           repSerie: rep ? rep.porSerie : null,
           repSeries: rep ? rep.series : null,
@@ -1509,6 +1625,8 @@
         <p class="freq-legenda">Dias com treino por semana (segunda a domingo)</p>` : ''}
       </div>`;
 
+    renderVolumeMuscular(relevantes, previstos, diasJanela);
+
     const wrap = $('#evo-graficos');
     const blocoDuracao = comDuracao.length > 1
       ? `<div class="chart-card">
@@ -1585,6 +1703,19 @@
         const resumoForca = e.forca
           ? `Força estimada ${fmt(e.forca.ini)} → ${fmt(e.forca.fim)} kg`
           : '';
+        // proximidade da falha: é o dado que diz se a série foi dura de verdade
+        const comRir = e.pontos.filter((p) => p.rir != null);
+        const rirMedio = comRir.length
+          ? Math.round((comRir.reduce((n, p) => n + p.rir, 0) / comRir.length) * 10) / 10
+          : null;
+        const resumoRir = comRir.length
+          ? `RIR médio ${fmt(rirMedio)}${rirMedio <= 2 ? ' (perto da falha)' : ' (sobrou série)'}`
+          : '';
+        const semRir = e.forca && comRir.length < e.pontos.length
+          ? comRir.length
+            ? `força estimada com RIR em ${comRir.length} de ${e.pontos.length} dias`
+            : 'força estimada supondo série até a falha'
+          : '';
         const comAquec = e.pontos.filter((p) => p.aquecimento != null);
         e.temAquecimento = comAquec.length > 0;
         const resumoAquec = comAquec.length
@@ -1595,7 +1726,7 @@
             }`
           : '';
         const notaAssist = e.assistida ? 'máquina de assistência: menos peso é mais forte' : '';
-        const extras = [resumoOutras, resumoReps, resumoForca, resumoVol, resumoAquec, notaAssist, semReps]
+        const extras = [resumoOutras, resumoReps, resumoForca, resumoRir, resumoVol, resumoAquec, notaAssist, semRir, semReps]
           .filter(Boolean)
           .join(' · ');
         return `
@@ -2205,6 +2336,7 @@
       if (ev.target.classList.contains('ex-tempo')) it.tempoMin = ev.target.value === '' ? null : Number(ev.target.value);
       if (ev.target.classList.contains('ex-bpm')) it.bpm = ev.target.value === '' ? null : Number(ev.target.value);
       if (ev.target.classList.contains('ex-reps')) it.reps = ev.target.value;
+      if (ev.target.classList.contains('ex-rir')) it.rir = ev.target.value === '' ? null : Number(ev.target.value);
       salvarExecucaoLocal();
       if (it.feito) gravarParcial(); // mudou a carga de um já marcado: regrava
     });

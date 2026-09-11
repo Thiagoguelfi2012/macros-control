@@ -208,8 +208,23 @@ python3 -m http.server 8000
     repetições numa conta só), que é o que enxerga 20 kg × 10 virando 40 kg × 6
     como avanço de **+80%** — e o caminho inverso como recuo. Ela também vai ao
     gráfico como **linha tracejada**, no mesmo eixo da carga, e decide o card
-    "Com evolução". Em hipertrofia a carga pesa mais que o número de repetições,
-    e a fórmula respeita isso: subir a carga vale mais do que repetir mais.
+    "Com evolução". Vale saber o que ela é: **uma métrica de força usada como
+    termômetro de sobrecarga progressiva**, não uma medida de estímulo de
+    hipertrofia — para isso o número que a literatura liga ao crescimento é o de
+    séries duras por músculo por semana, que tem painel próprio logo abaixo.
+    A fórmula também degrada acima de ~12 repetições e não se aplica a máquina
+    de assistência, onde o app a desliga.
+
+    Cada exercício tem um campo de **RIR** (repetições em reserva: quantas ainda
+    dariam quando a série parou), de "0 · falha" a "5+". Ele é o dado que separa
+    série dura de série que sobrou, e serve a três coisas: **entra na força
+    estimada** — Epley pressupõe série até a falha, então 40 kg × 6 parando com
+    2 na reserva vale o mesmo que 40 kg × 8 até a falha —, vira o **RIR médio**
+    no resumo do card, e muda a dica de carga parada: com 3 ou mais na reserva
+    o app deixa de sugerir mais peso e diz para chegar mais perto da falha
+    primeiro, porque é ali que o estímulo está faltando. Sem RIR anotado o dia
+    entra como se tivesse ido à falha — a suposição que a fórmula já fazia
+    calada —, e o card diz em quantos dias ela valeu.
 
     Máquinas de **assistência** (gráviton, barra fixa assistida) contam ao
     contrário: o peso é contrapeso, e tirar peso é que é progresso. A
@@ -223,6 +238,18 @@ python3 -m http.server 8000
     treino), fica guardada em cada registro, entra no "última vez", vira o
     padrão da próxima vez e aparece no gráfico como uma linha discreta — sem se
     misturar com a carga de trabalho na conta da progressão.
+
+    Acima dos gráficos vem **Séries por músculo por semana**, uma barra por
+    grupo muscular com a **referência de 10 séries semanais** marcada — a faixa
+    a partir da qual a literatura costuma ver ganho consistente, mostrada como
+    referência grosseira e não como meta. Barra cheia é grupo na faixa, barra
+    apagada é grupo abaixo dela, e o total do período vira média semanal pela
+    janela do filtro. A conta usa a **série fracionada**: o músculo principal do
+    exercício leva a série inteira e os auxiliares levam meia, cardio fica de
+    fora, e "série" é o que foi anotado em `12/10/8` (três) ou, sem anotação, o
+    número de séries previsto no treino. O subtítulo fecha com **quanto das
+    séries com RIR anotado parou a 2 ou menos da falha** — é o par que importa:
+    o volume diz quanto, o RIR diz se foi duro.
 
     Uma marca no eixo X por execução e no eixo Y por carga registrada (com as
     linhas de força e aquecimento o eixo passa a ser automático, para não virar
