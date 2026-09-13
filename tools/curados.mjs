@@ -448,6 +448,18 @@ export const CURADOS = [
   { n: "Folhado de frango", kcal: 330, p: 8, c: 32, g: 19, m: [["unidade (100 g)", 100]] },
   { n: "Torta salgada de frango de padaria (fatia)", kcal: 250, p: 10, c: 24, g: 13, m: [["fatia (120 g)", 120]] },
   { n: "Empadão de frango (fatia)", kcal: 300, p: 9, c: 28, g: 17, m: [["fatia (150 g)", 150]] },
+
+  // Tortas e quiches salgadas (padaria, buffet e casa)
+  { n: "Torta de camarão com cream cheese (fatia)", kcal: 255, p: 9, c: 17, g: 16.5, m: [["fatia (120 g)", 120], ["pedaço pequeno (80 g)", 80]] },
+  { n: "Torta de camarão com catupiry (fatia)", kcal: 265, p: 9, c: 17, g: 17.5, m: [["fatia (120 g)", 120], ["pedaço pequeno (80 g)", 80]] },
+  { n: "Torta salgada de camarão (fatia de padaria)", kcal: 235, p: 9, c: 22, g: 12, m: [["fatia (120 g)", 120], ["pedaço pequeno (80 g)", 80]] },
+  { n: "Quiche de camarão (fatia)", kcal: 275, p: 11, c: 14, g: 19, m: [["fatia (110 g)", 110], ["mini quiche (50 g)", 50]] },
+  { n: "Empadão de camarão (fatia)", kcal: 295, p: 10, c: 27, g: 16, m: [["fatia (150 g)", 150]] },
+  { n: "Torta de atum (fatia)", kcal: 250, p: 11, c: 22, g: 13, m: [["fatia (120 g)", 120], ["pedaço pequeno (80 g)", 80]] },
+  { n: "Torta de palmito (fatia)", kcal: 240, p: 6, c: 24, g: 13, m: [["fatia (120 g)", 120], ["pedaço pequeno (80 g)", 80]] },
+  { n: "Torta de queijo com presunto (fatia)", kcal: 270, p: 12, c: 22, g: 15, m: [["fatia (120 g)", 120], ["pedaço pequeno (80 g)", 80]] },
+  { n: "Quiche de alho-poró (fatia)", kcal: 280, p: 8, c: 18, g: 19, m: [["fatia (110 g)", 110], ["mini quiche (50 g)", 50]] },
+  { n: "Quiche Lorraine (bacon e queijo, fatia)", kcal: 300, p: 10, c: 17, g: 21, m: [["fatia (110 g)", 110], ["mini quiche (50 g)", 50]] },
   // ---- Fast food: cardápios das principais redes (valores do sanduíche montado) ----
 
   // McDonald's
