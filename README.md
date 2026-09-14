@@ -149,7 +149,7 @@ python3 -m http.server 8000
     quando houve mais de um), o dia de hoje destacado e a média das semanas
     anteriores logo abaixo. Dá para **andar pelas semanas passadas** arrastando
     o cartão para o lado (ou pelas setas ‹ ›), até a semana do primeiro
-    registro — o histórico importado entra nessa conta. No mesmo cartão vem o
+    registro. No mesmo cartão vem o
     **próximo treino**: o app escolhe sozinho o treino **ativo que está há mais
     tempo sem ser executado** (nunca executado vem primeiro) e oferece o botão
     para começar. Um treino pode ser tirado da rotação pelo editor (caixa "ativo
@@ -289,15 +289,12 @@ python3 -m http.server 8000
   prancha progride em tempo, não em peso), **minutos** ou **nível** —, usada nos
   cartões, na execução e nos eixos dos gráficos de evolução.
 
-  O **histórico de cargas anterior ao app** (vindo da tela "Progresso de Cargas"
-  do MFIT Personal) é importado junto com a ficha, com ids determinísticos — as
-  execuções antigas já aparecem nos gráficos de evolução e reimportar não
-  duplica nada. Para trazer histórico de outro aparelho, o caminho continua sendo
-  o backup `.json` em Ajustes.
-
-  Na primeira abertura o app já vem com a ficha atual do usuário (três treinos:
-  `P \ Del \ T`, `D \ Trap \ B` e `MMII \ Abs`), com séries, repetições, carga e
-  intervalo de cada exercício — é só ajustar ou trocar.
+  Na primeira abertura de uma conta nova o app semeia uma **ficha inicial** de
+  três treinos (`P \ Del \ T`, `D \ Trap \ B` e `MMII \ Abs`) com séries,
+  repetições e intervalo — **e nenhuma carga**. Carga é dado de pessoa: ela vem
+  da conta pela sincronização, nunca do código do app. Para trazer histórico de
+  outro aparelho o caminho é entrar na mesma conta, ou o backup `.json` em
+  Ajustes.
 - **Ajustes** (`config.html`): tela própria com gasto energético (TMB/TDEE),
   **dieta alvo** (alvos diários de calorias e macros, com as kcal implícitas
   calculadas), **meta de água**, **refeições por dia** (3 a 6 — a divisão que a Sugestão usa para
@@ -314,17 +311,30 @@ python3 -m http.server 8000
 - **Backup e transferência**: exportar/importar os dados em arquivo `.json` (ou
   copiar/colar em texto), com importação somando sem duplicar — é também o caminho
   de migração para quem usava o app só no modo local.
-- **Conta e sincronização** (opcional, via Supabase): **login com Google**, backup
-  na nuvem e sincronização entre aparelhos, com os dados de cada usuário separados.
-  Veja abaixo.
+- **Conta obrigatória** (via Supabase): o app abre atrás de um **véu translúcido**
+  com o botão de **entrar com Google** — dá para ver o app ao fundo, não dá para
+  usar. Enquanto não há sessão o conteúdo fica `inert`, fora do alcance do clique,
+  do foco e do leitor de tela. Backup na nuvem e sincronização entre aparelhos,
+  com os dados de cada usuário separados. Veja abaixo.
 - Tema claro/escuro automático (segue o sistema).
 
 ## Conta e sincronização (Supabase, plano gratuito)
 
 O app não tem servidor próprio: o login usa o **Supabase Auth** com o provedor
 **Google** e os dados ficam em uma tabela com **RLS** — cada usuário só enxerga a
-própria linha. As chamadas são REST puras no navegador (sem SDK). Configuração
-(uma vez):
+própria linha. As chamadas são REST puras no navegador (sem SDK).
+
+**O que a porta de entrada é e o que ela não é.** Este é um site estático e a
+trava vive no JavaScript da própria página: ela decide **quem usa a interface**,
+não **quem pode ler os dados**. Quem protege dado aqui é o **RLS** — o servidor
+só devolve a linha do dono do token. Duas consequências práticas: o que já está
+no IndexedDB deste aparelho continua legível neste aparelho (é por isso que sair
+da conta limpa o local), e **nada de pessoal pode morar no código do app**, que é
+público. O OAuth do Google precisa abrir a página inteira em `https`, então em
+`file://` ou dentro de um iframe não há login possível — nesses casos a porta
+explica o motivo e oferece usar sem conta, só naquele navegador e sem backup.
+
+Configuração (uma vez):
 
 1. Crie um projeto gratuito em [supabase.com](https://supabase.com).
 2. No **SQL Editor**, rode:
@@ -459,6 +469,7 @@ js/treinos.js                  treinos, execução com carga e evolução (Chart
 js/exercicios.js               biblioteca de exercícios da academia (gerado)
 js/config.js                   tela Ajustes (gasto, dieta alvo, backup, conta)
 js/sync.js                     conta (Supabase Auth) + sincronização do backup
+js/login-gate.js               porta de entrada: sem conta, sem app
 js/refresh.js                  pull-to-refresh
 data/foods.json                banco de ~18.000 alimentos gerado
 vendor/                        Tom Select e Chart.js vendorizados (offline)

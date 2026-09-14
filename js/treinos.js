@@ -138,52 +138,55 @@
   // O treino atual do usuário (MFIT Personal, professor Gustavo Gomes Soncin):
   // "Treino de força na academia — redução de gordura/hipertrofia — avançado".
   // Serve como ponto de partida na primeira abertura; depois é só editar.
-  const SEMEADURA = 3; // subir aqui quando a ficha mudar
+  const SEMEADURA = 4; // subir aqui quando a ficha mudar
   // [exercicioId, séries, repMín, repMáx, carga, intervalo, unidade]
+  // Ficha inicial de quem abre a conta pela primeira vez: é só a divisão e os
+  // exercícios, SEM carga. Carga é dado de pessoa — ela vem da conta do usuário
+  // pela sincronização, nunca do código do app.
   const TREINOS_INICIAIS = [
     {
       nome: 'Treino 1',
       foco: 'P \\ Del \\ T',
       exercicios: [
-        ['supino-inclinado-com-barra-reta', 3, 10, 12, 25, 60],
-        ['supino-reto-com-halteres', 3, 10, 12, 12, 60],
-        ['crossover-polia-alta', 3, 10, 12, 11, 60],
-        ['desenvolvimento-maquina-pegada-neutra', 3, 10, 12, 18, 60],
-        ['elevacao-lateral-unilateral-com-halteres', 3, 10, 12, 8, 60],
-        ['triceps-testa-na-polia-com-corda', 3, 10, 12, 9, 60],
-        ['triceps-paralelas-no-graviton', 3, 10, 12, 40, 60],
-        ['prancha-alta', 3, 30, 45, 60, 60, 'seg', 'seg'],
-        ['bicicleta', 1, 15, 15, 6, 0, 'min'],
+        ['supino-inclinado-com-barra-reta', 3, 10, 12, null, 60],
+        ['supino-reto-com-halteres', 3, 10, 12, null, 60],
+        ['crossover-polia-alta', 3, 10, 12, null, 60],
+        ['desenvolvimento-maquina-pegada-neutra', 3, 10, 12, null, 60],
+        ['elevacao-lateral-unilateral-com-halteres', 3, 10, 12, null, 60],
+        ['triceps-testa-na-polia-com-corda', 3, 10, 12, null, 60],
+        ['triceps-paralelas-no-graviton', 3, 10, 12, null, 60],
+        ['prancha-alta', 3, 30, 45, null, 60, 'seg', 'seg'],
+        ['bicicleta', 1, 15, 15, null, 0, 'min'],
       ],
     },
     {
       nome: 'Treino 2',
       foco: 'D \\ Trap \\ B',
       exercicios: [
-        ['puxada-fechada-com-barra-reta', 3, 10, 12, 39, 60],
-        ['remada-maquina-pegada-neutra', 3, 10, 12, 38, 60],
-        ['crucifixo-inverso-na-maquina', 3, 10, 12, 38, 60],
-        ['pulldown-barra-aberta', 3, 10, 12, 20, 60],
-        ['rosca-direta-com-barra-h', 3, 10, 12, 12, 60],
-        ['rosca-inversa-com-barra-w', 3, 10, 12, 20, 60],
-        ['rosca-concentrada', 3, 10, 12, 10, 60],
-        ['rosca-de-punho-pegada-supinada', 3, 10, 12, 20, 60],
-        ['bicicleta', 1, 15, 15, 7, 0, 'min'],
+        ['puxada-fechada-com-barra-reta', 3, 10, 12, null, 60],
+        ['remada-maquina-pegada-neutra', 3, 10, 12, null, 60],
+        ['crucifixo-inverso-na-maquina', 3, 10, 12, null, 60],
+        ['pulldown-barra-aberta', 3, 10, 12, null, 60],
+        ['rosca-direta-com-barra-h', 3, 10, 12, null, 60],
+        ['rosca-inversa-com-barra-w', 3, 10, 12, null, 60],
+        ['rosca-concentrada', 3, 10, 12, null, 60],
+        ['rosca-de-punho-pegada-supinada', 3, 10, 12, null, 60],
+        ['bicicleta', 1, 15, 15, null, 0, 'min'],
       ],
     },
     {
       nome: 'Treino 3',
       foco: 'MMII \\ Abs',
       exercicios: [
-        ['leg-press-45', 3, 10, 12, 120, 60],
-        ['panturrilha-no-leg-press', 3, 10, 12, 100, 60],
-        ['cadeira-extensora-unilateral', 3, 10, 12, 18, 60],
-        ['mesa-flexora', 3, 10, 12, 23, 60],
-        ['aducao-de-quadril-na-maquina-cadeira-adutora', 3, 10, 12, 36, 60],
-        ['abducao-de-quadril-na-maquina-cadeira-abdutora', 3, 10, 12, 50, 60],
+        ['leg-press-45', 3, 10, 12, null, 60],
+        ['panturrilha-no-leg-press', 3, 10, 12, null, 60],
+        ['cadeira-extensora-unilateral', 3, 10, 12, null, 60],
+        ['mesa-flexora', 3, 10, 12, null, 60],
+        ['aducao-de-quadril-na-maquina-cadeira-adutora', 3, 10, 12, null, 60],
+        ['abducao-de-quadril-na-maquina-cadeira-abdutora', 3, 10, 12, null, 60],
         ['abdominal-dead-bug', 3, 12, 14, null, 60],
-        ['abdominal-na-maquina', 3, 14, 16, 48, 60],
-        ['bicicleta', 1, 15, 15, 6, 0, 'min'],
+        ['abdominal-na-maquina', 3, 14, 16, null, 60],
+        ['bicicleta', 1, 15, 15, null, 0, 'min'],
       ],
     },
   ];
@@ -244,110 +247,6 @@
   }
 
   /* ---- Histórico de cargas vindo do MFIT Personal ---- */
-
-  // Execuções anteriores ao app, lidas da tela "Progresso de Cargas" do MFIT.
-  // As datas são as colunas; cada exercício traz a carga daquela coluna (null
-  // quando não foi registrado naquele dia). Os ids das execuções são
-  // determinísticos, então reimportar nunca duplica.
-  const HISTORICO_VERSAO = 2;
-  const HISTORICO_MFIT = {
-    'Treino 1': {
-      // 01/08 aparece duas vezes no MFIT: foram duas execuções no mesmo dia
-      datas: [
-        '2026-08-01T07:00', '2026-08-01T19:00', '2026-08-05T19:00', '2026-08-08T19:00',
-        '2026-08-13T19:00', '2026-08-16T19:00', '2026-08-20T19:00',
-      ],
-      cargas: {
-        'supino-inclinado-com-barra-reta': [20, 20, 20, 25, 25, 25, 25],
-        'supino-reto-com-halteres': [8, 8, 8, 8, 10, 10, 12],
-        'crossover-polia-alta': [9, 9, 9, 9, 11, 11, 11],
-        'desenvolvimento-maquina-pegada-neutra': [16, 16, 16, 16, 16, 18, 18],
-        'elevacao-lateral-unilateral-com-halteres': [6, 6, 6, 6, 6, 8, 8],
-        'triceps-testa-na-polia-com-corda': [null, null, null, null, null, null, 9],
-        'triceps-paralelas-no-graviton': [50, null, 50, 50, 50, 40, 40],
-        'prancha-alta': [null, null, null, null, null, 60, 60],
-        bicicleta: [5, null, 5, 5, 5, 6, 6],
-      },
-    },
-    'Treino 2': {
-      datas: [
-        '2026-07-31T19:00', '2026-08-04T19:00', '2026-08-08T19:00', '2026-08-12T19:00',
-        '2026-08-15T19:00', '2026-08-19T19:00', '2026-08-22T19:00',
-      ],
-      cargas: {
-        'puxada-fechada-com-barra-reta': [29, 35, 37, 37, 39, 39, 39],
-        'pulldown-barra-aberta': [14, 15, 15, 15, 18, 18, 20],
-        'rosca-direta-com-barra-h': [null, 12, 12, 12, 12, 12, 12],
-        'rosca-inversa-com-barra-w': [12.5, 12.5, 15, 15, 17, 20, 20],
-        'remada-maquina-pegada-neutra': [29, 33, 34, 36, 38, 38, 38],
-        'crucifixo-inverso-na-maquina': [23, 25, 28, 28, 31, 36, 38],
-        'rosca-de-punho-pegada-supinada': [10, 10, 10, 10, 20, 20, 20],
-        'rosca-concentrada': [6, 6, 6, 6, 8, 8, 10],
-        bicicleta: [null, null, null, null, null, 7, 7],
-      },
-    },
-    'Treino 3': {
-      datas: [
-        '2026-07-30T19:00', '2026-08-02T19:00', '2026-08-06T19:00', '2026-08-11T19:00',
-        '2026-08-14T19:00', '2026-08-17T19:00', '2026-08-21T19:00',
-      ],
-      cargas: {
-        'cadeira-extensora-unilateral': [14, 14, 14, 18, 18, 18, 18],
-        'mesa-flexora': [18, 15, 15, 17, 18, 18, 23],
-        'leg-press-45': [63, 75, 86, 100, 100, 100, 120],
-        'panturrilha-no-leg-press': [52, 55, 68, 80, 80, 80, 100],
-        'abdominal-na-maquina': [36, 36, 36, 43, 48, 48, 48],
-        'aducao-de-quadril-na-maquina-cadeira-adutora': [29, 29, 29, 34, 34, 36, 36],
-        'abducao-de-quadril-na-maquina-cadeira-abdutora': [29, 29, 36, 43, 43, 43, 50],
-        bicicleta: [5, 5, 6, 6, 6, 6, 6],
-      },
-    },
-  };
-
-  async function importarHistorico() {
-    if (Number(localStorage.getItem('historicoMfit') || 0) >= HISTORICO_VERSAO) return;
-    const lista = await MacroDB.getTreinos();
-    let sessoesCriadas = 0;
-    ignorarRecarga = true;
-    try {
-      for (const [nomeTreino, h] of Object.entries(HISTORICO_MFIT)) {
-        const treino = lista.find((t) => t.nome === nomeTreino);
-        if (!treino) continue;
-        for (const [i, quando] of h.datas.entries()) {
-          const itens = [];
-          for (const [exId, valores] of Object.entries(h.cargas)) {
-            const carga = valores[i];
-            if (carga == null) continue;
-            const doTreino = (treino.exercicios || []).find((e) => e.exercicioId === exId);
-            const base = doTreino || acharExercicio(exId);
-            itens.push({
-              exercicioId: exId,
-              nome: base ? base.nome : exId,
-              grupo: base ? base.grupo : '',
-              unidadeCarga: (doTreino && doTreino.unidadeCarga) || 'kg',
-              carga,
-              reps: '',
-              feito: true,
-            });
-          }
-          if (!itens.length) continue;
-          await MacroDB.saveSessao({
-            id: `mfit-${treino.id}-${i}`,
-            treinoId: treino.id,
-            treinoNome: treino.nome,
-            ts: new Date(quando).toISOString(),
-            origem: 'MFIT Personal',
-            itens,
-          });
-          sessoesCriadas++;
-        }
-      }
-    } finally {
-      ignorarRecarga = false;
-    }
-    localStorage.setItem('historicoMfit', String(HISTORICO_VERSAO));
-    return sessoesCriadas;
-  }
 
   async function semearTreinos() {
     const versao = Number(localStorage.getItem('treinosSemeados') || 0);
@@ -2121,7 +2020,6 @@
   async function init() {
     preencherSelects();
     await semearTreinos();
-    await importarHistorico();
     await carregar();
 
     // execução interrompida (app minimizado, aba fechada) volta de onde parou
