@@ -53,6 +53,10 @@ const FoodSearch = (() => {
       .replace(/\bamendo ?crem(e)?\b/g, 'amendocrem')
       .replace(/\bdr ?peanut\b/g, 'dr peanut')
       .replace(/\bvita ?power\b/g, 'vitapower')
+      // granola proteica Taeq: o sabor é "chocolate com café" no rótulo, mas
+      // quem procura escreve das duas outras formas
+      .replace(/\bcacau (com|e) cafe\b/g, 'chocolate com cafe')
+      .replace(/\bchocolate e cafe\b/g, 'chocolate com cafe')
       .replace(/\bmc ?donalds?\b/g, 'mcdonalds')
       .replace(/\bhamburger(s)?\b/g, 'hamburguer$1')
       .replace(/\bsmash ?burguer(s)?\b/g, 'smash burger$1')

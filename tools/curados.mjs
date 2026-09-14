@@ -593,6 +593,16 @@ export const CURADOS = [
   { n: 'Granola Naturale tradicional', kcal: 425, p: 9, c: 65, g: 13.5, m: [['porção (40 g)', 40], ['colher de sopa (15 g)', 15], ['xícara (60 g)', 60]] },
   { n: 'Granola com whey protein (média)', kcal: 425, p: 20, c: 55, g: 12.5, m: [['porção (40 g)', 40], ['colher de sopa (15 g)', 15], ['xícara (60 g)', 60]] },
 
+  // Taeq (marca própria do GPA — Pão de Açúcar e Extra). A linha proteica saiu
+  // em dois sabores, Chocolate com Café e Cúrcuma com Gengibre, e a marca
+  // anuncia 10 g de proteína por porção; a proteína aqui está calibrada para
+  // fechar esses 10 g na porção de 40 g. O resto do rótulo é estimativa da
+  // categoria — quem tiver o pacote na mão fecha a conta lendo o código de barras.
+  { n: 'Granola proteica Taeq chocolate com café', kcal: 420, p: 25, c: 48, g: 14, m: [['porção (40 g)', 40], ['colher de sopa (15 g)', 15], ['xícara (60 g)', 60]] },
+  { n: 'Granola proteica Taeq cúrcuma com gengibre', kcal: 410, p: 25, c: 50, g: 12, m: [['porção (40 g)', 40], ['colher de sopa (15 g)', 15], ['xícara (60 g)', 60]] },
+  { n: 'Granola Taeq castanha-de-caju, uva-passa e maçã', kcal: 420, p: 9, c: 66, g: 12.5, m: [['porção (40 g)', 40], ['colher de sopa (15 g)', 15], ['xícara (60 g)', 60]] },
+  { n: 'Granola Taeq light de soja, cacau e linhaça', kcal: 385, p: 12, c: 60, g: 10, m: [['porção (40 g)', 40], ['colher de sopa (15 g)', 15], ['xícara (60 g)', 60]] },
+
   // ---- Castanhas caramelizadas de quiosque (Bavarian Nuts e similares) ----
   { n: 'Bavarian Nuts amendoim caramelizado', kcal: 480, p: 16, c: 45, g: 26, m: [['punhado (30 g)', 30], ['saquinho (50 g)', 50], ['pacote (100 g)', 100]] },
   { n: 'Bavarian Nuts castanha de caju caramelizada', kcal: 520, p: 13, c: 42, g: 33, m: [['punhado (30 g)', 30], ['saquinho (50 g)', 50], ['pacote (100 g)', 100]] },
