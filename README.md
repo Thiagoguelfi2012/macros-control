@@ -135,15 +135,19 @@ python3 -m http.server 8000
   (`navigator.share`) e cai para download direto no computador.
 - **Relatórios** (`relatorios.html`): totais de calorias/proteínas/carboidratos/
   gorduras com filtros por **janelas móveis** (1, 7, 15, 30, 90 dias e 1 ano, com
-  navegação entre janelas); gráfico de calorias por dia/mês com linha do gasto
-  estimado e da dieta alvo; déficit calórico acumulado; distribuição dos macros;
+  navegação entre janelas); gráfico de calorias com **uma barra por dia** em
+  toda janela até 90 dias — só a de 1 ano agrupa por mês, que é onde a barra
+  diária vira um traço fino demais para ler. A média semanal saiu de propósito:
+  ela escondia justamente o que interessa, porque o dia fora da curva some
+  dentro da semana. O gráfico traz linha do gasto estimado e da dieta alvo;
+  déficit calórico acumulado; distribuição dos macros;
   **déficit/superávit calórico** do período, calculado a partir do gasto médio
   diário definido em Configurações. Tem também um **gráfico de água**: uma barra
   por dia (ou por mês, na janela de 1 ano), **cheia nos dias em que a meta foi
   batida** e vazada nos outros, com a linha da meta por cima e, embaixo, o total
   do período, a média por dia e **quantos dias bateram a meta**. O cartão só
-  aparece quando há água registrada na janela. Por último vem **O que mudou**: o
-  período é dividido em dois por um **divisor** (uma data que você escolhe, ou o
+  aparece quando há água registrada na janela. O **último cartão da tela** é
+  **O que mudou**: o período é dividido em dois por um **divisor** (uma data que você escolhe, ou o
   botão **achar sozinho**, que procura o ponto de virada — o corte que deixa as
   duas metades mais diferentes entre si). O cartão devolve o **déficit médio por
   dia de cada lado**, o custo do trecho em kcal e em kg de gordura, e uma tabela
