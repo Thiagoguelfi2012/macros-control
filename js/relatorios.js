@@ -39,8 +39,10 @@
           ? 'Hoje'
           : fimVis.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
     } else {
-      // até 30 dias: uma barra por dia; 90 dias: por semana; 1 ano: por mês
-      granularidade = n >= 180 ? 'mes' : n > 31 ? 'semana' : 'dia';
+      // uma barra por dia em qualquer janela até 1 ano, que é onde a barra
+      // diária vira um traço fino demais para ler. A média semanal escondia
+      // justamente o que interessa: o dia fora da curva some dentro da semana.
+      granularidade = n >= 365 ? 'mes' : 'dia';
       label =
         offset === 0
           ? `Últimos ${n} dias`
@@ -410,6 +412,16 @@
 
   // Água por período: barras do que foi bebido e a linha da meta. Em janelas
   // maiores que o dia a meta da barra é a meta diária vezes os dias do balde.
+  // Com muitas colunas a barra fica com poucos pixels de largura, e aí a borda
+  // (1,5 px de cada lado, da cor do cartão) cobre a barra inteira e o gráfico
+  // parece vazio. Passando de 40 colunas a borda sai e a coluna ocupa quase
+  // toda a fatia, para o gráfico virar uma mancha legível em vez de sumir.
+  const barraFina = (n) => n > 40;
+  const formaDaBarra = (n, borda) =>
+    barraFina(n)
+      ? { borderWidth: 0, maxBarThickness: 26, barPercentage: 0.95, categoryPercentage: 0.95 }
+      : { borderWidth: borda, maxBarThickness: 26, barPercentage: 0.65, categoryPercentage: 0.8 };
+
   function renderAgua(buckets, granularidade, entries, dias) {
     const { metaAgua } = MacroDB.getSettings();
     const total = entries.reduce((n, e) => (ehAgua(e) ? n + (e.gramas || 0) : n), 0);
@@ -443,10 +455,7 @@
           metaAgua && b.agua >= metaAgua * (b.dias || 1) ? azul : `${azul}88`
         ),
         borderColor: azul,
-        borderWidth: 1,
-        maxBarThickness: 26,
-        barPercentage: 0.65,
-        categoryPercentage: 0.8,
+        ...formaDaBarra(buckets.length, 1),
       },
     ];
     if (metaAgua && granularidade !== 'hora') {
@@ -711,11 +720,8 @@
       backgroundColor: cor,
       stack: 'kcal',
       borderColor: surface,
-      borderWidth: 1.5,
       borderSkipped: false,
-      maxBarThickness: 26,
-      barPercentage: 0.65,
-      categoryPercentage: 0.8,
+      ...formaDaBarra(buckets.length, 1.5),
     });
     const datasets = [
       mkStack('Proteínas', s1, (b) => b.p * 4),
