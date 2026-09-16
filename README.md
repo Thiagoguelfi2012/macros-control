@@ -142,7 +142,23 @@ python3 -m http.server 8000
   por dia (ou por mês, na janela de 1 ano), **cheia nos dias em que a meta foi
   batida** e vazada nos outros, com a linha da meta por cima e, embaixo, o total
   do período, a média por dia e **quantos dias bateram a meta**. O cartão só
-  aparece quando há água registrada na janela.
+  aparece quando há água registrada na janela. Por último vem **O que mudou**: o
+  período é dividido em dois por um **divisor** (uma data que você escolhe, ou o
+  botão **achar sozinho**, que procura o ponto de virada — o corte que deixa as
+  duas metades mais diferentes entre si). O cartão devolve o **déficit médio por
+  dia de cada lado**, o custo do trecho em kcal e em kg de gordura, e uma tabela
+  com três linhas: **antes**, **depois nos dias normais** e **depois nos dias
+  caros**. Dia caro é o dia em que o déficit não chegou a 200 kcal, e a
+  proporção aparece explícita ("0 de 19 dias antes · 9 de 24 depois") — é o que
+  separa "a dieta inteira afrouxou" de "apareceram alguns dias fora da curva".
+  Fecha com **o que entrou** e **o que saiu**, por kcal/dia e por número de
+  vezes, comparando alimento a alimento pelo nome inteiro.
+
+  Dois cuidados que mudam o resultado: dias **meio registrados** (abaixo de
+  metade do dia mediano da pessoa — o jantar que ninguém anotou, ou hoje de
+  manhã) ficam **fora das médias**, porque entrariam como jejum e inventariam
+  déficit; e o cartão diz quais foram. E tudo é lido em **dia local**, não em
+  UTC, senão a ceia da meia-noite cai no dia seguinte.
 - **Treinos** (`treinos.html`, área Treino): três abas.
   - **Treinos** — no topo, a **frequência da semana**: um círculo por dia
     (segunda a domingo), marcado nos dias em que houve treino (com o número

@@ -487,6 +487,212 @@
     });
   }
 
+  /* ---- O que mudou entre dois trechos do período ---- */
+
+  // Um dia "caro" é um dia em que o déficit não chegou a 200 kcal — inclui os
+  // dias que passaram do gasto. O corte é redondo de propósito: serve para
+  // separar o dia fora da curva do dia normal, não para julgar o dia.
+  const DEFICIT_MINIMO = 200;
+  let corteManual = null;
+
+  const chaveDia = (d) => {
+    const x = new Date(d);
+    x.setHours(0, 0, 0, 0);
+    return x.getTime();
+  };
+
+  // Dia meio-registrado (esqueceu de anotar o jantar, ou é hoje de manhã) não
+  // pode entrar na média: ele puxaria o consumo para baixo e inventaria déficit.
+  // A régua é relativa à própria pessoa — metade do dia mediano dela.
+  function diasDoPeriodo(entries) {
+    const mapa = new Map();
+    for (const e of entries) {
+      if (ehAgua(e)) continue;
+      const k = chaveDia(e.ts);
+      if (!mapa.has(k)) mapa.set(k, { ts: k, kcal: 0, p: 0, c: 0, g: 0, itens: [] });
+      const b = mapa.get(k);
+      b.kcal += e.kcal || 0;
+      b.p += e.p || 0;
+      b.c += e.c || 0;
+      b.g += e.g || 0;
+      b.itens.push(e);
+    }
+    const lista = [...mapa.values()].sort((a, b) => a.ts - b.ts);
+    const ord = lista.map((d) => d.kcal).sort((a, b) => a - b);
+    const mediana = ord.length ? ord[Math.floor(ord.length / 2)] : 0;
+    for (const d of lista) d.parcial = d.kcal < mediana * 0.5;
+    return lista;
+  }
+
+  const mediaDe = (dias, campo) =>
+    dias.length ? dias.reduce((n, d) => n + d[campo], 0) / dias.length : 0;
+
+  // Ponto de virada: o corte que deixa as duas metades mais diferentes entre si.
+  // Varre todos os cortes possíveis deixando ao menos 5 dias de cada lado.
+  function acharCorte(dias) {
+    const uteis = dias.filter((d) => !d.parcial);
+    if (uteis.length < 12) return null;
+    let melhor = null;
+    for (let i = 5; i <= uteis.length - 5; i++) {
+      const a = mediaDe(uteis.slice(0, i), 'kcal');
+      const b = mediaDe(uteis.slice(i), 'kcal');
+      const forca = Math.abs(b - a) * Math.min(i, uteis.length - i);
+      if (!melhor || forca > melhor.forca) melhor = { forca, ts: uteis[i].ts };
+    }
+    return melhor && melhor.ts;
+  }
+
+  // kcal por dia de cada alimento, para dizer o que entrou e o que saiu
+  function porAlimento(dias) {
+    const mapa = new Map();
+    for (const d of dias)
+      for (const e of d.itens) {
+        const n = String(e.nome || '').trim();
+        if (!n) continue;
+        if (!mapa.has(n)) mapa.set(n, { kcal: 0, vezes: 0 });
+        const b = mapa.get(n);
+        b.kcal += e.kcal || 0;
+        b.vezes++;
+      }
+    const n = Math.max(1, dias.length);
+    for (const v of mapa.values()) v.kcal /= n;
+    return mapa;
+  }
+
+  const dataCurta = (ts) =>
+    new Date(ts).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+  const diaSemana = (ts) =>
+    new Date(ts).toLocaleDateString('pt-BR', { weekday: 'long' }).replace('-feira', '');
+  const isoDia = (ts) => {
+    const d = new Date(ts);
+    const p = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  };
+
+  function renderComparar(entries) {
+    const card = $('#card-comparar');
+    const { gastoDiario } = MacroDB.getSettings();
+    const dias = diasDoPeriodo(entries);
+    const uteis = dias.filter((d) => !d.parcial);
+    if (!gastoDiario || uteis.length < 12) {
+      card.hidden = true;
+      return;
+    }
+    card.hidden = false;
+
+    const auto = acharCorte(dias);
+    const dentro = (ts) => uteis.some((d) => d.ts === ts);
+    const corte = corteManual && dentro(corteManual) ? corteManual : auto;
+    $('#cmp-data').value = isoDia(corte);
+    $('#cmp-data').min = isoDia(uteis[0].ts);
+    $('#cmp-data').max = isoDia(uteis[uteis.length - 1].ts);
+
+    const antes = uteis.filter((d) => d.ts < corte);
+    const depois = uteis.filter((d) => d.ts >= corte);
+    if (!antes.length || !depois.length) {
+      $('#cmp-saida').innerHTML = '<p class="cmp-nota">Escolha um divisor com dias registrados dos dois lados.</p>';
+      return;
+    }
+    const caros = depois.filter((d) => gastoDiario - d.kcal < DEFICIT_MINIMO);
+    const normais = depois.filter((d) => !caros.includes(d));
+    const carosAntes = antes.filter((d) => gastoDiario - d.kcal < DEFICIT_MINIMO);
+
+    const mA = mediaDe(antes, 'kcal');
+    const mD = mediaDe(depois, 'kcal');
+    const defA = gastoDiario - mA;
+    const defD = gastoDiario - mD;
+    const custo = depois.reduce((n, d) => n + (d.kcal - mA), 0);
+    const parciais = dias.filter((d) => d.parcial);
+
+    const linha = (rot, lista, destaque) => {
+      if (!lista.length) return '';
+      return `<tr${destaque ? ' class="alto"' : ''}>
+        <td>${rot} <i>${lista.length}d</i></td>
+        <td><b>${fmt(mediaDe(lista, 'kcal'), 0)}</b></td>
+        <td>${fmt(mediaDe(lista, 'p'), 0)}</td>
+        <td>${fmt(mediaDe(lista, 'c'), 0)}</td>
+        <td>${fmt(mediaDe(lista, 'g'), 0)}</td>
+      </tr>`;
+    };
+
+    const a = porAlimento(antes);
+    const b = porAlimento(depois);
+    const nomes = new Set([...a.keys(), ...b.keys()]);
+    const difs = [...nomes]
+      .map((n) => {
+        const x = a.get(n) || { kcal: 0, vezes: 0 };
+        const y = b.get(n) || { kcal: 0, vezes: 0 };
+        return { n, d: y.kcal - x.kcal, antes: x, depois: y };
+      })
+      .sort((x, y) => y.d - x.d);
+    const entrou = difs.filter((x) => x.d >= 10).slice(0, 6);
+    const saiu = difs.filter((x) => x.d <= -10).reverse().slice(0, 6);
+
+    const item = (x, sinal) => `<li>
+      <span class="cmp-n">${esc(x.n)}</span>
+      <span class="cmp-k">${sinal}${fmt(Math.abs(x.d), 0)} kcal/dia</span>
+      <i>${x.antes.vezes}× → ${x.depois.vezes}×</i>
+    </li>`;
+
+    $('#cmp-saida').innerHTML = `
+      <div class="cmp-topo">
+        <div>
+          <span class="cmp-rot">antes de ${dataCurta(corte)}</span>
+          <b>${fmt(defA, 0)}</b><span class="cmp-un">kcal de déficit por dia</span>
+        </div>
+        <div class="cmp-seta" aria-hidden="true">→</div>
+        <div>
+          <span class="cmp-rot">de ${dataCurta(corte)} em diante</span>
+          <b class="${defD < defA ? 'pior' : 'melhor'}">${fmt(defD, 0)}</b><span class="cmp-un">kcal de déficit por dia</span>
+        </div>
+      </div>
+      ${Math.abs(custo) > 500 ? `<p class="cmp-custo">
+        ${custo > 0 ? 'Custou' : 'Rendeu'} <b>${fmt(Math.abs(custo), 0)} kcal</b> no trecho —
+        cerca de <b>${fmt(Math.abs(custo) / KCAL_POR_KG, 2)} kg</b> de gordura
+        ${custo > 0 ? 'que deixaram de sair' : 'a mais'}.</p>` : ''}
+
+      <table class="cmp-tab">
+        <thead><tr><th></th><th>kcal</th><th>P</th><th>C</th><th>G</th></tr></thead>
+        <tbody>
+          ${linha(`antes de ${dataCurta(corte)}`, antes)}
+          ${linha('depois · dias normais', normais)}
+          ${linha('depois · dias caros', caros, true)}
+        </tbody>
+      </table>
+
+      ${caros.length ? `<div class="cmp-caros">
+        <h4>Dias caros <i>déficit abaixo de ${DEFICIT_MINIMO} kcal</i></h4>
+        <p class="cmp-nota">${carosAntes.length} de ${antes.length} dias antes · <b>${caros.length} de ${depois.length}</b> depois</p>
+        <ul>
+          ${caros.map((d) => {
+            const top = [...d.itens].sort((x, y) => (y.kcal || 0) - (x.kcal || 0)).slice(0, 2);
+            const curto = (nome) => {
+              const partes = String(nome).split(',');
+              const t = partes.slice(0, 2).join(',').trim();
+              return t.length > 34 ? `${t.slice(0, 33)}…` : t;
+            };
+            return `<li>
+              <span class="cmp-n">${dataCurta(d.ts)} <i>${diaSemana(d.ts)}</i></span>
+              <span class="cmp-k">${fmt(d.kcal, 0)} kcal</span>
+              <i>${top.map((e) => esc(curto(e.nome))).join(' · ')}</i>
+            </li>`;
+          }).join('')}
+        </ul>
+      </div>` : ''}
+
+      <div class="cmp-listas">
+        ${entrou.length ? `<div><h4>O que entrou</h4><ul>${entrou.map((x) => item(x, '+')).join('')}</ul></div>` : ''}
+        ${saiu.length ? `<div><h4>O que saiu</h4><ul>${saiu.map((x) => item(x, '−')).join('')}</ul></div>` : ''}
+      </div>
+
+      <p class="cmp-nota rodape">
+        Médias por dia com registro, sobre o gasto de ${fmt(gastoDiario, 0)} kcal/dia dos Ajustes.
+        ${parciais.length ? `${parciais.length} ${parciais.length === 1 ? 'dia ficou' : 'dias ficaram'} de fora por
+        ${parciais.length === 1 ? 'estar' : 'estarem'} meio registrado${parciais.length === 1 ? '' : 's'}
+        (${parciais.map((d) => dataCurta(d.ts)).join(', ')}) — entrariam como jejum e inventariam déficit.` : ''}
+      </p>`;
+  }
+
   function renderCharts(buckets, granularidade, tot, dias) {
     const { gastoDiario } = MacroDB.getSettings();
     const ink2 = cssVar('--ink-2');
@@ -708,6 +914,7 @@
     const buckets = agregar(entries, inicio, fim, granularidade);
     renderCharts(buckets, granularidade, tot, dias);
     renderAgua(buckets, granularidade, entries, dias);
+    renderComparar(entries);
   }
 
 
@@ -1848,6 +2055,16 @@ function abrirTudo(abrir){document.querySelectorAll('details').forEach(function(
       for (const b of $('#seg-periodo').children) b.classList.toggle('active', b === btn);
       periodo = Number(btn.dataset.p);
       offset = 0;
+      corteManual = null; // janela nova, divisor novo
+      render();
+    });
+    $('#cmp-data').addEventListener('change', (ev) => {
+      const [y, m, d] = ev.target.value.split('-').map(Number);
+      corteManual = y ? new Date(y, m - 1, d).getTime() : null;
+      render();
+    });
+    $('#cmp-auto').addEventListener('click', () => {
+      corteManual = null;
       render();
     });
     $('#btn-pdf').addEventListener('click', () => abrirRelatorio());
@@ -1861,11 +2078,13 @@ function abrirTudo(abrir){document.querySelectorAll('details').forEach(function(
 
     $('#btn-prev').addEventListener('click', () => {
       offset--;
+      corteManual = null;
       render();
     });
     $('#btn-next').addEventListener('click', () => {
       if (offset < 0) {
         offset++;
+        corteManual = null;
         render();
       }
     });

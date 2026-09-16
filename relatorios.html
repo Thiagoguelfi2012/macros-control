@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Relatórios — Controle de Macros</title>
   <link rel="icon" href="data:," />
-  <link rel="stylesheet" href="css/app.css?v=24ffba69" />
+  <link rel="stylesheet" href="css/app.css?v=0427fe08" />
 </head>
 <body>
   <div class="barras">
@@ -65,6 +65,17 @@
       <div class="chart-wrap small"><canvas id="chart-agua"></canvas></div>
     </div>
 
+    <div class="chart-card" id="card-comparar" hidden>
+      <h3>O que mudou</h3>
+      <p class="sub">Divide o período em dois e compara: o que entrou, o que saiu e quanto custou</p>
+      <div class="cmp-corte">
+        <label for="cmp-data">Divisor</label>
+        <input type="date" id="cmp-data" />
+        <button class="btn" type="button" id="cmp-auto">achar sozinho</button>
+      </div>
+      <div id="cmp-saida"></div>
+    </div>
+
     <div class="charts-row">
       <div class="chart-card">
         <h3 id="chart-kcal-titulo">Calorias consumidas</h3>
@@ -97,7 +108,7 @@
   <script src="js/db.js?v=3abd987c"></script>
   <script src="js/sync.js?v=bc4146c6"></script>
   <script src="js/login-gate.js?v=85c88240"></script>
-  <script src="js/relatorios.js?v=a948383e"></script>
+  <script src="js/relatorios.js?v=2370ba7d"></script>
   <script src="js/agua-aviso.js?v=e9d2f26a"></script>
   <script src="js/refresh.js?v=5d27466c"></script>
 </body>
