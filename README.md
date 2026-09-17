@@ -126,6 +126,13 @@ python3 -m http.server 8000
   whey, pão com mel e whey, tapioca com queijo, batata doce com frango, cuscuz
   com ovo…), e o cabeçalho diz de onde veio o palpite: "você costuma treinar às
   19h às quintas".
+- **Aviso de alimento caro**: ao escolher um alimento que está na lista de
+  **alimentos caros** (a mesma do cartão "O que mudou", calculada sobre os
+  últimos 90 dias), o modal mostra um aviso vermelho com a evidência — em
+  quantos dias sem déficit ele apareceu, em quantas das vezes que você comeu e
+  quantas kcal tem a porção — e **pede confirmação** antes de incluir na
+  refeição ou salvar. O aviso só existe quando a **dieta alvo é menor que o
+  gasto**: fora do déficit não há dia caro, há dia normal.
 - **Relatório para o médico**: o botão **PDF** na barra de filtros abre uma prévia
   com duas saídas. **Baixar PDF** gera o arquivo para impressão (jsPDF, com os
   gráficos como imagem). **Enviar HTML** gera um **arquivo HTML interativo e
@@ -152,11 +159,21 @@ python3 -m http.server 8000
   duas metades mais diferentes entre si). O cartão devolve o **déficit médio por
   dia de cada lado**, o custo do trecho em kcal e em kg de gordura, e uma tabela
   com três linhas: **antes**, **depois nos dias normais** e **depois nos dias
-  caros**. Dia caro é o dia em que o déficit não chegou a 200 kcal, e a
-  proporção aparece explícita ("0 de 19 dias antes · 9 de 24 depois") — é o que
-  separa "a dieta inteira afrouxou" de "apareceram alguns dias fora da curva".
-  Fecha com **o que entrou** e **o que saiu**, por kcal/dia e por número de
-  vezes, comparando alimento a alimento pelo nome inteiro.
+  caros**. Dia caro é o dia em que o déficit não chegou a 200 kcal.
+
+  O bloco principal é **Alimentos caros**: não o mais calórico da tabela, e sim
+  o que aparece nos *seus* dias caros e quase não aparece nos outros. Ovo mexido
+  tem caloria e está em todos os dias, inclusive nos estourados — ele não explica
+  nada; um alimento que apareceu seis vezes e cinco delas em dia estourado
+  explica. A régua exige as três coisas: porção de **200 kcal ou mais**,
+  **60% ou mais** das aparições em dia caro, e **duas aparições** (ou uma só, se
+  a porção passar de 400 kcal e estourar o dia sozinha). A lista para em 12 itens
+  de propósito — aviso que dispara à toa vira aviso ignorado. Logo abaixo, os
+  **Dias caros** ficam **retráteis e fechados**, com a proporção de cada lado no
+  resumo ("0 antes · 9 depois") — é o que separa "a dieta inteira afrouxou" de
+  "apareceram alguns dias fora da curva". Fecha com **o que entrou** e **o que
+  saiu**, por kcal/dia e por número de vezes, comparando alimento a alimento pelo
+  nome inteiro.
 
   Dois cuidados que mudam o resultado: dias **meio registrados** (abaixo de
   metade do dia mediano da pessoa — o jantar que ninguém anotou, ou hoje de
@@ -490,6 +507,7 @@ js/exercicios.js               biblioteca de exercícios da academia (gerado)
 js/config.js                   tela Ajustes (gasto, dieta alvo, backup, conta)
 js/sync.js                     conta (Supabase Auth) + sincronização do backup
 js/login-gate.js               porta de entrada: sem conta, sem app
+js/caros.js                    alimentos caros: os que fazem o dia estourar
 js/refresh.js                  pull-to-refresh
 data/foods.json                banco de ~18.000 alimentos gerado
 vendor/                        Tom Select e Chart.js vendorizados (offline)

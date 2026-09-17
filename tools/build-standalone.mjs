@@ -102,6 +102,9 @@ ${read('vendor/jspdf.plugin.autotable.min.js')}
 ${read('js/db.js')}
 </script>
 <script>
+${read('js/caros.js')}
+</script>
+<script>
 ${read('js/exercicios.js')}
 </script>
 <script>
@@ -109,6 +112,9 @@ ${read('js/busca.js')}
 </script>
 <script>
 ${read('js/sync.js')}
+</script>
+<script>
+${read('js/login-gate.js')}
 </script>
 <script>
 ${read('js/sugestao.js')}

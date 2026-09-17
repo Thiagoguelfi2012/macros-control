@@ -501,37 +501,10 @@
   // Um dia "caro" é um dia em que o déficit não chegou a 200 kcal — inclui os
   // dias que passaram do gasto. O corte é redondo de propósito: serve para
   // separar o dia fora da curva do dia normal, não para julgar o dia.
-  const DEFICIT_MINIMO = 200;
+  const DEFICIT_MINIMO = AlimentosCaros.DEFICIT_MINIMO;
   let corteManual = null;
 
-  const chaveDia = (d) => {
-    const x = new Date(d);
-    x.setHours(0, 0, 0, 0);
-    return x.getTime();
-  };
-
-  // Dia meio-registrado (esqueceu de anotar o jantar, ou é hoje de manhã) não
-  // pode entrar na média: ele puxaria o consumo para baixo e inventaria déficit.
-  // A régua é relativa à própria pessoa — metade do dia mediano dela.
-  function diasDoPeriodo(entries) {
-    const mapa = new Map();
-    for (const e of entries) {
-      if (ehAgua(e)) continue;
-      const k = chaveDia(e.ts);
-      if (!mapa.has(k)) mapa.set(k, { ts: k, kcal: 0, p: 0, c: 0, g: 0, itens: [] });
-      const b = mapa.get(k);
-      b.kcal += e.kcal || 0;
-      b.p += e.p || 0;
-      b.c += e.c || 0;
-      b.g += e.g || 0;
-      b.itens.push(e);
-    }
-    const lista = [...mapa.values()].sort((a, b) => a.ts - b.ts);
-    const ord = lista.map((d) => d.kcal).sort((a, b) => a - b);
-    const mediana = ord.length ? ord[Math.floor(ord.length / 2)] : 0;
-    for (const d of lista) d.parcial = d.kcal < mediana * 0.5;
-    return lista;
-  }
+  const diasDoPeriodo = (entries) => AlimentosCaros.porDia(entries);
 
   const mediaDe = (dias, campo) =>
     dias.length ? dias.reduce((n, d) => n + d[campo], 0) / dias.length : 0;
@@ -606,6 +579,10 @@
     const normais = depois.filter((d) => !caros.includes(d));
     const carosAntes = antes.filter((d) => gastoDiario - d.kcal < DEFICIT_MINIMO);
 
+    // os alimentos caros saem do trecho DEPOIS do divisor, que é o que a
+    // pessoa quer entender; antes do divisor serve de contraste, não de alvo
+    const alimentosCaros = AlimentosCaros.alimentosDe(depois, gastoDiario);
+
     const mA = mediaDe(antes, 'kcal');
     const mD = mediaDe(depois, 'kcal');
     const defA = gastoDiario - mA;
@@ -669,8 +646,23 @@
         </tbody>
       </table>
 
-      ${caros.length ? `<div class="cmp-caros">
-        <h4>Dias caros <i>déficit abaixo de ${DEFICIT_MINIMO} kcal</i></h4>
+      ${alimentosCaros.length ? `<div class="cmp-vil">
+        <h4>Alimentos caros <i>o que faz o dia estourar</i></h4>
+        <p class="cmp-nota">Aparecem nos dias caros e quase não aparecem nos outros — não é o mais calórico, é o que decide o dia.</p>
+        <ul>
+          ${alimentosCaros.map((a) => `<li>
+            <span class="cmp-n">${esc(a.nome)}</span>
+            <span class="cmp-k">${fmt(a.kcalCaros, 0)} kcal</span>
+            <i>em ${a.diasCaros} ${a.diasCaros === 1 ? 'dia caro' : 'dias caros'} · ${a.vezesCaras} de ${a.vezes} ${a.vezes === 1 ? 'vez' : 'vezes'} · ${fmt(a.kcalMedia, 0)} kcal por porção</i>
+          </li>`).join('')}
+        </ul>
+      </div>` : ''}
+
+      ${caros.length ? `<details class="cmp-caros">
+        <summary>
+          <span>Dias caros <i>déficit abaixo de ${DEFICIT_MINIMO} kcal</i></span>
+          <b>${carosAntes.length} antes · ${caros.length} depois</b>
+        </summary>
         <p class="cmp-nota">${carosAntes.length} de ${antes.length} dias antes · <b>${caros.length} de ${depois.length}</b> depois</p>
         <ul>
           ${caros.map((d) => {
@@ -687,7 +679,7 @@
             </li>`;
           }).join('')}
         </ul>
-      </div>` : ''}
+      </details>` : ''}
 
       <div class="cmp-listas">
         ${entrou.length ? `<div><h4>O que entrou</h4><ul>${entrou.map((x) => item(x, '+')).join('')}</ul></div>` : ''}

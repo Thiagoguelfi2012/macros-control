@@ -1436,6 +1436,50 @@ body.com-gate { overflow: hidden; }
   .cmp-topo b { font-size: 22px; }
 }
 
+/* ---- Alerta de alimento caro (na hora de incluir) ---- */
+.alerta-caro {
+  display: flex; gap: 11px; align-items: flex-start;
+  margin: 12px 0; padding: 12px 14px;
+  border: 1px solid #e0704f; border-left-width: 4px; border-radius: 12px;
+  background: color-mix(in srgb, #e0704f 14%, var(--surface));
+}
+.ac-icone {
+  flex: none; width: 22px; height: 22px; border-radius: 50%;
+  background: #e0704f; color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 14px; line-height: 1;
+}
+.alerta-caro b { color: var(--ink); }
+.alerta-caro > div { min-width: 0; }
+.alerta-caro > div > b { display: block; font-size: 13.5px; margin-bottom: 3px; }
+.alerta-caro p { margin: 0; font-size: 12.5px; line-height: 1.5; color: var(--ink-2); }
+
+/* ---- Alimentos caros e dias caros no cartão "O que mudou" ---- */
+.cmp-vil { margin-top: 18px; }
+.cmp-vil h4 { margin: 0 0 4px; font-size: 13px; }
+.cmp-vil h4 i { font-style: normal; font-weight: 400; font-size: 11px; color: var(--muted); }
+.cmp-vil ul { list-style: none; margin: 8px 0 0; padding: 0; }
+.cmp-vil li {
+  display: grid; grid-template-columns: 1fr auto; gap: 2px 10px;
+  padding: 7px 0; border-top: 1px solid var(--border); font-size: 12.5px;
+}
+.cmp-vil li > i { grid-column: 1 / -1; font-style: normal; font-size: 11px; color: var(--muted); line-height: 1.4; }
+.cmp-vil .cmp-k { color: #e0704f; font-weight: 600; }
+details.cmp-caros { margin-top: 18px; }
+details.cmp-caros > summary {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  cursor: pointer; list-style: none; padding: 8px 0; font-size: 13px;
+  border-top: 1px solid var(--border);
+}
+details.cmp-caros > summary::-webkit-details-marker { display: none; }
+details.cmp-caros > summary::after {
+  content: '▸'; color: var(--muted); font-size: 12px; transition: transform 0.15s;
+}
+details.cmp-caros[open] > summary::after { transform: rotate(90deg); }
+details.cmp-caros > summary > span { font-weight: 600; }
+details.cmp-caros > summary i { font-style: normal; font-weight: 400; font-size: 11px; color: var(--muted); }
+details.cmp-caros > summary b { margin-left: auto; font-size: 11.5px; color: var(--muted); font-weight: 500; }
+
 </style>
 </head>
 <body>
@@ -1509,6 +1553,8 @@ body.com-gate { overflow: hidden; }
         <span class="macro-chip"><span class="sw sw-g"></span>Gord <b id="pv-g">0</b> g</span>
         <span id="pv-dens"></span>
       </div>
+
+      <div class="alerta-caro" id="alerta-caro" role="alert" hidden></div>
 
       <button class="btn btn-incluir" id="btn-incluir" type="button" hidden>+ Incluir na refeição e adicionar outro</button>
       <button class="btn-link" id="btn-cancelar-item" type="button" hidden>Cancelar edição do item</button>
@@ -3401,6 +3447,182 @@ const MacroDB = (() => {
 
 </script>
 <script>
+/* Alimentos caros: os que fazem o dia estourar.
+
+   Não é "alimento calórico" — é o alimento que aparece nos SEUS dias caros e
+   quase não aparece nos outros. Ovo mexido tem caloria e aparece todo dia,
+   inclusive nos estourados: ele não explica nada. Banoffee aparece seis vezes
+   e cinco delas são dias estourados: esse explica.
+
+   Por isso a régua tem três partes — o alimento precisa pesar (uma porção que
+   move o dia), aparecer nos dias caros, e estar concentrado neles. */
+const AlimentosCaros = (() => {
+  // dia caro: o déficit do dia não chegou a 200 kcal, incluindo os dias que
+  // passaram do gasto. Mesma régua do cartão "O que mudou".
+  const DEFICIT_MINIMO = 200;
+  // abaixo disso a porção não derruba um dia sozinha
+  const KCAL_MINIMA = 200;
+  // a maioria das aparições precisa cair em dia caro, senão é comida do dia a dia
+  const CONCENTRACAO = 0.6;
+  // duas aparições para não confundir coincidência com padrão — a exceção é a
+  // porção enorme, que estoura o dia sozinha já na primeira vez
+  const KCAL_DE_UMA_VEZ = 400;
+  // a lista fica curta de propósito: aviso que dispara à toa vira aviso ignorado
+  const MAXIMO = 12;
+  const JANELA_DIAS = 90;
+
+  const ehAgua = (e) =>
+    typeof AguaAviso !== 'undefined'
+      ? AguaAviso.ehAgua(e)
+      : !!e.ml && (e.kcal || 0) <= 2;
+
+  const chaveDia = (ts) => {
+    const d = new Date(ts);
+    d.setHours(0, 0, 0, 0);
+    return d.getTime();
+  };
+
+  // Agrupa por dia LOCAL: em UTC a ceia da meia-noite cairia no dia seguinte.
+  function porDia(entries) {
+    const mapa = new Map();
+    for (const e of entries) {
+      if (ehAgua(e)) continue;
+      const k = chaveDia(e.ts);
+      if (!mapa.has(k)) mapa.set(k, { ts: k, kcal: 0, p: 0, c: 0, g: 0, itens: [] });
+      const b = mapa.get(k);
+      b.kcal += e.kcal || 0;
+      b.p += e.p || 0;
+      b.c += e.c || 0;
+      b.g += e.g || 0;
+      b.itens.push(e);
+    }
+    const lista = [...mapa.values()].sort((a, b) => a.ts - b.ts);
+    // dia meio registrado (o jantar que ninguém anotou, ou hoje de manhã) não
+    // pode entrar: ele entraria como jejum e inventaria déficit
+    const ord = lista.map((d) => d.kcal).sort((a, b) => a - b);
+    const mediana = ord.length ? ord[Math.floor(ord.length / 2)] : 0;
+    for (const d of lista) d.parcial = d.kcal < mediana * 0.5;
+    return lista;
+  }
+
+  const ehDiaCaro = (dia, gastoDiario) => gastoDiario - dia.kcal < DEFICIT_MINIMO;
+
+  // Lista ordenada pelo que cada alimento somou nos dias caros.
+  function alimentosDe(dias, gastoDiario) {
+    const uteis = dias.filter((d) => !d.parcial);
+    const caros = uteis.filter((d) => ehDiaCaro(d, gastoDiario));
+    if (!caros.length) return [];
+    const mapa = new Map();
+    for (const d of uteis) {
+      const caro = ehDiaCaro(d, gastoDiario);
+      for (const e of d.itens) {
+        const nome = String(e.nome || '').trim();
+        if (!nome) continue;
+        if (!mapa.has(nome))
+          mapa.set(nome, { nome, kcalCaros: 0, kcalTotal: 0, vezes: 0, vezesCaras: 0, dias: new Set() });
+        const a = mapa.get(nome);
+        a.kcalTotal += e.kcal || 0;
+        a.vezes++;
+        if (caro) {
+          a.kcalCaros += e.kcal || 0;
+          a.vezesCaras++;
+          a.dias.add(d.ts);
+        }
+      }
+    }
+    return [...mapa.values()]
+      .map((a) => ({
+        ...a,
+        diasCaros: a.dias.size,
+        kcalMedia: a.vezes ? a.kcalTotal / a.vezes : 0,
+        concentracao: a.vezes ? a.vezesCaras / a.vezes : 0,
+      }))
+      .filter(
+        (a) =>
+          a.kcalMedia >= KCAL_MINIMA &&
+          a.concentracao >= CONCENTRACAO &&
+          (a.vezesCaras >= 2 || a.kcalMedia >= KCAL_DE_UMA_VEZ)
+      )
+      .sort((a, b) => b.kcalCaros - a.kcalCaros)
+      .slice(0, MAXIMO);
+  }
+
+  function analisar(entries, gastoDiario) {
+    const dias = porDia(entries);
+    const uteis = dias.filter((d) => !d.parcial);
+    const caros = uteis.filter((d) => ehDiaCaro(d, gastoDiario));
+    return {
+      dias,
+      uteis,
+      caros,
+      normais: uteis.filter((d) => !ehDiaCaro(d, gastoDiario)),
+      parciais: dias.filter((d) => d.parcial),
+      alimentos: gastoDiario ? alimentosDe(dias, gastoDiario) : [],
+    };
+  }
+
+  /* ---- Cache para o Diário consultar na hora de incluir um alimento ---- */
+
+  let cache = null; // { mapa: Map<nome, info>, total: n, quando: ts }
+
+  // O aviso só existe quando a dieta alvo é menor que o gasto: quem não está em
+  // déficit não tem dia caro, tem dia normal.
+  const emDeficit = () => {
+    const { metaKcal, gastoDiario } = MacroDB.getSettings();
+    return !!(metaKcal && gastoDiario && metaKcal < gastoDiario);
+  };
+
+  async function carregar() {
+    if (!emDeficit()) {
+      cache = { mapa: new Map(), total: 0, quando: Date.now() };
+      return cache;
+    }
+    const fim = new Date();
+    fim.setHours(0, 0, 0, 0);
+    fim.setDate(fim.getDate() + 1);
+    const inicio = new Date(fim);
+    inicio.setDate(inicio.getDate() - JANELA_DIAS);
+    const entries = await MacroDB.getEntriesBetween(inicio.toISOString(), fim.toISOString());
+    const { gastoDiario } = MacroDB.getSettings();
+    const r = analisar(entries, gastoDiario);
+    const mapa = new Map();
+    for (const a of r.alimentos) mapa.set(a.nome, a);
+    cache = { mapa, total: r.caros.length, dias: r.uteis.length, quando: Date.now() };
+    return cache;
+  }
+
+  const invalidar = () => {
+    cache = null;
+  };
+
+  // null quando o alimento não é caro (ou quando não há déficit configurado)
+  const consultar = (nome) => {
+    if (!cache || !nome) return null;
+    return cache.mapa.get(String(nome).trim()) || null;
+  };
+
+  const resumo = () => cache;
+
+  return {
+    analisar,
+    alimentosDe,
+    porDia,
+    ehDiaCaro,
+    carregar,
+    invalidar,
+    consultar,
+    resumo,
+    emDeficit,
+    DEFICIT_MINIMO,
+    KCAL_MINIMA,
+    CONCENTRACAO,
+    MAXIMO,
+    JANELA_DIAS,
+  };
+})();
+
+</script>
+<script>
 /* Biblioteca de exercícios (Smart Fit) — gerado por tools/build-exercicios.mjs. Não editar à mão. */
 window.EXERCICIOS = [{"id":"supino-reto-com-barra","nome":"Supino Reto com Barra","grupo":"Peito","equipamento":"Barra","sec":["Tríceps","Ombros"]},{"id":"supino-reto-com-halteres","nome":"Supino Reto com Halteres","grupo":"Peito","equipamento":"Halteres","sec":["Tríceps","Ombros"]},{"id":"supino-inclinado-com-barra-reta","nome":"Supino Inclinado com Barra Reta","grupo":"Peito","equipamento":"Barra","sec":["Tríceps","Ombros"]},{"id":"supino-inclinado-com-halteres","nome":"Supino Inclinado com Halteres","grupo":"Peito","equipamento":"Halteres","sec":["Tríceps","Ombros"]},{"id":"supino-declinado-com-barra","nome":"Supino Declinado com Barra","grupo":"Peito","equipamento":"Barra","sec":["Tríceps","Ombros"]},{"id":"supino-declinado-com-halteres","nome":"Supino Declinado com Halteres","grupo":"Peito","equipamento":"Halteres","sec":["Tríceps","Ombros"]},{"id":"supino-reto-na-maquina","nome":"Supino Reto na Máquina","grupo":"Peito","equipamento":"Máquina","sec":["Tríceps","Ombros"]},{"id":"supino-inclinado-na-maquina","nome":"Supino Inclinado na Máquina","grupo":"Peito","equipamento":"Máquina","sec":["Tríceps","Ombros"]},{"id":"supino-reto-no-smith","nome":"Supino Reto no Smith","grupo":"Peito","equipamento":"Smith","sec":["Tríceps","Ombros"]},{"id":"supino-inclinado-no-smith","nome":"Supino Inclinado no Smith","grupo":"Peito","equipamento":"Smith","sec":["Tríceps","Ombros"]},{"id":"crucifixo-reto-com-halteres","nome":"Crucifixo Reto com Halteres","grupo":"Peito","equipamento":"Halteres","sec":["Ombros"]},{"id":"crucifixo-inclinado-com-halteres","nome":"Crucifixo Inclinado com Halteres","grupo":"Peito","equipamento":"Halteres","sec":["Ombros"]},{"id":"voador-peck-deck","nome":"Voador (Peck Deck)","grupo":"Peito","equipamento":"Máquina","sec":["Ombros"]},{"id":"crossover-polia-alta","nome":"Crossover Polia Alta","grupo":"Peito","equipamento":"Polia","sec":["Ombros"]},{"id":"crossover-polia-media","nome":"Crossover Polia Média","grupo":"Peito","equipamento":"Polia","sec":["Ombros"]},{"id":"crossover-polia-baixa","nome":"Crossover Polia Baixa","grupo":"Peito","equipamento":"Polia","sec":["Ombros"]},{"id":"pullover-com-halter","nome":"Pullover com Halter","grupo":"Peito","equipamento":"Halteres","sec":["Costas","Tríceps"]},{"id":"flexao-de-braco","nome":"Flexão de Braço","grupo":"Peito","equipamento":"Peso corporal","sec":["Tríceps","Ombros"]},{"id":"flexao-de-braco-inclinada","nome":"Flexão de Braço Inclinada","grupo":"Peito","equipamento":"Peso corporal","sec":["Tríceps","Ombros"]},{"id":"mergulho-nas-paralelas","nome":"Mergulho nas Paralelas","grupo":"Peito","equipamento":"Peso corporal","sec":["Tríceps","Ombros"]},{"id":"puxada-frontal-na-polia-alta","nome":"Puxada Frontal na Polia Alta","grupo":"Costas","equipamento":"Polia","sec":["Bíceps","Antebraço"]},{"id":"puxada-frontal-pegada-aberta","nome":"Puxada Frontal Pegada Aberta","grupo":"Costas","equipamento":"Polia","sec":["Bíceps","Antebraço"]},{"id":"puxada-frontal-pegada-supinada","nome":"Puxada Frontal Pegada Supinada","grupo":"Costas","equipamento":"Polia","sec":["Bíceps","Antebraço"]},{"id":"puxada-frontal-pegada-neutra-triangulo","nome":"Puxada Frontal Pegada Neutra (Triângulo)","grupo":"Costas","equipamento":"Polia","sec":["Bíceps","Antebraço"]},{"id":"puxada-fechada-com-barra-reta","nome":"Puxada Fechada com Barra Reta","grupo":"Costas","equipamento":"Polia","sec":["Bíceps","Antebraço"]},{"id":"puxada-articulada-na-maquina","nome":"Puxada Articulada na Máquina","grupo":"Costas","equipamento":"Máquina","sec":["Bíceps","Antebraço"]},{"id":"remada-baixa-na-polia-triangulo","nome":"Remada Baixa na Polia (Triângulo)","grupo":"Costas","equipamento":"Polia","sec":["Bíceps","Antebraço"]},{"id":"remada-baixa-pegada-aberta","nome":"Remada Baixa Pegada Aberta","grupo":"Costas","equipamento":"Polia","sec":["Bíceps","Antebraço"]},{"id":"remada-curvada-com-barra","nome":"Remada Curvada com Barra","grupo":"Costas","equipamento":"Barra","sec":["Bíceps","Antebraço","Trapézio"]},{"id":"remada-curvada-com-halteres","nome":"Remada Curvada com Halteres","grupo":"Costas","equipamento":"Halteres","sec":["Bíceps","Antebraço","Trapézio"]},{"id":"remada-unilateral-com-halter-serrote","nome":"Remada Unilateral com Halter (Serrote)","grupo":"Costas","equipamento":"Halteres","sec":["Bíceps","Antebraço","Trapézio"]},{"id":"remada-cavalinho","nome":"Remada Cavalinho","grupo":"Costas","equipamento":"Barra","sec":["Bíceps","Antebraço","Trapézio"]},{"id":"remada-articulada-na-maquina","nome":"Remada Articulada na Máquina","grupo":"Costas","equipamento":"Máquina","sec":["Bíceps","Antebraço"]},{"id":"remada-maquina-pegada-neutra","nome":"Remada Máquina (Pegada Neutra)","grupo":"Costas","equipamento":"Máquina","sec":["Bíceps","Antebraço"]},{"id":"barra-fixa","nome":"Barra Fixa","grupo":"Costas","equipamento":"Peso corporal","sec":["Bíceps","Antebraço"]},{"id":"barra-fixa-assistida-graviton","nome":"Barra Fixa Assistida (Graviton)","grupo":"Costas","equipamento":"Máquina","sec":["Bíceps","Antebraço"],"assistida":true},{"id":"pulldown-com-bracos-estendidos","nome":"Pulldown com Braços Estendidos","grupo":"Costas","equipamento":"Polia","sec":["Bíceps","Antebraço"]},{"id":"pulldown-barra-aberta","nome":"Pulldown Barra Aberta","grupo":"Costas","equipamento":"Polia","sec":["Bíceps","Antebraço"]},{"id":"pullover-na-polia-alta","nome":"Pullover na Polia Alta","grupo":"Costas","equipamento":"Polia","sec":["Tríceps"]},{"id":"remada-baixa-unilateral-na-polia","nome":"Remada Baixa Unilateral na Polia","grupo":"Costas","equipamento":"Polia","sec":["Bíceps","Antebraço"]},{"id":"levantamento-terra","nome":"Levantamento Terra","grupo":"Costas","equipamento":"Barra","sec":["Lombar","Glúteos","Posterior de coxa"]},{"id":"levantamento-terra-romeno","nome":"Levantamento Terra Romeno","grupo":"Costas","equipamento":"Barra","sec":["Lombar","Glúteos","Posterior de coxa"]},{"id":"encolhimento-com-halteres","nome":"Encolhimento com Halteres","grupo":"Trapézio","equipamento":"Halteres","sec":["Antebraço"]},{"id":"encolhimento-com-barra","nome":"Encolhimento com Barra","grupo":"Trapézio","equipamento":"Barra","sec":["Antebraço"]},{"id":"encolhimento-no-smith","nome":"Encolhimento no Smith","grupo":"Trapézio","equipamento":"Smith","sec":["Antebraço"]},{"id":"encolhimento-na-polia","nome":"Encolhimento na Polia","grupo":"Trapézio","equipamento":"Polia","sec":["Antebraço"]},{"id":"remada-alta-com-barra","nome":"Remada Alta com Barra","grupo":"Trapézio","equipamento":"Barra","sec":["Costas","Bíceps","Antebraço"]},{"id":"remada-alta-na-polia","nome":"Remada Alta na Polia","grupo":"Trapézio","equipamento":"Polia","sec":["Costas","Bíceps","Antebraço"]},{"id":"face-pull-na-polia","nome":"Face Pull na Polia","grupo":"Trapézio","equipamento":"Polia","sec":["Costas"]},{"id":"desenvolvimento-com-halteres","nome":"Desenvolvimento com Halteres","grupo":"Ombros","equipamento":"Halteres","sec":["Tríceps","Trapézio"]},{"id":"desenvolvimento-com-barra","nome":"Desenvolvimento com Barra","grupo":"Ombros","equipamento":"Barra","sec":["Tríceps","Trapézio"]},{"id":"desenvolvimento-na-maquina","nome":"Desenvolvimento na Máquina","grupo":"Ombros","equipamento":"Máquina","sec":["Tríceps","Trapézio"]},{"id":"desenvolvimento-maquina-pegada-neutra","nome":"Desenvolvimento Máquina (Pegada Neutra)","grupo":"Ombros","equipamento":"Máquina","sec":["Tríceps","Trapézio"]},{"id":"desenvolvimento-no-smith","nome":"Desenvolvimento no Smith","grupo":"Ombros","equipamento":"Smith","sec":["Tríceps","Trapézio"]},{"id":"desenvolvimento-arnold","nome":"Desenvolvimento Arnold","grupo":"Ombros","equipamento":"Halteres","sec":["Tríceps","Trapézio"]},{"id":"elevacao-lateral-com-halteres","nome":"Elevação Lateral com Halteres","grupo":"Ombros","equipamento":"Halteres","sec":["Trapézio"]},{"id":"elevacao-lateral-unilateral-com-halteres","nome":"Elevação Lateral Unilateral com Halteres","grupo":"Ombros","equipamento":"Halteres","sec":["Trapézio"]},{"id":"elevacao-lateral-na-polia","nome":"Elevação Lateral na Polia","grupo":"Ombros","equipamento":"Polia","sec":["Trapézio"]},{"id":"elevacao-lateral-na-maquina","nome":"Elevação Lateral na Máquina","grupo":"Ombros","equipamento":"Máquina","sec":["Trapézio"]},{"id":"elevacao-frontal-com-halteres","nome":"Elevação Frontal com Halteres","grupo":"Ombros","equipamento":"Halteres","sec":["Trapézio"]},{"id":"elevacao-frontal-com-barra","nome":"Elevação Frontal com Barra","grupo":"Ombros","equipamento":"Barra","sec":["Trapézio"]},{"id":"elevacao-frontal-na-polia","nome":"Elevação Frontal na Polia","grupo":"Ombros","equipamento":"Polia","sec":["Trapézio"]},{"id":"crucifixo-inverso-na-maquina","nome":"Crucifixo Inverso na Máquina","grupo":"Ombros","equipamento":"Máquina","sec":["Trapézio","Costas"]},{"id":"crucifixo-inverso-com-halteres","nome":"Crucifixo Inverso com Halteres","grupo":"Ombros","equipamento":"Halteres","sec":["Trapézio","Costas"]},{"id":"crucifixo-inverso-na-polia","nome":"Crucifixo Inverso na Polia","grupo":"Ombros","equipamento":"Polia","sec":["Trapézio","Costas"]},{"id":"elevacao-lateral-inclinada","nome":"Elevação Lateral Inclinada","grupo":"Ombros","equipamento":"Halteres","sec":["Trapézio"]},{"id":"rosca-direta-com-barra","nome":"Rosca Direta com Barra","grupo":"Bíceps","equipamento":"Barra","sec":["Antebraço"]},{"id":"rosca-direta-com-barra-w","nome":"Rosca Direta com Barra W","grupo":"Bíceps","equipamento":"Barra","sec":["Antebraço"]},{"id":"rosca-direta-com-barra-h","nome":"Rosca Direta com Barra H","grupo":"Bíceps","equipamento":"Barra","sec":["Antebraço"]},{"id":"rosca-direta-com-halteres","nome":"Rosca Direta com Halteres","grupo":"Bíceps","equipamento":"Halteres","sec":["Antebraço"]},{"id":"rosca-alternada-com-halteres","nome":"Rosca Alternada com Halteres","grupo":"Bíceps","equipamento":"Halteres","sec":["Antebraço"]},{"id":"rosca-martelo","nome":"Rosca Martelo","grupo":"Bíceps","equipamento":"Halteres","sec":["Antebraço"]},{"id":"rosca-concentrada","nome":"Rosca Concentrada","grupo":"Bíceps","equipamento":"Halteres","sec":["Antebraço"]},{"id":"rosca-scott-com-barra-w","nome":"Rosca Scott com Barra W","grupo":"Bíceps","equipamento":"Barra","sec":["Antebraço"]},{"id":"rosca-scott-na-maquina","nome":"Rosca Scott na Máquina","grupo":"Bíceps","equipamento":"Máquina","sec":["Antebraço"]},{"id":"rosca-na-polia-baixa","nome":"Rosca na Polia Baixa","grupo":"Bíceps","equipamento":"Polia","sec":["Antebraço"]},{"id":"rosca-martelo-na-polia-corda","nome":"Rosca Martelo na Polia (Corda)","grupo":"Bíceps","equipamento":"Polia","sec":["Antebraço"]},{"id":"rosca-inclinada-com-halteres","nome":"Rosca Inclinada com Halteres","grupo":"Bíceps","equipamento":"Halteres","sec":["Antebraço"]},{"id":"rosca-21","nome":"Rosca 21","grupo":"Bíceps","equipamento":"Barra","sec":["Antebraço"]},{"id":"triceps-na-polia-com-barra-reta","nome":"Tríceps na Polia com Barra Reta","grupo":"Tríceps","equipamento":"Polia"},{"id":"triceps-na-polia-com-corda","nome":"Tríceps na Polia com Corda","grupo":"Tríceps","equipamento":"Polia"},{"id":"triceps-testa-na-polia-com-corda","nome":"Tríceps Testa na Polia com Corda","grupo":"Tríceps","equipamento":"Polia","sec":["Ombros"]},{"id":"triceps-na-polia-com-barra-v","nome":"Tríceps na Polia com Barra V","grupo":"Tríceps","equipamento":"Polia"},{"id":"triceps-unilateral-na-polia-pegada-inversa","nome":"Tríceps Unilateral na Polia (Pegada Inversa)","grupo":"Tríceps","equipamento":"Polia"},{"id":"triceps-testa-com-barra-w","nome":"Tríceps Testa com Barra W","grupo":"Tríceps","equipamento":"Barra","sec":["Ombros"]},{"id":"triceps-testa-com-halteres","nome":"Tríceps Testa com Halteres","grupo":"Tríceps","equipamento":"Halteres","sec":["Ombros"]},{"id":"triceps-frances","nome":"Tríceps Francês","grupo":"Tríceps","equipamento":"Halteres","sec":["Ombros"]},{"id":"triceps-coice-kickback","nome":"Tríceps Coice (Kickback)","grupo":"Tríceps","equipamento":"Halteres","sec":["Ombros","Posterior de coxa","Lombar"]},{"id":"triceps-na-maquina","nome":"Tríceps na Máquina","grupo":"Tríceps","equipamento":"Máquina"},{"id":"mergulho-no-banco","nome":"Mergulho no Banco","grupo":"Tríceps","equipamento":"Peso corporal","sec":["Peito","Ombros"]},{"id":"supino-fechado","nome":"Supino Fechado","grupo":"Tríceps","equipamento":"Barra","sec":["Ombros"]},{"id":"paralelas-para-triceps","nome":"Paralelas para Tríceps","grupo":"Tríceps","equipamento":"Peso corporal","sec":["Peito","Ombros"]},{"id":"triceps-paralelas-no-graviton","nome":"Tríceps Paralelas no Gráviton","grupo":"Tríceps","equipamento":"Máquina","sec":["Peito","Ombros"],"assistida":true},{"id":"rosca-de-punho-pegada-supinada","nome":"Rosca de Punho (Pegada Supinada)","grupo":"Antebraço","equipamento":"Barra"},{"id":"rosca-de-punho-pegada-pronada","nome":"Rosca de Punho (Pegada Pronada)","grupo":"Antebraço","equipamento":"Barra"},{"id":"rosca-inversa-com-barra-w","nome":"Rosca Inversa com Barra W","grupo":"Antebraço","equipamento":"Barra"},{"id":"farmer-walk-com-halteres","nome":"Farmer Walk com Halteres","grupo":"Antebraço","equipamento":"Halteres","sec":["Trapézio","Abdômen"]},{"id":"agachamento-livre-com-barra","nome":"Agachamento Livre com Barra","grupo":"Quadríceps","equipamento":"Barra","sec":["Glúteos","Posterior de coxa","Abdômen"]},{"id":"agachamento-no-smith","nome":"Agachamento no Smith","grupo":"Quadríceps","equipamento":"Smith","sec":["Glúteos","Posterior de coxa","Abdômen"]},{"id":"agachamento-hack","nome":"Agachamento Hack","grupo":"Quadríceps","equipamento":"Máquina","sec":["Glúteos","Posterior de coxa","Abdômen"]},{"id":"leg-press-45","nome":"Leg Press 45°","grupo":"Quadríceps","equipamento":"Máquina","sec":["Glúteos","Posterior de coxa"]},{"id":"leg-press-horizontal","nome":"Leg Press Horizontal","grupo":"Quadríceps","equipamento":"Máquina","sec":["Glúteos","Posterior de coxa"]},{"id":"cadeira-extensora","nome":"Cadeira Extensora","grupo":"Quadríceps","equipamento":"Máquina"},{"id":"cadeira-extensora-unilateral","nome":"Cadeira Extensora Unilateral","grupo":"Quadríceps","equipamento":"Máquina"},{"id":"agachamento-bulgaro","nome":"Agachamento Búlgaro","grupo":"Quadríceps","equipamento":"Halteres","sec":["Glúteos","Posterior de coxa","Abdômen"]},{"id":"afundo-com-halteres","nome":"Afundo com Halteres","grupo":"Quadríceps","equipamento":"Halteres","sec":["Glúteos","Posterior de coxa","Abdômen"]},{"id":"avanco-no-smith","nome":"Avanço no Smith","grupo":"Quadríceps","equipamento":"Smith","sec":["Glúteos","Posterior de coxa","Abdômen"]},{"id":"passada-walking-lunge","nome":"Passada (Walking Lunge)","grupo":"Quadríceps","equipamento":"Halteres","sec":["Glúteos","Posterior de coxa","Abdômen"]},{"id":"agachamento-goblet","nome":"Agachamento Goblet","grupo":"Quadríceps","equipamento":"Halteres","sec":["Glúteos","Posterior de coxa","Abdômen"]},{"id":"agachamento-sumo-com-halter","nome":"Agachamento Sumô com Halter","grupo":"Quadríceps","equipamento":"Halteres","sec":["Glúteos","Posterior de coxa","Abdômen"]},{"id":"subida-no-banco-step-up","nome":"Subida no Banco (Step Up)","grupo":"Quadríceps","equipamento":"Halteres","sec":["Glúteos","Posterior de coxa","Abdômen"]},{"id":"mesa-flexora","nome":"Mesa Flexora","grupo":"Posterior de coxa","equipamento":"Máquina","sec":["Glúteos","Lombar"]},{"id":"cadeira-flexora","nome":"Cadeira Flexora","grupo":"Posterior de coxa","equipamento":"Máquina","sec":["Glúteos","Lombar"]},{"id":"flexora-em-pe-unilateral","nome":"Flexora em Pé (Unilateral)","grupo":"Posterior de coxa","equipamento":"Máquina","sec":["Glúteos","Lombar"]},{"id":"stiff-com-barra","nome":"Stiff com Barra","grupo":"Posterior de coxa","equipamento":"Barra","sec":["Glúteos","Lombar"]},{"id":"stiff-com-halteres","nome":"Stiff com Halteres","grupo":"Posterior de coxa","equipamento":"Halteres","sec":["Glúteos","Lombar"]},{"id":"levantamento-terra-sumo","nome":"Levantamento Terra Sumô","grupo":"Posterior de coxa","equipamento":"Barra","sec":["Lombar","Glúteos","Trapézio"]},{"id":"good-morning","nome":"Good Morning","grupo":"Posterior de coxa","equipamento":"Barra","sec":["Lombar","Glúteos"]},{"id":"elevacao-pelvica-com-barra","nome":"Elevação Pélvica com Barra","grupo":"Posterior de coxa","equipamento":"Barra","sec":["Lombar"]},{"id":"elevacao-pelvica-na-maquina","nome":"Elevação Pélvica na Máquina","grupo":"Glúteos","equipamento":"Máquina","sec":["Posterior de coxa","Lombar"]},{"id":"gluteo-na-polia-coice","nome":"Glúteo na Polia (Coice)","grupo":"Glúteos","equipamento":"Polia","sec":["Posterior de coxa","Lombar"]},{"id":"gluteo-na-maquina-coice","nome":"Glúteo na Máquina (Coice)","grupo":"Glúteos","equipamento":"Máquina","sec":["Posterior de coxa","Lombar"]},{"id":"abducao-de-quadril-na-maquina-cadeira-abdutora","nome":"Abdução de Quadril na Máquina (Cadeira Abdutora)","grupo":"Glúteos","equipamento":"Máquina"},{"id":"abducao-no-cabo","nome":"Abdução no Cabo","grupo":"Glúteos","equipamento":"Polia"},{"id":"ponte-de-gluteo-no-solo","nome":"Ponte de Glúteo no Solo","grupo":"Glúteos","equipamento":"Peso corporal","sec":["Posterior de coxa","Lombar"]},{"id":"agachamento-sumo-no-smith","nome":"Agachamento Sumô no Smith","grupo":"Glúteos","equipamento":"Smith","sec":["Posterior de coxa","Abdômen"]},{"id":"aducao-de-quadril-na-maquina-cadeira-adutora","nome":"Adução de Quadril na Máquina (Cadeira Adutora)","grupo":"Adutores","equipamento":"Máquina"},{"id":"aducao-no-cabo","nome":"Adução no Cabo","grupo":"Adutores","equipamento":"Polia"},{"id":"panturrilha-em-pe-na-maquina","nome":"Panturrilha em Pé na Máquina","grupo":"Panturrilha","equipamento":"Máquina"},{"id":"panturrilha-sentado-na-maquina","nome":"Panturrilha Sentado na Máquina","grupo":"Panturrilha","equipamento":"Máquina"},{"id":"panturrilha-no-leg-press","nome":"Panturrilha no Leg Press","grupo":"Panturrilha","equipamento":"Máquina"},{"id":"panturrilha-no-smith","nome":"Panturrilha no Smith","grupo":"Panturrilha","equipamento":"Smith"},{"id":"panturrilha-com-halteres","nome":"Panturrilha com Halteres","grupo":"Panturrilha","equipamento":"Halteres"},{"id":"abdominal-supra-no-solo","nome":"Abdominal Supra no Solo","grupo":"Abdômen","equipamento":"Peso corporal","sec":["Lombar"]},{"id":"abdominal-na-maquina","nome":"Abdominal na Máquina","grupo":"Abdômen","equipamento":"Máquina","sec":["Lombar"]},{"id":"abdominal-na-polia-alta-ajoelhado","nome":"Abdominal na Polia Alta (Ajoelhado)","grupo":"Abdômen","equipamento":"Polia","sec":["Lombar"]},{"id":"abdominal-infra-elevacao-de-pernas","nome":"Abdominal Infra (Elevação de Pernas)","grupo":"Abdômen","equipamento":"Peso corporal","sec":["Lombar"]},{"id":"elevacao-de-pernas-na-barra-fixa","nome":"Elevação de Pernas na Barra Fixa","grupo":"Abdômen","equipamento":"Peso corporal","sec":["Bíceps","Antebraço","Lombar"]},{"id":"elevacao-de-pernas-no-banco","nome":"Elevação de Pernas no Banco","grupo":"Abdômen","equipamento":"Peso corporal","sec":["Lombar"]},{"id":"prancha-isometrica","nome":"Prancha Isométrica","grupo":"Abdômen","equipamento":"Peso corporal","sec":["Lombar","Ombros"]},{"id":"prancha-alta","nome":"Prancha Alta","grupo":"Abdômen","equipamento":"Peso corporal","sec":["Lombar","Ombros"]},{"id":"abdominal-dead-bug","nome":"Abdominal Dead Bug","grupo":"Abdômen","equipamento":"Peso corporal","sec":["Lombar"]},{"id":"prancha-lateral","nome":"Prancha Lateral","grupo":"Abdômen","equipamento":"Peso corporal","sec":["Lombar","Ombros"]},{"id":"abdominal-bicicleta","nome":"Abdominal Bicicleta","grupo":"Abdômen","equipamento":"Peso corporal","sec":["Lombar","Quadríceps","Panturrilha"]},{"id":"abdominal-obliquo","nome":"Abdominal Oblíquo","grupo":"Abdômen","equipamento":"Peso corporal","sec":["Lombar"]},{"id":"russian-twist","nome":"Russian Twist","grupo":"Abdômen","equipamento":"Anilha","sec":["Lombar","Ombros"]},{"id":"abdominal-canivete","nome":"Abdominal Canivete","grupo":"Abdômen","equipamento":"Peso corporal","sec":["Lombar"]},{"id":"rotacao-de-tronco-na-polia-lenhador","nome":"Rotação de Tronco na Polia (Lenhador)","grupo":"Abdômen","equipamento":"Polia","sec":["Lombar","Ombros"]},{"id":"roda-abdominal","nome":"Roda Abdominal","grupo":"Abdômen","equipamento":"Peso corporal","sec":["Lombar"]},{"id":"hiperextensao-lombar-banco-romano","nome":"Hiperextensão Lombar (Banco Romano)","grupo":"Lombar","equipamento":"Peso corporal","sec":["Glúteos","Posterior de coxa"]},{"id":"extensao-lombar-na-maquina","nome":"Extensão Lombar na Máquina","grupo":"Lombar","equipamento":"Máquina","sec":["Glúteos","Posterior de coxa"]},{"id":"superman-no-solo","nome":"Superman no Solo","grupo":"Lombar","equipamento":"Peso corporal","sec":["Glúteos","Posterior de coxa"]},{"id":"levantamento-terra-com-halteres","nome":"Levantamento Terra com Halteres","grupo":"Corpo inteiro","equipamento":"Halteres","sec":["Lombar","Glúteos","Posterior de coxa"]},{"id":"swing-com-kettlebell","nome":"Swing com Kettlebell","grupo":"Corpo inteiro","equipamento":"Kettlebell","sec":["Ombros","Quadríceps","Glúteos"]},{"id":"thruster-com-halteres","nome":"Thruster com Halteres","grupo":"Corpo inteiro","equipamento":"Halteres","sec":["Ombros","Quadríceps","Glúteos"]},{"id":"burpee","nome":"Burpee","grupo":"Corpo inteiro","equipamento":"Peso corporal","sec":["Ombros","Quadríceps","Glúteos"]},{"id":"corda-naval","nome":"Corda Naval","grupo":"Corpo inteiro","equipamento":"Funcional","sec":["Ombros","Costas","Abdômen"]},{"id":"agachamento-com-salto","nome":"Agachamento com Salto","grupo":"Corpo inteiro","equipamento":"Peso corporal","sec":["Glúteos","Posterior de coxa","Abdômen"]},{"id":"remada-renegada","nome":"Remada Renegada","grupo":"Corpo inteiro","equipamento":"Halteres","sec":["Bíceps","Antebraço"]},{"id":"esteira","nome":"Esteira","grupo":"Cardio","equipamento":"Cardio","sec":["Quadríceps","Panturrilha","Glúteos"]},{"id":"bicicleta","nome":"Bicicleta","grupo":"Cardio","equipamento":"Cardio","sec":["Quadríceps","Panturrilha"]},{"id":"bicicleta-horizontal","nome":"Bicicleta Horizontal","grupo":"Cardio","equipamento":"Cardio","sec":["Quadríceps","Panturrilha"]},{"id":"eliptico-transport","nome":"Elíptico (Transport)","grupo":"Cardio","equipamento":"Cardio","sec":["Quadríceps","Panturrilha","Glúteos"]},{"id":"escada-stair","nome":"Escada (Stair)","grupo":"Cardio","equipamento":"Cardio","sec":["Quadríceps","Panturrilha","Glúteos"]},{"id":"remo-ergometro","nome":"Remo Ergômetro","grupo":"Cardio","equipamento":"Cardio","sec":["Costas","Bíceps","Quadríceps"]},{"id":"simulador-de-escada","nome":"Simulador de Escada","grupo":"Cardio","equipamento":"Cardio","sec":["Quadríceps","Panturrilha","Glúteos"]}];
 window.EXERCICIOS_VERSAO = 4;
@@ -3932,6 +4154,128 @@ const SupabaseSync = (() => {
       fn(estado);
     },
   };
+})();
+
+</script>
+<script>
+/* Porta de entrada: sem conta, sem app.
+
+   O app fica visível atrás de um véu translúcido — dá para ver que ele existe,
+   não dá para usar. Enquanto não há sessão, o conteúdo é marcado como inerte,
+   então nada atrás da tela recebe clique, foco ou tecla.
+
+   Um aviso honesto sobre o alcance disto: este é um site estático, e a trava
+   vive no próprio JavaScript da página. Ela decide quem usa a interface, não
+   quem pode ler os dados — o que já está no navegador deste aparelho continua
+   no navegador deste aparelho. Quem protege dado de verdade aqui é o RLS do
+   Supabase, que só entrega a linha do dono do token. */
+const LoginGate = (() => {
+  const ID = 'login-gate';
+  const SEM_CONTA = 'gateSemConta'; // escape onde o OAuth é impossível
+  let veu = null;
+  let ultimo = null;
+
+  const temSync = () => typeof SupabaseSync !== 'undefined';
+
+  // OAuth do Google sai da página e volta com os tokens no endereço. Isso não
+  // acontece dentro de um iframe nem em arquivo aberto do disco: nesses lugares
+  // não existe login possível, e travar a porta só deixaria o app inútil.
+  const oauthPossivel = () => temSync() && SupabaseSync.configurado() && SupabaseSync.podeOAuth();
+
+  const voltandoDoGoogle = () => /access_token=|error_description=/.test(location.hash || '');
+
+  const dispensado = () => localStorage.getItem(SEM_CONTA) === '1';
+
+  function montar() {
+    if (veu) return veu;
+    veu = document.createElement('div');
+    veu.id = ID;
+    veu.className = 'gate';
+    veu.setAttribute('role', 'dialog');
+    veu.setAttribute('aria-modal', 'true');
+    veu.setAttribute('aria-label', 'Entrar na sua conta');
+    document.body.appendChild(veu);
+    veu.addEventListener('click', (ev) => {
+      const b = ev.target.closest('button');
+      if (!b) return;
+      if (b.dataset.acao === 'entrar') {
+        b.disabled = true;
+        b.textContent = 'abrindo o Google…';
+        SupabaseSync.entrarComGoogle();
+      }
+      if (b.dataset.acao === 'sem-conta') {
+        localStorage.setItem(SEM_CONTA, '1');
+        aplicar(ultimo || {});
+      }
+    });
+    return veu;
+  }
+
+  const icone = `<svg viewBox="0 0 48 48" width="18" height="18" aria-hidden="true">
+    <path fill="#4285F4" d="M45 24c0-1.6-.1-2.7-.4-4H24v7.5h12c-.2 2-1.5 5-4.4 7l6.7 5.2C42.2 36 45 30.6 45 24z"/>
+    <path fill="#34A853" d="M24 46c5.9 0 10.9-2 14.5-5.3l-6.9-5.4c-1.9 1.3-4.4 2.2-7.6 2.2-5.8 0-10.7-3.8-12.5-9.1l-7.1 5.5C8.1 41 15.4 46 24 46z"/>
+    <path fill="#FBBC05" d="M11.5 28.4c-.5-1.4-.7-2.9-.7-4.4s.3-3 .7-4.4l-7.1-5.5C2.9 17 2 20.4 2 24s.9 7 2.4 9.9l7.1-5.5z"/>
+    <path fill="#EA4335" d="M24 10.6c3.3 0 5.5 1.4 6.8 2.6l6-5.9C33.1 3.9 29.1 2 24 2 15.4 2 8.1 7 4.4 14.1l7.1 5.5C13.3 14.4 18.2 10.6 24 10.6z"/>
+  </svg>`;
+
+  function corpo(st) {
+    if (voltandoDoGoogle())
+      return `<p class="gate-sub">Entrando…</p>`;
+
+    if (!oauthPossivel()) {
+      const motivo = !temSync() || !SupabaseSync.configurado()
+        ? 'A conta não está configurada nesta cópia do app.'
+        : window.self !== window.top
+          ? 'Esta cópia está rodando dentro de um quadro (iframe), e o login do Google precisa abrir a página inteira.'
+          : 'Esta cópia foi aberta como arquivo do computador, e o login do Google só funciona em endereço https.';
+      return `
+        <p class="gate-sub">${motivo}</p>
+        <p class="gate-sub">Para entrar com a sua conta, abra o app pelo endereço https dele. Aqui dá para usar sem conta — mas nada sai deste navegador: sem backup, sem sincronizar com o celular.</p>
+        <button class="btn" data-acao="sem-conta" type="button">Usar sem conta neste navegador</button>`;
+    }
+
+    return `
+      <p class="gate-sub">Seus treinos, sua dieta e seu histórico ficam na sua conta — e só aparecem depois que você entra.</p>
+      <button class="btn btn-primary gate-google" data-acao="entrar" type="button">${icone}<span>Entrar com Google</span></button>
+      ${st && st.erro ? `<p class="gate-erro">${st.erro}</p>` : ''}`;
+  }
+
+  function aplicar(st) {
+    ultimo = st;
+    const liberado = (st && st.conectado) || dispensado();
+    const app = document.querySelector('main') || document.body;
+
+    if (liberado) {
+      if (veu) veu.remove();
+      veu = null;
+      document.body.classList.remove('com-gate');
+      if (app !== document.body) app.removeAttribute('inert');
+      return;
+    }
+
+    const el = montar();
+    el.innerHTML = `
+      <div class="gate-fundo"></div>
+      <div class="gate-card">
+        <h2>Controle de Macros</h2>
+        ${corpo(st)}
+      </div>`;
+    document.body.classList.add('com-gate');
+    // inert tira tudo que está atrás da porta do alcance do clique, do foco e
+    // do leitor de tela — o véu sozinho só esconderia
+    if (app !== document.body) app.setAttribute('inert', '');
+  }
+
+  function iniciar() {
+    if (!temSync()) return aplicar({});
+    SupabaseSync.onEstado(aplicar);
+  }
+
+  if (document.readyState === 'loading')
+    document.addEventListener('DOMContentLoaded', iniciar);
+  else iniciar();
+
+  return { aplicar, liberar: () => localStorage.setItem(SEM_CONTA, '1') };
 })();
 
 </script>
@@ -5296,6 +5640,7 @@ if (typeof window !== 'undefined') window.Barras = Barras;
     tomSelect.clear(true);
     tomSelect.clearOptions();
     foodSelecionado = null;
+    caroConfirmado = null;
     selMedida.innerHTML = '<option value="g">gramas (g)</option>';
     inpQtd.value = 100;
     atualizarPreview();
@@ -5432,6 +5777,7 @@ if (typeof window !== 'undefined') window.Barras = Barras;
       tomSelect.focus();
       return;
     }
+    if (!confirmarCaro()) return;
     if (editandoItemCesta != null && cesta[editandoItemCesta]) {
       // item desativado continua desativado depois de editado
       if (cesta[editandoItemCesta].off) item.off = true;
@@ -5597,9 +5943,56 @@ if (typeof window !== 'undefined') window.Barras = Barras;
     box.hidden = false;
   }
 
+  /* ---- Aviso de alimento caro ---- */
+
+  // Alimento caro é o que aparece nos dias em que o déficit foi embora — não o
+  // mais calórico da tabela. O aviso só existe quando a dieta alvo é menor que
+  // o gasto: fora do déficit não há dia caro, há dia normal.
+  let caroConfirmado = null; // nome já confirmado nesta seleção
+
+  function renderAlertaCaro() {
+    const box = $('#alerta-caro');
+    if (!box) return;
+    const info = foodSelecionado ? AlimentosCaros.consultar(foodSelecionado.n) : null;
+    if (!info) {
+      box.hidden = true;
+      box.innerHTML = '';
+      return;
+    }
+    const r = AlimentosCaros.resumo() || {};
+    const { metaKcal } = MacroDB.getSettings();
+    box.hidden = false;
+    box.innerHTML = `
+      <span class="ac-icone" aria-hidden="true">!</span>
+      <div>
+        <b>Este alimento costuma derrubar o seu dia.</b>
+        <p>Nos últimos ${AlimentosCaros.JANELA_DIAS} dias, <b>${esc(info.nome)}</b> apareceu em
+        <b>${info.diasCaros} ${info.diasCaros === 1 ? 'dia' : 'dias'}</b> em que você não fechou déficit —
+        ${info.vezesCaras} das ${info.vezes} ${info.vezes === 1 ? 'vez' : 'vezes'} que comeu,
+        a ${fmt(info.kcalMedia, 0)} kcal por porção${metaKcal ? `, contra um alvo de ${fmt(metaKcal, 0)} kcal no dia inteiro` : ''}.</p>
+      </div>`;
+  }
+
+  // true = pode seguir. Chamado antes de incluir na cesta e antes de salvar.
+  function confirmarCaro() {
+    if (!foodSelecionado) return true;
+    const info = AlimentosCaros.consultar(foodSelecionado.n);
+    if (!info || caroConfirmado === info.nome) return true;
+    const ok = confirm(
+      `${info.nome}\n\n` +
+        `Apareceu em ${info.diasCaros} ${info.diasCaros === 1 ? 'dia' : 'dias'} sem déficit nos últimos ` +
+        `${AlimentosCaros.JANELA_DIAS} dias (${info.vezesCaras} das ${info.vezes} vezes), ` +
+        `a ${fmt(info.kcalMedia, 0)} kcal por porção.\n\n` +
+        'Incluir mesmo assim?'
+    );
+    if (ok) caroConfirmado = info.nome;
+    return ok;
+  }
+
   function atualizarPreview() {
     atualizarBotaoSalvar();
     atualizarBotaoIncluir();
+    renderAlertaCaro();
     if (!foodSelecionado) {
       preview.hidden = true;
       $('#btn-incluir').hidden = true;
@@ -5634,6 +6027,7 @@ if (typeof window !== 'undefined') window.Barras = Barras;
 
   async function salvar() {
     if (!inpDataHora.value) return;
+    if (!confirmarCaro()) return;
     const ts = new Date(inpDataHora.value).toISOString();
     // edição: sempre um único registro
     if (editandoId != null) {
@@ -6230,6 +6624,8 @@ if (typeof window !== 'undefined') window.Barras = Barras;
 
   async function render() {
     const entries = await MacroDB.getAllEntries();
+    AlimentosCaros.invalidar();
+    AlimentosCaros.carregar();
     historico.innerHTML = '';
     historico.appendChild(renderHoje(entries));
     const agoraDia = new Date();
@@ -6989,37 +7385,10 @@ if (typeof window !== 'undefined') window.Barras = Barras;
   // Um dia "caro" é um dia em que o déficit não chegou a 200 kcal — inclui os
   // dias que passaram do gasto. O corte é redondo de propósito: serve para
   // separar o dia fora da curva do dia normal, não para julgar o dia.
-  const DEFICIT_MINIMO = 200;
+  const DEFICIT_MINIMO = AlimentosCaros.DEFICIT_MINIMO;
   let corteManual = null;
 
-  const chaveDia = (d) => {
-    const x = new Date(d);
-    x.setHours(0, 0, 0, 0);
-    return x.getTime();
-  };
-
-  // Dia meio-registrado (esqueceu de anotar o jantar, ou é hoje de manhã) não
-  // pode entrar na média: ele puxaria o consumo para baixo e inventaria déficit.
-  // A régua é relativa à própria pessoa — metade do dia mediano dela.
-  function diasDoPeriodo(entries) {
-    const mapa = new Map();
-    for (const e of entries) {
-      if (ehAgua(e)) continue;
-      const k = chaveDia(e.ts);
-      if (!mapa.has(k)) mapa.set(k, { ts: k, kcal: 0, p: 0, c: 0, g: 0, itens: [] });
-      const b = mapa.get(k);
-      b.kcal += e.kcal || 0;
-      b.p += e.p || 0;
-      b.c += e.c || 0;
-      b.g += e.g || 0;
-      b.itens.push(e);
-    }
-    const lista = [...mapa.values()].sort((a, b) => a.ts - b.ts);
-    const ord = lista.map((d) => d.kcal).sort((a, b) => a - b);
-    const mediana = ord.length ? ord[Math.floor(ord.length / 2)] : 0;
-    for (const d of lista) d.parcial = d.kcal < mediana * 0.5;
-    return lista;
-  }
+  const diasDoPeriodo = (entries) => AlimentosCaros.porDia(entries);
 
   const mediaDe = (dias, campo) =>
     dias.length ? dias.reduce((n, d) => n + d[campo], 0) / dias.length : 0;
@@ -7094,6 +7463,10 @@ if (typeof window !== 'undefined') window.Barras = Barras;
     const normais = depois.filter((d) => !caros.includes(d));
     const carosAntes = antes.filter((d) => gastoDiario - d.kcal < DEFICIT_MINIMO);
 
+    // os alimentos caros saem do trecho DEPOIS do divisor, que é o que a
+    // pessoa quer entender; antes do divisor serve de contraste, não de alvo
+    const alimentosCaros = AlimentosCaros.alimentosDe(depois, gastoDiario);
+
     const mA = mediaDe(antes, 'kcal');
     const mD = mediaDe(depois, 'kcal');
     const defA = gastoDiario - mA;
@@ -7157,8 +7530,23 @@ if (typeof window !== 'undefined') window.Barras = Barras;
         </tbody>
       </table>
 
-      ${caros.length ? `<div class="cmp-caros">
-        <h4>Dias caros <i>déficit abaixo de ${DEFICIT_MINIMO} kcal</i></h4>
+      ${alimentosCaros.length ? `<div class="cmp-vil">
+        <h4>Alimentos caros <i>o que faz o dia estourar</i></h4>
+        <p class="cmp-nota">Aparecem nos dias caros e quase não aparecem nos outros — não é o mais calórico, é o que decide o dia.</p>
+        <ul>
+          ${alimentosCaros.map((a) => `<li>
+            <span class="cmp-n">${esc(a.nome)}</span>
+            <span class="cmp-k">${fmt(a.kcalCaros, 0)} kcal</span>
+            <i>em ${a.diasCaros} ${a.diasCaros === 1 ? 'dia caro' : 'dias caros'} · ${a.vezesCaras} de ${a.vezes} ${a.vezes === 1 ? 'vez' : 'vezes'} · ${fmt(a.kcalMedia, 0)} kcal por porção</i>
+          </li>`).join('')}
+        </ul>
+      </div>` : ''}
+
+      ${caros.length ? `<details class="cmp-caros">
+        <summary>
+          <span>Dias caros <i>déficit abaixo de ${DEFICIT_MINIMO} kcal</i></span>
+          <b>${carosAntes.length} antes · ${caros.length} depois</b>
+        </summary>
         <p class="cmp-nota">${carosAntes.length} de ${antes.length} dias antes · <b>${caros.length} de ${depois.length}</b> depois</p>
         <ul>
           ${caros.map((d) => {
@@ -7175,7 +7563,7 @@ if (typeof window !== 'undefined') window.Barras = Barras;
             </li>`;
           }).join('')}
         </ul>
-      </div>` : ''}
+      </details>` : ''}
 
       <div class="cmp-listas">
         ${entrou.length ? `<div><h4>O que entrou</h4><ul>${entrou.map((x) => item(x, '+')).join('')}</ul></div>` : ''}

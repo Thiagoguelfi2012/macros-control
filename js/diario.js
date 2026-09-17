@@ -300,6 +300,7 @@
     tomSelect.clear(true);
     tomSelect.clearOptions();
     foodSelecionado = null;
+    caroConfirmado = null;
     selMedida.innerHTML = '<option value="g">gramas (g)</option>';
     inpQtd.value = 100;
     atualizarPreview();
@@ -436,6 +437,7 @@
       tomSelect.focus();
       return;
     }
+    if (!confirmarCaro()) return;
     if (editandoItemCesta != null && cesta[editandoItemCesta]) {
       // item desativado continua desativado depois de editado
       if (cesta[editandoItemCesta].off) item.off = true;
@@ -601,9 +603,56 @@
     box.hidden = false;
   }
 
+  /* ---- Aviso de alimento caro ---- */
+
+  // Alimento caro é o que aparece nos dias em que o déficit foi embora — não o
+  // mais calórico da tabela. O aviso só existe quando a dieta alvo é menor que
+  // o gasto: fora do déficit não há dia caro, há dia normal.
+  let caroConfirmado = null; // nome já confirmado nesta seleção
+
+  function renderAlertaCaro() {
+    const box = $('#alerta-caro');
+    if (!box) return;
+    const info = foodSelecionado ? AlimentosCaros.consultar(foodSelecionado.n) : null;
+    if (!info) {
+      box.hidden = true;
+      box.innerHTML = '';
+      return;
+    }
+    const r = AlimentosCaros.resumo() || {};
+    const { metaKcal } = MacroDB.getSettings();
+    box.hidden = false;
+    box.innerHTML = `
+      <span class="ac-icone" aria-hidden="true">!</span>
+      <div>
+        <b>Este alimento costuma derrubar o seu dia.</b>
+        <p>Nos últimos ${AlimentosCaros.JANELA_DIAS} dias, <b>${esc(info.nome)}</b> apareceu em
+        <b>${info.diasCaros} ${info.diasCaros === 1 ? 'dia' : 'dias'}</b> em que você não fechou déficit —
+        ${info.vezesCaras} das ${info.vezes} ${info.vezes === 1 ? 'vez' : 'vezes'} que comeu,
+        a ${fmt(info.kcalMedia, 0)} kcal por porção${metaKcal ? `, contra um alvo de ${fmt(metaKcal, 0)} kcal no dia inteiro` : ''}.</p>
+      </div>`;
+  }
+
+  // true = pode seguir. Chamado antes de incluir na cesta e antes de salvar.
+  function confirmarCaro() {
+    if (!foodSelecionado) return true;
+    const info = AlimentosCaros.consultar(foodSelecionado.n);
+    if (!info || caroConfirmado === info.nome) return true;
+    const ok = confirm(
+      `${info.nome}\n\n` +
+        `Apareceu em ${info.diasCaros} ${info.diasCaros === 1 ? 'dia' : 'dias'} sem déficit nos últimos ` +
+        `${AlimentosCaros.JANELA_DIAS} dias (${info.vezesCaras} das ${info.vezes} vezes), ` +
+        `a ${fmt(info.kcalMedia, 0)} kcal por porção.\n\n` +
+        'Incluir mesmo assim?'
+    );
+    if (ok) caroConfirmado = info.nome;
+    return ok;
+  }
+
   function atualizarPreview() {
     atualizarBotaoSalvar();
     atualizarBotaoIncluir();
+    renderAlertaCaro();
     if (!foodSelecionado) {
       preview.hidden = true;
       $('#btn-incluir').hidden = true;
@@ -638,6 +687,7 @@
 
   async function salvar() {
     if (!inpDataHora.value) return;
+    if (!confirmarCaro()) return;
     const ts = new Date(inpDataHora.value).toISOString();
     // edição: sempre um único registro
     if (editandoId != null) {
@@ -1234,6 +1284,8 @@
 
   async function render() {
     const entries = await MacroDB.getAllEntries();
+    AlimentosCaros.invalidar();
+    AlimentosCaros.carregar();
     historico.innerHTML = '';
     historico.appendChild(renderHoje(entries));
     const agoraDia = new Date();
