@@ -10,6 +10,7 @@
  * arquivos brutos para tools/.cache/.
  */
 import { mkdirSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { CURADOS } from './curados.mjs';
@@ -21,6 +22,7 @@ import { SORVETES } from './sorvetes.mjs';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const RAW_DIR = process.argv[2] || join(ROOT, 'tools', '.cache');
 const OUT = join(ROOT, 'data', 'foods.json');
+const MANIFESTO = join(ROOT, 'data', 'foods-manifest.json');
 const TARGET_TOTAL = 25000; // efetivamente "tudo": inclui todas as fontes
 
 const SOURCES = {
@@ -1137,9 +1139,18 @@ async function main() {
   mkdirSync(dirname(OUT), { recursive: true });
   // Ao regenerar a base com mudanças relevantes, incremente v e o
   // FOODS_VERSION correspondente em js/db.js para forçar a recarga no navegador.
-  writeFileSync(OUT, JSON.stringify({ v: 51, foods }));
+  const corpo = JSON.stringify({ v: 51, foods });
+  writeFileSync(OUT, corpo);
+
+  // Manifesto: alguns bytes com a versão e o hash do conteúdo. O app busca ISTO
+  // a cada abertura (é barato) e só baixa os 2,3 MB quando o hash muda — assim
+  // um v novo com conteúdo igual não custa download a ninguém, e conteúdo novo
+  // chega mesmo que alguém esqueça de subir o v.
+  const hash = createHash('sha1').update(corpo).digest('hex').slice(0, 16);
+  writeFileSync(MANIFESTO, JSON.stringify({ v: 51, h: hash, n: foods.length }));
 
   const bytes = readFileSync(OUT).length;
+  console.log(`manifesto: v51 · hash ${hash}`);
   console.log(`foods.json gerado: ${foods.length} alimentos (${(bytes / 1024 / 1024).toFixed(2)} MB)`);
   console.log(`  TACO: ${nTaco} | TBCA: ${nTbca} | Curados: ${nCurados} | Marcas: ${nMarcas} | Chocolates: ${nChocolates} | Pastas: ${nPastas} | Sorvetes: ${nSorvetes} | IBGE: ${nIbge} | USDA SR28 traduzido: ${nUsda}`);
   const comMedidas = foods.filter((f) => f.m && f.m.length).length;

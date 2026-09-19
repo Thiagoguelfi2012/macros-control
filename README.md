@@ -434,6 +434,30 @@ externas — use o app no endereço próprio (GitHub Pages) ou no arquivo standa
 - Biblioteca de exercícios: `js/exercicios.js`, gerado por
   `tools/build-exercicios.mjs` a partir de uma lista curada — não depende de rede.
 - Configurações (TMB/TDEE e dieta alvo): `localStorage`.
+- **Abertura do app**: a base de alimentos **não segura a tela**. O diário do dia
+  sai inteiro dos registros — cada registro guarda o próprio nome e os próprios
+  macros —, então ele desenha primeiro; a base começa a carregar depois, porque
+  quem precisa dela é a **busca**, e a busca só existe quando alguém abre o modal
+  de adicionar. Enquanto o índice não fica pronto (18 mil nomes normalizados, o
+  passo mais caro da abertura), o campo de alimento aparece desabilitado dizendo
+  que está carregando.
+
+  A base também não é baixada a cada visita. O que o app busca ao abrir é o
+  **manifesto** (`data/foods-manifest.json`, uns 50 bytes com a versão, o hash do
+  conteúdo e a contagem): se o hash bate com o que está guardado no aparelho,
+  **nada é baixado**. O hash resolve dois problemas que o número de versão
+  sozinho não resolvia — um `v` novo com conteúdo igual deixa de custar 2,3 MB a
+  todo mundo, e conteúdo novo chega mesmo que alguém esqueça de subir o `v`.
+  O hash gravado é o do arquivo que **realmente chegou**, nunca o que o
+  manifesto prometeu: se um cache servir conteúdo velho, a próxima visita
+  percebe em vez de se achar em dia para sempre. Sem rede o manifesto falha em
+  silêncio e a base local é usada assim mesmo — o app abre offline.
+
+  A base fica no IndexedDB em **um registro só**. Guardada como 18 mil registros
+  soltos, relê-la custava um `getAll()` de 18 mil desserializações a cada
+  abertura de página; em um registro é uma leitura (120 ms → 34 ms no
+  laboratório, proporcionalmente mais no celular). Quem já tinha a base no
+  formato antigo é migrado sem baixar nada de novo.
 - Banco de alimentos: `data/foods.json` (~2,3 MB, **18.134 itens**, ~10.900 com
   medidas caseiras e ~890 líquidos medidos em ml/L), carregado no IndexedDB na
   primeira visita. Valores por 100 g (ou 100 ml). Fontes, na ordem de prioridade da

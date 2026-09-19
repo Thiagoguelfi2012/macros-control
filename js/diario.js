@@ -1438,10 +1438,38 @@
 
   /* ---- Inicialização ---- */
 
-  async function init() {
-    const foods = await MacroDB.ensureFoods();
-    FoodSearch.buildIndex(foods);
+  // A base de alimentos não segura mais a tela. O histórico do dia sai inteiro
+  // dos registros — cada um guarda o próprio nome e os próprios macros —, então
+  // ele desenha na hora. Quem precisa da base é a BUSCA, e a busca só existe
+  // depois que alguém abre o modal de adicionar. Enquanto o índice não fica
+  // pronto (18 mil nomes normalizados, o passo mais caro da abertura), o campo
+  // de alimento aparece desabilitado dizendo que está carregando.
+  let buscaPronta = false;
 
+  function liberarBusca() {
+    buscaPronta = true;
+    if (!tomSelect) return;
+    tomSelect.enable();
+    const inp = tomSelect.control_input;
+    if (inp) inp.placeholder = PLACEHOLDER_BUSCA;
+  }
+
+  const PLACEHOLDER_BUSCA = 'Digite para pesquisar… ex.: arroz, frango, banana';
+
+  let baseCarregando = null;
+
+  // Começa a base (e o índice de busca) só depois que a tela está desenhada.
+  const carregarBase = () => {
+    if (!baseCarregando)
+      baseCarregando = MacroDB.ensureFoods().then((foods) => {
+        FoodSearch.buildIndex(foods);
+        liberarBusca();
+        return foods;
+      });
+    return baseCarregando;
+  };
+
+  async function init() {
     tomSelect = new TomSelect('#sel-alimento', {
       valueField: 'i',
       labelField: 'n',
@@ -1449,7 +1477,7 @@
       sortField: [{ field: '$order', direction: 'asc' }], // preserva a ordem de relevância do FoodSearch
       score: () => () => 1, // desativa o score interno (a filtragem/ordem é do FoodSearch)
       maxOptions: 50,
-      placeholder: 'Digite para pesquisar… ex.: arroz, frango, banana',
+      placeholder: PLACEHOLDER_BUSCA,
       render: {
         option: (item, escape) => {
           const fonte =
@@ -1479,13 +1507,23 @@
       // são necessárias: o Tom Select grava $order no objeto e o reaproveitaria,
       // bagunçando a ordem de relevância nas buscas seguintes.
       onType: (query) => {
+        if (!buscaPronta) return;
         tomSelect.clearOptions();
         if (query.length >= 2) tomSelect.addOptions(FoodSearch.search(query).map((f) => ({ ...f })));
         tomSelect.refreshOptions(false);
       },
     });
 
-    $('#btn-adicionar').addEventListener('click', () => abrirModal());
+    if (!buscaPronta) {
+      tomSelect.disable();
+      const inp = tomSelect.control_input;
+      if (inp) inp.placeholder = 'Carregando alimentos…';
+    }
+
+    $('#btn-adicionar').addEventListener('click', () => {
+      carregarBase();
+      abrirModal();
+    });
     $('#btn-cancelar').addEventListener('click', () => {
       sairDaEdicaoDeRefeicao();
       fecharModal();
@@ -1529,9 +1567,15 @@
     document.addEventListener('diario:refresh', render);
 
     restaurarCesta();
-    render();
-    // refeição recuperada de uma recarga: reabre o modal onde o usuário parou
-    if (cesta.length) abrirModal();
+    await render();
+    // diário na tela: agora sim a base, sem disputar a primeira pintura
+    carregarBase();
+    // refeição recuperada de uma recarga: reabre o modal onde o usuário parou.
+    // Aí sim vale esperar a base, porque o modal é onde a busca faz falta.
+    if (cesta.length) {
+      await carregarBase();
+      abrirModal();
+    }
   }
 
   init().catch((e) => {
