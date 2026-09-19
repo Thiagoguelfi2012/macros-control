@@ -1282,6 +1282,59 @@
     return card;
   }
 
+  /* ---- Histórico em lotes ---- */
+
+  // Quantos dias entram na primeira leva e quantos entram a cada vez que a
+  // rolagem chega no fim. A primeira leva cobre mais do que uma tela para a
+  // rolagem já ter para onde ir antes do observador acordar.
+  const DIAS_PRIMEIRA_LEVA = 4;
+  const DIAS_POR_LEVA = 6;
+  let diasMostrados = DIAS_PRIMEIRA_LEVA; // cresce com a rolagem e sobrevive a um re-render
+  let observador = null;
+
+  function mostrarDias(keys, criarGrupo) {
+    if (observador) {
+      observador.disconnect();
+      observador = null;
+    }
+    // um re-render (editou, excluiu, repetiu) não pode jogar a pessoa de volta
+    // para o topo da lista: mantém o tanto que já estava aberto
+    let desenhados = 0;
+    const sentinela = document.createElement('div');
+    sentinela.className = 'hist-fim';
+
+    const desenharAte = (quantos) => {
+      const alvo = Math.min(quantos, keys.length);
+      const fragmento = document.createDocumentFragment();
+      for (; desenhados < alvo; desenhados++) fragmento.appendChild(criarGrupo(keys[desenhados]));
+      historico.insertBefore(fragmento, sentinela);
+      diasMostrados = Math.max(diasMostrados, desenhados);
+      if (desenhados >= keys.length) {
+        sentinela.remove();
+        if (observador) observador.disconnect();
+      }
+    };
+
+    historico.appendChild(sentinela);
+    desenharAte(Math.max(DIAS_PRIMEIRA_LEVA, diasMostrados));
+
+    if (desenhados >= keys.length) return;
+    // sem IntersectionObserver (navegador antigo) desenha tudo de uma vez: é
+    // lento, mas ninguém fica sem ver o próprio histórico
+    if (typeof IntersectionObserver === 'undefined') {
+      desenharAte(keys.length);
+      return;
+    }
+    sentinela.innerHTML = '<span class="hist-mais">carregando mais dias…</span>';
+    observador = new IntersectionObserver(
+      (entradas) => {
+        if (entradas.some((e) => e.isIntersecting)) desenharAte(desenhados + DIAS_POR_LEVA);
+      },
+      { root: null, rootMargin: '600px 0px' } // acorda antes de a pessoa chegar no fim
+    );
+    observador.observe(sentinela);
+  }
+
   async function render() {
     const entries = await MacroDB.getAllEntries();
     AlimentosCaros.invalidar();
@@ -1314,126 +1367,131 @@
       grupos.get(key).push(e);
     }
     const keys = [...grupos.keys()].sort((a, b) => (a < b ? 1 : -1));
-    for (const key of keys) {
-      const itens = grupos.get(key).sort((a, b) => (a.ts < b.ts ? 1 : -1));
-      const tot = itens.reduce(
-        (acc, e) => ({ kcal: acc.kcal + e.kcal, p: acc.p + e.p, c: acc.c + e.c, g: acc.g + e.g }),
-        { kcal: 0, p: 0, c: 0, g: 0 }
-      );
-      const { nome, dataStr } = labelDia(key);
-      const grupo = document.createElement('section');
-      grupo.className = 'day-group';
-      grupo.innerHTML = `
-        <div class="day-head">
-          <h3>${nome} <span class="day-date">${dataStr}</span></h3>
-          <div class="day-macros">
-            <span><b>${fmt(tot.kcal, 0)}</b> kcal</span>
-            <span class="macro-chip"><span class="sw sw-p"></span>P <b>${fmt(tot.p)}</b> g</span>
-            <span class="macro-chip"><span class="sw sw-c"></span>C <b>${fmt(tot.c)}</b> g</span>
-            <span class="macro-chip"><span class="sw sw-g"></span>G <b>${fmt(tot.g)}</b> g</span>
-          </div>
-        </div>`;
-      // itens registrados no mesmo minuto vieram da mesma refeição: ficam
-      // agrupados num bloco com horário e totais próprios
-      const refeicoes = new Map();
-      for (const e of itens) {
-        const chaveHora = e.ts.slice(0, 16); // até os minutos
-        if (!refeicoes.has(chaveHora)) refeicoes.set(chaveHora, []);
-        refeicoes.get(chaveHora).push(e);
-      }
-
-      function criarLinha(e, dentroDeRefeicao) {
-        const hora = new Date(e.ts).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-        const div = document.createElement('div');
-        div.className = 'entry';
-        div.setAttribute('role', 'button');
-        div.setAttribute('tabindex', '0');
-        div.title = 'Toque para editar';
-        div.innerHTML = `
-          <div class="name"></div>
-          <div class="kcal">${fmt(e.kcal, 0)} kcal</div>
-          <div class="acts">
-            <button class="icon-btn act-repeat" title="Registrar de novo agora" aria-label="Registrar de novo agora">${SVG_REPEAT}</button>
-            <button class="icon-btn act-del" title="Excluir" aria-label="Excluir">${SVG_DEL}</button>
-          </div>
-          <div class="meta">${dentroDeRefeicao ? '' : hora + ' · '}${qtdStr(e)}</div>
-          <div class="macros">P ${fmt(e.p)} · C ${fmt(e.c)} · G ${fmt(e.g)}</div>`;
-        div.querySelector('.name').textContent = e.nome;
-        div.addEventListener('click', (ev) => {
-          if (!ev.target.closest('.icon-btn')) abrirModal(e);
-        });
-        div.addEventListener('keydown', (ev) => {
-          if (ev.key === 'Enter' && !ev.target.closest('.icon-btn')) abrirModal(e);
-        });
-        div.querySelector('.act-repeat').addEventListener('click', async (ev) => {
-          ev.stopPropagation(); // não deixa o clique abrir a edição da linha
-          const { id, ...resto } = e;
-          await MacroDB.addEntry({ ...resto, ts: new Date().toISOString() });
-          render();
-        });
-        div.querySelector('.act-del').addEventListener('click', (ev) => {
-          ev.stopPropagation(); // não deixa o clique abrir a edição da linha
-          confirmarDoisToques(ev.currentTarget, async () => {
-            await MacroDB.deleteEntry(e.id);
-            render();
-          });
-        });
-        return div;
-      }
-
-      for (const itensRef of refeicoes.values()) {
-        // item solto: linha simples, sem o peso visual de um bloco de refeição
-        if (itensRef.length === 1) {
-          grupo.appendChild(criarLinha(itensRef[0], false));
-          continue;
-        }
-        const totRef = itensRef.reduce(
+    // Um dia por vez: o histórico inteiro custava 13 mil nós e 75 telas de
+    // rolagem montadas de uma vez, e isso é o que segurava a abertura. Agora
+    // cada dia só vira DOM quando está perto de aparecer.
+    function criarGrupoDoDia(key) {
+        const itens = grupos.get(key).sort((a, b) => (a.ts < b.ts ? 1 : -1));
+        const tot = itens.reduce(
           (acc, e) => ({ kcal: acc.kcal + e.kcal, p: acc.p + e.p, c: acc.c + e.c, g: acc.g + e.g }),
           { kcal: 0, p: 0, c: 0, g: 0 }
         );
-        const data = new Date(itensRef[0].ts);
-        const hora = data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-        const { nome: nomeRef, icone } = nomeRefeicao(data);
-        const bloco = document.createElement('div');
-        bloco.className = 'meal-card';
-        bloco.innerHTML = `
-          <div class="meal-head" role="button" tabindex="0" title="Editar esta refeição">
-            <span class="meal-icone" aria-hidden="true">${icone}</span>
-            <span class="meal-nome-wrap">
-              <span class="meal-nome">${nomeRef}</span>
-              <span class="meal-hora">${hora}</span>
-            </span>
-            <span class="meal-kcal"><b>${fmt(totRef.kcal, 0)}</b> kcal</span>
-            <span class="meal-acoes">
-              <button class="icon-btn act-editar-ref" title="Editar esta refeição" aria-label="Editar ${nomeRef}">${SVG_EDIT}</button>
-              <button class="icon-btn act-repeat-ref" title="Registrar a refeição de novo agora" aria-label="Repetir refeição">${SVG_REPEAT}</button>
-            </span>
-            <span class="meal-sub">${itensRef.length} itens · P ${fmt(totRef.p)} · C ${fmt(totRef.c)} · G ${fmt(totRef.g)} g</span>
+        const { nome, dataStr } = labelDia(key);
+        const grupo = document.createElement('section');
+        grupo.className = 'day-group';
+        grupo.innerHTML = `
+          <div class="day-head">
+            <h3>${nome} <span class="day-date">${dataStr}</span></h3>
+            <div class="day-macros">
+              <span><b>${fmt(tot.kcal, 0)}</b> kcal</span>
+              <span class="macro-chip"><span class="sw sw-p"></span>P <b>${fmt(tot.p)}</b> g</span>
+              <span class="macro-chip"><span class="sw sw-c"></span>C <b>${fmt(tot.c)}</b> g</span>
+              <span class="macro-chip"><span class="sw sw-g"></span>G <b>${fmt(tot.g)}</b> g</span>
+            </div>
           </div>`;
-        // tocar no cabeçalho abre a refeição inteira para editar
-        const cabeca = bloco.querySelector('.meal-head');
-        cabeca.addEventListener('click', (ev) => {
-          if (ev.target.closest('.act-repeat-ref')) return;
-          abrirModalRefeicao(itensRef);
-        });
-        cabeca.addEventListener('keydown', (ev) => {
-          if (ev.key !== 'Enter' && ev.key !== ' ') return;
-          ev.preventDefault();
-          abrirModalRefeicao(itensRef);
-        });
-        bloco.querySelector('.act-repeat-ref').addEventListener('click', async () => {
-          const agora = new Date().toISOString();
-          for (const e of itensRef) {
+        // itens registrados no mesmo minuto vieram da mesma refeição: ficam
+        // agrupados num bloco com horário e totais próprios
+        const refeicoes = new Map();
+        for (const e of itens) {
+          const chaveHora = e.ts.slice(0, 16); // até os minutos
+          if (!refeicoes.has(chaveHora)) refeicoes.set(chaveHora, []);
+          refeicoes.get(chaveHora).push(e);
+        }
+
+        function criarLinha(e, dentroDeRefeicao) {
+          const hora = new Date(e.ts).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+          const div = document.createElement('div');
+          div.className = 'entry';
+          div.setAttribute('role', 'button');
+          div.setAttribute('tabindex', '0');
+          div.title = 'Toque para editar';
+          div.innerHTML = `
+            <div class="name"></div>
+            <div class="kcal">${fmt(e.kcal, 0)} kcal</div>
+            <div class="acts">
+              <button class="icon-btn act-repeat" title="Registrar de novo agora" aria-label="Registrar de novo agora">${SVG_REPEAT}</button>
+              <button class="icon-btn act-del" title="Excluir" aria-label="Excluir">${SVG_DEL}</button>
+            </div>
+            <div class="meta">${dentroDeRefeicao ? '' : hora + ' · '}${qtdStr(e)}</div>
+            <div class="macros">P ${fmt(e.p)} · C ${fmt(e.c)} · G ${fmt(e.g)}</div>`;
+          div.querySelector('.name').textContent = e.nome;
+          div.addEventListener('click', (ev) => {
+            if (!ev.target.closest('.icon-btn')) abrirModal(e);
+          });
+          div.addEventListener('keydown', (ev) => {
+            if (ev.key === 'Enter' && !ev.target.closest('.icon-btn')) abrirModal(e);
+          });
+          div.querySelector('.act-repeat').addEventListener('click', async (ev) => {
+            ev.stopPropagation(); // não deixa o clique abrir a edição da linha
             const { id, ...resto } = e;
-            await MacroDB.addEntry({ ...resto, ts: agora });
+            await MacroDB.addEntry({ ...resto, ts: new Date().toISOString() });
+            render();
+          });
+          div.querySelector('.act-del').addEventListener('click', (ev) => {
+            ev.stopPropagation(); // não deixa o clique abrir a edição da linha
+            confirmarDoisToques(ev.currentTarget, async () => {
+              await MacroDB.deleteEntry(e.id);
+              render();
+            });
+          });
+          return div;
+        }
+
+        for (const itensRef of refeicoes.values()) {
+          // item solto: linha simples, sem o peso visual de um bloco de refeição
+          if (itensRef.length === 1) {
+            grupo.appendChild(criarLinha(itensRef[0], false));
+            continue;
           }
-          render();
-        });
-        for (const e of itensRef) bloco.appendChild(criarLinha(e, true));
-        grupo.appendChild(bloco);
-      }
-      historico.appendChild(grupo);
+          const totRef = itensRef.reduce(
+            (acc, e) => ({ kcal: acc.kcal + e.kcal, p: acc.p + e.p, c: acc.c + e.c, g: acc.g + e.g }),
+            { kcal: 0, p: 0, c: 0, g: 0 }
+          );
+          const data = new Date(itensRef[0].ts);
+          const hora = data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+          const { nome: nomeRef, icone } = nomeRefeicao(data);
+          const bloco = document.createElement('div');
+          bloco.className = 'meal-card';
+          bloco.innerHTML = `
+            <div class="meal-head" role="button" tabindex="0" title="Editar esta refeição">
+              <span class="meal-icone" aria-hidden="true">${icone}</span>
+              <span class="meal-nome-wrap">
+                <span class="meal-nome">${nomeRef}</span>
+                <span class="meal-hora">${hora}</span>
+              </span>
+              <span class="meal-kcal"><b>${fmt(totRef.kcal, 0)}</b> kcal</span>
+              <span class="meal-acoes">
+                <button class="icon-btn act-editar-ref" title="Editar esta refeição" aria-label="Editar ${nomeRef}">${SVG_EDIT}</button>
+                <button class="icon-btn act-repeat-ref" title="Registrar a refeição de novo agora" aria-label="Repetir refeição">${SVG_REPEAT}</button>
+              </span>
+              <span class="meal-sub">${itensRef.length} itens · P ${fmt(totRef.p)} · C ${fmt(totRef.c)} · G ${fmt(totRef.g)} g</span>
+            </div>`;
+          // tocar no cabeçalho abre a refeição inteira para editar
+          const cabeca = bloco.querySelector('.meal-head');
+          cabeca.addEventListener('click', (ev) => {
+            if (ev.target.closest('.act-repeat-ref')) return;
+            abrirModalRefeicao(itensRef);
+          });
+          cabeca.addEventListener('keydown', (ev) => {
+            if (ev.key !== 'Enter' && ev.key !== ' ') return;
+            ev.preventDefault();
+            abrirModalRefeicao(itensRef);
+          });
+          bloco.querySelector('.act-repeat-ref').addEventListener('click', async () => {
+            const agora = new Date().toISOString();
+            for (const e of itensRef) {
+              const { id, ...resto } = e;
+              await MacroDB.addEntry({ ...resto, ts: agora });
+            }
+            render();
+          });
+          for (const e of itensRef) bloco.appendChild(criarLinha(e, true));
+          grupo.appendChild(bloco);
+        }
+      return grupo;
     }
+
+    mostrarDias(keys, criarGrupoDoDia);
   }
 
   /* ---- Inicialização ---- */

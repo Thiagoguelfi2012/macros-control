@@ -434,7 +434,18 @@ externas — use o app no endereço próprio (GitHub Pages) ou no arquivo standa
 - Biblioteca de exercícios: `js/exercicios.js`, gerado por
   `tools/build-exercicios.mjs` a partir de uma lista curada — não depende de rede.
 - Configurações (TMB/TDEE e dieta alvo): `localStorage`.
-- **Abertura do app**: a base de alimentos **não segura a tela**. O diário do dia
+- **Abertura do app**: o histórico entra **em levas, conforme a rolagem**. Antes
+  ele era montado inteiro de uma vez — com 45 dias registrados isso dava **13 mil
+  nós no DOM e 75 telas de rolagem**, e era o que mais atrasava a abertura. Agora
+  a primeira leva traz **4 dias** (~1.100 nós) e cada vez que a rolagem se
+  aproxima do fim entram mais **6**, avisados por um `IntersectionObserver` com
+  600 px de antecedência, para os dias já estarem prontos quando você chegar
+  neles. Montar o histórico caiu de **até 840 ms para ~40 ms**. Um re-render
+  (editar, excluir, repetir um item) **mantém o tanto que já estava aberto** em
+  vez de jogar você de volta ao topo. Navegador sem `IntersectionObserver`
+  desenha tudo de uma vez — lento, mas ninguém fica sem ver o próprio histórico.
+
+  A base de alimentos **também não segura a tela**. O diário do dia
   sai inteiro dos registros — cada registro guarda o próprio nome e os próprios
   macros —, então ele desenha primeiro; a base começa a carregar depois, porque
   quem precisa dela é a **busca**, e a busca só existe quando alguém abre o modal
