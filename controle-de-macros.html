@@ -1487,6 +1487,27 @@ details.cmp-caros > summary b { margin-left: auto; font-size: 11.5px; color: var
   font-size: 12.5px; color: var(--muted);
 }
 
+/* ---- Projeção do fim do dia ---- */
+.proj {
+  margin: 14px 0 0; padding: 12px 14px;
+  border: 1px solid var(--border); border-radius: 12px; background: var(--surface);
+}
+.proj.risco-leve { border-color: #d6a72a; background: color-mix(in srgb, #d6a72a 10%, var(--surface)); }
+.proj.risco-forte { border-color: #e0704f; background: color-mix(in srgb, #e0704f 12%, var(--surface)); }
+.proj-title { font-size: 13px; font-weight: 600; margin-bottom: 9px; }
+.proj-conta {
+  display: flex; align-items: flex-end; flex-wrap: wrap; gap: 4px 7px; margin-bottom: 9px;
+}
+.proj-conta span { display: flex; flex-direction: column; line-height: 1.15; }
+.proj-conta i { font-style: normal; font-size: 10.5px; color: var(--muted); white-space: nowrap; }
+.proj-conta b { font-size: 16px; font-variant-numeric: tabular-nums; }
+.proj-conta .op { align-self: flex-end; color: var(--muted); font-size: 14px; padding-bottom: 1px; }
+.proj-conta .total b { font-size: 20px; }
+.proj-alerta, .proj-ok { margin: 0; font-size: 12.5px; line-height: 1.5; color: var(--ink-2); }
+.proj.risco-forte .proj-alerta b { color: #e0704f; }
+.proj.risco-leve .proj-alerta b { color: #d6a72a; }
+.proj-nota { margin: 8px 0 0; font-size: 11px; line-height: 1.5; color: var(--muted); }
+
 </style>
 </head>
 <body>
@@ -1578,6 +1599,8 @@ details.cmp-caros > summary b { margin-left: auto; font-size: 11.5px; color: var
         <div class="imp-title">Impacto na meta do dia</div>
         <div id="impacto-rows"></div>
       </div>
+
+      <div class="proj" id="proj" hidden></div>
 
       <div class="modal-actions">
         <button class="btn" id="btn-cancelar">Cancelar</button>
@@ -4911,6 +4934,146 @@ if (typeof window !== 'undefined') window.Sugestao = Sugestao;
 
 </script>
 <script>
+/* Como o dia deve terminar.
+
+   O painel de impacto responde "o que esta refeição faz com o dia até agora".
+   Esta projeção responde outra coisa: "e depois dela, ainda vem o quê?". Sem
+   isso o almoço de 700 kcal parece folgado às 13h e o dia estoura às 21h.
+
+   O que falta do dia não é chutado por regra de três em cima da meta: é o que
+   a PESSOA costuma comer em cada refeição, pela mediana dos últimos dois meses.
+   Mediana e não média porque um rodízio de sexta não pode virar a expectativa
+   de todas as sextas. Sem histórico suficiente para uma refeição, aí sim cai
+   no peso do plano — e a projeção diz que aquele trecho é estimado. */
+const Projecao = (() => {
+  const JANELA_DIAS = 60;
+  // abaixo disso a mediana é anedota, não hábito
+  const MINIMO_AMOSTRAS = 3;
+  // folga antes de falar: projeção é palpite, e palpite não pode gritar por 20 kcal
+  const MARGEM = 0.05;
+  const MARGEM_FORTE = 0.15;
+
+  const ehAgua = (e) =>
+    typeof AguaAviso !== 'undefined'
+      ? AguaAviso.ehAgua(e)
+      : !!e.ml && (e.kcal || 0) <= 2;
+
+  const diaDe = (ts) => {
+    const d = new Date(ts);
+    d.setHours(0, 0, 0, 0);
+    return d.getTime();
+  };
+
+  const mediana = (v) => {
+    if (!v.length) return 0;
+    const o = [...v].sort((a, b) => a - b);
+    const m = Math.floor(o.length / 2);
+    return o.length % 2 ? o[m] : (o[m - 1] + o[m]) / 2;
+  };
+
+  /* Quanto cada refeição custa para esta pessoa, por janela do plano.
+     Só entram dias em que aquela refeição existiu: dia sem jantar registrado
+     não conta como "jantar de 0 kcal", senão a mediana desabaria e a projeção
+     prometeria um dia que nunca acontece. */
+  function custoPorRefeicao(entries, plano, agora) {
+    const limite = (agora || new Date()).getTime() - JANELA_DIAS * 86400000;
+    const hoje = diaDe(agora || new Date());
+    const porDiaRef = new Map(); // "dia|chave" -> kcal
+    for (const e of entries) {
+      if (ehAgua(e)) continue;
+      const d = new Date(e.ts);
+      const dia = diaDe(e.ts);
+      if (dia < limite || dia >= hoje) continue; // hoje é o que se quer prever
+      const ref = Sugestao.refeicaoDe(d, plano);
+      const k = `${dia}|${ref.chave}`;
+      porDiaRef.set(k, (porDiaRef.get(k) || 0) + (e.kcal || 0));
+    }
+    const amostras = new Map();
+    for (const [k, kcal] of porDiaRef) {
+      const chave = k.split('|')[1];
+      if (!amostras.has(chave)) amostras.set(chave, []);
+      amostras.get(chave).push(kcal);
+    }
+    const custo = new Map();
+    for (const r of plano) {
+      const v = amostras.get(r.chave) || [];
+      custo.set(r.chave, { kcal: mediana(v), n: v.length, medido: v.length >= MINIMO_AMOSTRAS });
+    }
+    return custo;
+  }
+
+  /* entries: histórico inteiro · doDia: registros de hoje já salvos
+     adicionando: kcal da refeição em montagem · quando: data/hora dela */
+  function projetar({ entries, doDia, adicionando = 0, quando, refeicoesDia, metaKcal, gastoDiario }) {
+    if (!metaKcal || !gastoDiario) return null;
+    const direcao = metaKcal < gastoDiario ? 'deficit' : metaKcal > gastoDiario ? 'superavit' : null;
+    if (!direcao) return null; // manutenção: não há teto nem piso a defender
+
+    const agora = quando || new Date();
+    const plano = Sugestao.planoDe(refeicoesDia);
+    const atual = Sugestao.refeicaoDe(agora, plano);
+    const custo = custoPorRefeicao(entries, plano, agora);
+
+    const consumido = (doDia || []).reduce((n, e) => (ehAgua(e) ? n : n + (e.kcal || 0)), 0);
+
+    // refeições de hoje que já têm registro: não são mais "o que falta"
+    const jaFeitas = new Set();
+    for (const e of doDia || []) {
+      if (ehAgua(e)) continue;
+      jaFeitas.add(Sugestao.refeicaoDe(new Date(e.ts), plano).chave);
+    }
+
+    const iAtual = plano.findIndex((r) => r.chave === atual.chave);
+    const restantes = plano
+      .slice(iAtual + 1)
+      .filter((r) => !jaFeitas.has(r.chave))
+      .map((r) => {
+        const c = custo.get(r.chave) || { kcal: 0, n: 0, medido: false };
+        return {
+          chave: r.chave,
+          nome: r.nome,
+          kcal: Math.round(c.medido ? c.kcal : metaKcal * r.peso),
+          medido: c.medido,
+          n: c.n,
+        };
+      });
+
+    const falta = restantes.reduce((n, r) => n + r.kcal, 0);
+    const total = consumido + adicionando + falta;
+    const sobra = metaKcal - total;
+    const estimados = restantes.filter((r) => !r.medido).length;
+
+    let risco = null;
+    if (direcao === 'deficit') {
+      if (total > metaKcal * (1 + MARGEM_FORTE)) risco = 'estoura';
+      else if (total > metaKcal * (1 + MARGEM)) risco = 'aperta';
+    } else {
+      if (total < metaKcal * (1 - MARGEM_FORTE)) risco = 'falta';
+      else if (total < metaKcal * (1 - MARGEM)) risco = 'curto';
+    }
+
+    return {
+      direcao,
+      consumido: Math.round(consumido),
+      adicionando: Math.round(adicionando),
+      restantes,
+      falta: Math.round(falta),
+      total: Math.round(total),
+      meta: Math.round(metaKcal),
+      sobra: Math.round(sobra),
+      risco,
+      estimados,
+      refeicaoAtual: atual,
+    };
+  }
+
+  return { projetar, custoPorRefeicao, JANELA_DIAS, MINIMO_AMOSTRAS };
+})();
+
+if (typeof window !== 'undefined') window.Projecao = Projecao;
+
+</script>
+<script>
 /* Carga glicêmica estimada de uma refeição, e o que fazer a respeito.
 
    As tabelas de alimentos do app não trazem índice glicêmico (nem fibra), e
@@ -5875,11 +6038,21 @@ if (typeof window !== 'undefined') window.Barras = Barras;
 
   // totais do dia escolhido no modal (sem o registro em edição), para o impacto
   let totaisDia = { kcal: 0, p: 0, c: 0, g: 0 };
+  let historicoTodo = []; // para a projeção do fim do dia
+  let registrosDoDia = [];
 
   async function atualizarTotaisDia() {
     const base = inpDataHora.value ? new Date(inpDataHora.value) : new Date();
     const key = `${base.getFullYear()}-${pad(base.getMonth() + 1)}-${pad(base.getDate())}`;
     const entries = await MacroDB.getAllEntries();
+    historicoTodo = entries;
+    const doDia = (e) => {
+      const d = new Date(e.ts);
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` === key;
+    };
+    const emEdicao = (e) =>
+      e.id === editandoId || (editandoRefeicao && editandoRefeicao.ids.includes(e.id));
+    registrosDoDia = entries.filter((e) => doDia(e) && !emEdicao(e));
     totaisDia = entries.reduce(
       (acc, e) => {
         if (e.id === editandoId) return acc;
@@ -5891,6 +6064,64 @@ if (typeof window !== 'undefined') window.Barras = Barras;
       { kcal: 0, p: 0, c: 0, g: 0 }
     );
     atualizarPreview();
+  }
+
+  /* ---- Como o dia deve terminar ---- */
+
+  // O impacto responde "o que esta refeição faz com o dia até agora". Esta
+  // projeção responde "e depois dela, ainda vem o quê?" — sem isso um almoço
+  // folgado às 13h vira um dia estourado às 21h.
+  function renderProjecao(r) {
+    const box = $('#proj');
+    if (!box) return;
+    const { metaKcal, gastoDiario, refeicoesDia } = MacroDB.getSettings();
+    const sc = editandoId == null ? somaCesta() : { kcal: 0, p: 0, c: 0, g: 0 };
+    const adicionando = (r ? r.kcal : 0) + sc.kcal;
+    const p =
+      typeof Projecao === 'undefined'
+        ? null
+        : Projecao.projetar({
+            entries: historicoTodo,
+            doDia: registrosDoDia,
+            adicionando,
+            quando: inpDataHora.value ? new Date(inpDataHora.value) : new Date(),
+            refeicoesDia,
+            metaKcal,
+            gastoDiario,
+          });
+    // sem meta, em manutenção, ou sem nada previsto depois desta refeição:
+    // não há teto nem piso para avisar, e prever "o dia inteiro" seria ruído
+    if (!p || (!p.restantes.length && !p.risco)) {
+      box.hidden = true;
+      box.innerHTML = '';
+      return;
+    }
+    const excesso = -p.sobra;
+    const alerta = {
+      estoura: ['forte', `Vai passar da meta em ${fmt(excesso, 0)} kcal`],
+      aperta: ['leve', `Fica ${fmt(excesso, 0)} kcal acima da meta`],
+      falta: ['forte', `Vai ficar ${fmt(p.sobra, 0)} kcal abaixo da meta`],
+      curto: ['leve', `Fica ${fmt(p.sobra, 0)} kcal abaixo da meta`],
+    }[p.risco];
+    const medido = p.restantes.filter((x) => x.medido);
+    box.hidden = false;
+    box.className = `proj${alerta ? ` risco-${alerta[0]}` : ''}`;
+    box.innerHTML = `
+      <div class="proj-title">Como o dia deve terminar</div>
+      <div class="proj-conta">
+        <span><i>já comeu</i><b>${fmt(p.consumido, 0)}</b></span>
+        <span class="op">+</span>
+        <span><i>esta refeição</i><b>${fmt(p.adicionando, 0)}</b></span>
+        ${p.restantes.length ? `<span class="op">+</span>
+        <span><i>ainda vem</i><b>${fmt(p.falta, 0)}</b></span>` : ''}
+        <span class="op">=</span>
+        <span class="total"><i>previsto</i><b>${fmt(p.total, 0)}</b></span>
+      </div>
+      ${alerta ? `<p class="proj-alerta"><b>${alerta[1]}</b> de ${fmt(p.meta, 0)} kcal.</p>`
+        : `<p class="proj-ok">Dentro da meta de ${fmt(p.meta, 0)} kcal${p.sobra > 0 ? `, com ${fmt(p.sobra, 0)} kcal de folga` : ''}.</p>`}
+      ${p.restantes.length ? `<p class="proj-nota">"Ainda vem" é o que você costuma comer ${
+        p.restantes.map((x) => `${x.nome.toLowerCase()} (${fmt(x.kcal, 0)} kcal${x.medido ? `, mediana de ${x.n} dias` : ', estimado pelo plano'})`).join(' e ')
+      }${medido.length ? '' : ' — ainda sem histórico suficiente, então esse trecho é chute do plano'}.</p>` : ''}`;
   }
 
   function renderImpacto(r) {
@@ -6077,9 +6308,11 @@ if (typeof window !== 'undefined') window.Barras = Barras;
       if (cesta.length && editandoId == null) {
         renderImpacto({ kcal: 0, p: 0, c: 0, g: 0 });
         renderGlicemia(null);
+        renderProjecao(null);
       } else {
         $('#impacto').hidden = true;
         $('#glic').hidden = true;
+        $('#proj').hidden = true;
       }
       return;
     }
@@ -6100,6 +6333,7 @@ if (typeof window !== 'undefined') window.Barras = Barras;
     preview.hidden = false;
     renderImpacto(r);
     renderGlicemia(r);
+    renderProjecao(r);
   }
 
   async function salvar() {

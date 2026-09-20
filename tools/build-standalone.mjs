@@ -120,6 +120,9 @@ ${read('js/login-gate.js')}
 ${read('js/sugestao.js')}
 </script>
 <script>
+${read('js/projecao.js')}
+</script>
+<script>
 ${read('js/glicemia.js')}
 </script>
 <script>

@@ -126,6 +126,27 @@ python3 -m http.server 8000
   whey, pão com mel e whey, tapioca com queijo, batata doce com frango, cuscuz
   com ovo…), e o cabeçalho diz de onde veio o palpite: "você costuma treinar às
   19h às quintas".
+- **Como o dia deve terminar**: o painel de impacto responde "o que esta refeição
+  faz com o dia até agora"; este responde **"e depois dela, ainda vem o quê?"**.
+  Sem ele um almoço folgado às 13h vira um dia estourado às 21h. A conta é
+  `já comeu + esta refeição + ainda vem = previsto`, comparada com a dieta alvo.
+
+  O **"ainda vem"** não é regra de três em cima da meta: é a **mediana do que a
+  pessoa realmente come em cada refeição**, nos últimos 60 dias, por janela do
+  plano (as mesmas janelas da Sugestão, conforme as refeições por dia de
+  Ajustes). Mediana e não média porque um rodízio de sexta não pode virar a
+  expectativa de todas as sextas. Só entram dias em que aquela refeição existiu —
+  dia sem jantar registrado não conta como "jantar de 0 kcal", senão a projeção
+  prometeria um dia que nunca acontece. Sem três dias de histórico numa refeição,
+  aí sim cai no peso do plano, e o texto diz que aquele trecho é estimado.
+  Refeições que **já têm registro hoje** saem do "ainda vem": elas já estão no
+  "já comeu".
+
+  O aviso tem direção: em **déficit** (alvo abaixo do gasto) alerta sobre
+  **passar do teto**; em **superávit**, sobre **não chegar ao piso** — quem está
+  em bulking erra por comer de menos. Em manutenção não há aviso, porque não há
+  teto nem piso a defender. Dois níveis, 5% e 15% de distância da meta, porque
+  projeção é palpite e palpite não pode gritar por 20 kcal.
 - **Aviso de alimento caro**: ao escolher um alimento que está na lista de
   **alimentos caros** (a mesma do cartão "O que mudou", calculada sobre os
   últimos 90 dias), o modal mostra um aviso vermelho com a evidência — em
@@ -552,6 +573,7 @@ js/config.js                   tela Ajustes (gasto, dieta alvo, backup, conta)
 js/sync.js                     conta (Supabase Auth) + sincronização do backup
 js/login-gate.js               porta de entrada: sem conta, sem app
 js/caros.js                    alimentos caros: os que fazem o dia estourar
+js/projecao.js                 projeção do fim do dia (mediana por refeição)
 js/refresh.js                  pull-to-refresh
 data/foods.json                banco de ~18.000 alimentos gerado
 vendor/                        Tom Select e Chart.js vendorizados (offline)

@@ -458,11 +458,21 @@
 
   // totais do dia escolhido no modal (sem o registro em edição), para o impacto
   let totaisDia = { kcal: 0, p: 0, c: 0, g: 0 };
+  let historicoTodo = []; // para a projeção do fim do dia
+  let registrosDoDia = [];
 
   async function atualizarTotaisDia() {
     const base = inpDataHora.value ? new Date(inpDataHora.value) : new Date();
     const key = `${base.getFullYear()}-${pad(base.getMonth() + 1)}-${pad(base.getDate())}`;
     const entries = await MacroDB.getAllEntries();
+    historicoTodo = entries;
+    const doDia = (e) => {
+      const d = new Date(e.ts);
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` === key;
+    };
+    const emEdicao = (e) =>
+      e.id === editandoId || (editandoRefeicao && editandoRefeicao.ids.includes(e.id));
+    registrosDoDia = entries.filter((e) => doDia(e) && !emEdicao(e));
     totaisDia = entries.reduce(
       (acc, e) => {
         if (e.id === editandoId) return acc;
@@ -474,6 +484,64 @@
       { kcal: 0, p: 0, c: 0, g: 0 }
     );
     atualizarPreview();
+  }
+
+  /* ---- Como o dia deve terminar ---- */
+
+  // O impacto responde "o que esta refeição faz com o dia até agora". Esta
+  // projeção responde "e depois dela, ainda vem o quê?" — sem isso um almoço
+  // folgado às 13h vira um dia estourado às 21h.
+  function renderProjecao(r) {
+    const box = $('#proj');
+    if (!box) return;
+    const { metaKcal, gastoDiario, refeicoesDia } = MacroDB.getSettings();
+    const sc = editandoId == null ? somaCesta() : { kcal: 0, p: 0, c: 0, g: 0 };
+    const adicionando = (r ? r.kcal : 0) + sc.kcal;
+    const p =
+      typeof Projecao === 'undefined'
+        ? null
+        : Projecao.projetar({
+            entries: historicoTodo,
+            doDia: registrosDoDia,
+            adicionando,
+            quando: inpDataHora.value ? new Date(inpDataHora.value) : new Date(),
+            refeicoesDia,
+            metaKcal,
+            gastoDiario,
+          });
+    // sem meta, em manutenção, ou sem nada previsto depois desta refeição:
+    // não há teto nem piso para avisar, e prever "o dia inteiro" seria ruído
+    if (!p || (!p.restantes.length && !p.risco)) {
+      box.hidden = true;
+      box.innerHTML = '';
+      return;
+    }
+    const excesso = -p.sobra;
+    const alerta = {
+      estoura: ['forte', `Vai passar da meta em ${fmt(excesso, 0)} kcal`],
+      aperta: ['leve', `Fica ${fmt(excesso, 0)} kcal acima da meta`],
+      falta: ['forte', `Vai ficar ${fmt(p.sobra, 0)} kcal abaixo da meta`],
+      curto: ['leve', `Fica ${fmt(p.sobra, 0)} kcal abaixo da meta`],
+    }[p.risco];
+    const medido = p.restantes.filter((x) => x.medido);
+    box.hidden = false;
+    box.className = `proj${alerta ? ` risco-${alerta[0]}` : ''}`;
+    box.innerHTML = `
+      <div class="proj-title">Como o dia deve terminar</div>
+      <div class="proj-conta">
+        <span><i>já comeu</i><b>${fmt(p.consumido, 0)}</b></span>
+        <span class="op">+</span>
+        <span><i>esta refeição</i><b>${fmt(p.adicionando, 0)}</b></span>
+        ${p.restantes.length ? `<span class="op">+</span>
+        <span><i>ainda vem</i><b>${fmt(p.falta, 0)}</b></span>` : ''}
+        <span class="op">=</span>
+        <span class="total"><i>previsto</i><b>${fmt(p.total, 0)}</b></span>
+      </div>
+      ${alerta ? `<p class="proj-alerta"><b>${alerta[1]}</b> de ${fmt(p.meta, 0)} kcal.</p>`
+        : `<p class="proj-ok">Dentro da meta de ${fmt(p.meta, 0)} kcal${p.sobra > 0 ? `, com ${fmt(p.sobra, 0)} kcal de folga` : ''}.</p>`}
+      ${p.restantes.length ? `<p class="proj-nota">"Ainda vem" é o que você costuma comer ${
+        p.restantes.map((x) => `${x.nome.toLowerCase()} (${fmt(x.kcal, 0)} kcal${x.medido ? `, mediana de ${x.n} dias` : ', estimado pelo plano'})`).join(' e ')
+      }${medido.length ? '' : ' — ainda sem histórico suficiente, então esse trecho é chute do plano'}.</p>` : ''}`;
   }
 
   function renderImpacto(r) {
@@ -660,9 +728,11 @@
       if (cesta.length && editandoId == null) {
         renderImpacto({ kcal: 0, p: 0, c: 0, g: 0 });
         renderGlicemia(null);
+        renderProjecao(null);
       } else {
         $('#impacto').hidden = true;
         $('#glic').hidden = true;
+        $('#proj').hidden = true;
       }
       return;
     }
@@ -683,6 +753,7 @@
     preview.hidden = false;
     renderImpacto(r);
     renderGlicemia(r);
+    renderProjecao(r);
   }
 
   async function salvar() {
