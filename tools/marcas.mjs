@@ -809,6 +809,23 @@ export const MARCAS = [
   { n: "Gelato Bacio di Latte café", kcal: 225, p: 4, c: 27, g: 11.5, m: [["pequeno (120 g)", 120], ["médio (140 g)", 140], ["grande (160 g)", 160], ["massimo (300 g)", 300], ["pote Maxi (250 ml)", 188], ["pote Solo (490 ml)", 368], ["pote Amici (630 ml)", 473], ["pote Famiglia (1,3 L)", 975]] },
   { n: "Sorbet Bacio di Latte limão siciliano", kcal: 130, p: 0, c: 32, g: 0, m: [["pequeno (120 g)", 120], ["médio (140 g)", 140], ["grande (160 g)", 160], ["massimo (300 g)", 300], ["pote Maxi (250 ml)", 188], ["pote Solo (490 ml)", 368], ["pote Amici (630 ml)", 473], ["pote Famiglia (1,3 L)", 975]] },
   { n: "Sorbet Bacio di Latte frutas vermelhas", kcal: 135, p: 0.3, c: 33, g: 0, m: [["pequeno (120 g)", 120], ["médio (140 g)", 140], ["grande (160 g)", 160], ["massimo (300 g)", 300], ["pote Maxi (250 ml)", 188], ["pote Solo (490 ml)", 368], ["pote Amici (630 ml)", 473], ["pote Famiglia (1,3 L)", 975]] },
+
+  // Linha Bacio Zero: gelatos SEM ADIÇÃO de açúcar, nos três clássicos. As
+  // calorias são as divulgadas no lançamento, por porção de 60 g — pistacchio
+  // 81, cioccolato 89 e doce de leite 100 —, aqui convertidas para 100 g. Os
+  // macros são estimados em cima delas: sem o açúcar, o carboidrato que sobra é
+  // lactose mais o poliol do adoçante, e a gordura segue o leite e o creme da
+  // base tradicional.
+  { n: "Gelato Bacio di Latte Zero pistacchio (pistache, sem açúcar)", kcal: 135, p: 5, c: 11, g: 8, m: [["pequeno (120 g)", 120], ["médio (140 g)", 140], ["grande (160 g)", 160], ["massimo (300 g)", 300], ["porção do rótulo (60 g)", 60], ["pote Maxi (250 ml)", 188], ["pote Solo (490 ml)", 368], ["pote Amici (630 ml)", 473], ["pote Famiglia (1,3 L)", 975]] },
+  { n: "Gelato Bacio di Latte Zero cioccolato (chocolate, sem açúcar)", kcal: 148, p: 4.5, c: 12, g: 9, m: [["pequeno (120 g)", 120], ["médio (140 g)", 140], ["grande (160 g)", 160], ["massimo (300 g)", 300], ["porção do rótulo (60 g)", 60], ["pote Maxi (250 ml)", 188], ["pote Solo (490 ml)", 368], ["pote Amici (630 ml)", 473], ["pote Famiglia (1,3 L)", 975]] },
+  { n: "Gelato Bacio di Latte Zero doce de leite (sem açúcar)", kcal: 167, p: 5, c: 17, g: 9, m: [["pequeno (120 g)", 120], ["médio (140 g)", 140], ["grande (160 g)", 160], ["massimo (300 g)", 300], ["porção do rótulo (60 g)", 60], ["pote Maxi (250 ml)", 188], ["pote Solo (490 ml)", 368], ["pote Amici (630 ml)", 473], ["pote Famiglia (1,3 L)", 975]] },
+
+  // Milkshake Pro + Zero: gelato zero com whey. Da marca vêm o volume (410 ml)
+  // e os 30 g de proteína por copo; o resto é estimativa, e é por isso que o
+  // valor calórico aqui não tem a mesma confiança dos gelatos acima.
+  { n: "Milkshake Bacio di Latte Pro + Zero pistacchio (pistache, 30 g proteína)", kcal: 76, p: 7.3, c: 6, g: 2.4, l: 1, m: [["copo (410 ml)", 410]] },
+  { n: "Milkshake Bacio di Latte Pro + Zero cioccolato (chocolate, 30 g proteína)", kcal: 79, p: 7.3, c: 6.6, g: 2.4, l: 1, m: [["copo (410 ml)", 410]] },
+  { n: "Milkshake Bacio di Latte Pro + Zero doce de leite (30 g proteína)", kcal: 83, p: 7.3, c: 7.6, g: 2.4, l: 1, m: [["copo (410 ml)", 410]] },
   { n: "Casquinha de gelato (cone, sem o sorvete)", kcal: 400, p: 7, c: 78, g: 6, m: [["unidade (15 g)", 15]] },
   { n: "Gelato italiano de gelateria (média dos sabores)", kcal: 240, p: 4, c: 28, g: 12.5, m: [["pequeno (100 g)", 100], ["médio (150 g)", 150], ["grande (200 g)", 200], ["bola (60 g)", 60]] },
   { n: "Gelato Häagen-Dazs (pote)", kcal: 260, p: 4.5, c: 26, g: 15, m: [["pote (100 ml)", 55], ["bola (60 g)", 60], ["pote (473 ml)", 260]] },
