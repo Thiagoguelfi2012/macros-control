@@ -787,19 +787,23 @@ export const MARCAS = [
   { n: "Bala de leite caseira (leite ninho)", kcal: 390, p: 3, c: 78, g: 7, m: [["unidade (8 g)", 8]] },
   // ---- Gelaterias: gelato italiano por sabor (tamanhos da casquinha/pote) ----
   // Medidas usuais das lojas: pequeno ~100 g, médio ~150 g, grande ~200 g.
-  { n: "Gelato Bacio di Latte Bacio (avelã com chocolate)", kcal: 255, p: 4.5, c: 27, g: 14, m: [["pequeno (100 g)", 100], ["médio (150 g)", 150], ["grande (200 g)", 200]] },
-  { n: "Gelato Bacio di Latte pistacchio (pistache)", kcal: 250, p: 5, c: 25, g: 14, m: [["pequeno (100 g)", 100], ["médio (150 g)", 150], ["grande (200 g)", 200]] },
-  { n: "Gelato Bacio di Latte nocciola (avelã)", kcal: 245, p: 4.5, c: 26, g: 13.5, m: [["pequeno (100 g)", 100], ["médio (150 g)", 150], ["grande (200 g)", 200]] },
-  { n: "Gelato Bacio di Latte stracciatella", kcal: 240, p: 4, c: 27, g: 13, m: [["pequeno (100 g)", 100], ["médio (150 g)", 150], ["grande (200 g)", 200]] },
-  { n: "Gelato Bacio di Latte doce de leite", kcal: 245, p: 4, c: 33, g: 10.5, m: [["pequeno (100 g)", 100], ["médio (150 g)", 150], ["grande (200 g)", 200]] },
-  { n: "Gelato Bacio di Latte chocolate belga", kcal: 250, p: 4.5, c: 30, g: 12.5, m: [["pequeno (100 g)", 100], ["médio (150 g)", 150], ["grande (200 g)", 200]] },
-  { n: "Gelato Bacio di Latte creme (fior di latte)", kcal: 220, p: 4, c: 26, g: 11, m: [["pequeno (100 g)", 100], ["médio (150 g)", 150], ["grande (200 g)", 200]] },
-  { n: "Gelato Bacio di Latte morango", kcal: 200, p: 3, c: 28, g: 8.5, m: [["pequeno (100 g)", 100], ["médio (150 g)", 150], ["grande (200 g)", 200]] },
-  { n: "Gelato Bacio di Latte cookies", kcal: 265, p: 4.5, c: 31, g: 14, m: [["pequeno (100 g)", 100], ["médio (150 g)", 150], ["grande (200 g)", 200]] },
-  { n: "Gelato Bacio di Latte Nutella", kcal: 275, p: 4.5, c: 30, g: 15.5, m: [["pequeno (100 g)", 100], ["médio (150 g)", 150], ["grande (200 g)", 200]] },
-  { n: "Gelato Bacio di Latte café", kcal: 225, p: 4, c: 27, g: 11.5, m: [["pequeno (100 g)", 100], ["médio (150 g)", 150], ["grande (200 g)", 200]] },
-  { n: "Sorbet Bacio di Latte limão siciliano", kcal: 130, p: 0, c: 32, g: 0, m: [["pequeno (100 g)", 100], ["médio (150 g)", 150], ["grande (200 g)", 200]] },
-  { n: "Sorbet Bacio di Latte frutas vermelhas", kcal: 135, p: 0.3, c: 33, g: 0, m: [["pequeno (100 g)", 100], ["médio (150 g)", 150], ["grande (200 g)", 200]] },
+  // Os copos da casa têm nome italiano no cardápio: piccolo, medio, grande e
+  // massimo (o maior, até 3 sabores). Os três primeiros seguem os pesos
+  // divulgados pela marca (110-130, 130-150 e 150-170 g, pelos meios da faixa);
+  // o massimo é estimado no degrau seguinte — não achei o peso publicado.
+  { n: "Gelato Bacio di Latte Bacio (avelã com chocolate)", kcal: 255, p: 4.5, c: 27, g: 14, m: [["piccolo (120 g)", 120], ["medio (140 g)", 140], ["grande (160 g)", 160], ["massimo (200 g)", 200]] },
+  { n: "Gelato Bacio di Latte pistacchio (pistache)", kcal: 250, p: 5, c: 25, g: 14, m: [["piccolo (120 g)", 120], ["medio (140 g)", 140], ["grande (160 g)", 160], ["massimo (200 g)", 200]] },
+  { n: "Gelato Bacio di Latte nocciola (avelã)", kcal: 245, p: 4.5, c: 26, g: 13.5, m: [["piccolo (120 g)", 120], ["medio (140 g)", 140], ["grande (160 g)", 160], ["massimo (200 g)", 200]] },
+  { n: "Gelato Bacio di Latte stracciatella", kcal: 240, p: 4, c: 27, g: 13, m: [["piccolo (120 g)", 120], ["medio (140 g)", 140], ["grande (160 g)", 160], ["massimo (200 g)", 200]] },
+  { n: "Gelato Bacio di Latte doce de leite", kcal: 245, p: 4, c: 33, g: 10.5, m: [["piccolo (120 g)", 120], ["medio (140 g)", 140], ["grande (160 g)", 160], ["massimo (200 g)", 200]] },
+  { n: "Gelato Bacio di Latte chocolate belga", kcal: 250, p: 4.5, c: 30, g: 12.5, m: [["piccolo (120 g)", 120], ["medio (140 g)", 140], ["grande (160 g)", 160], ["massimo (200 g)", 200]] },
+  { n: "Gelato Bacio di Latte creme (fior di latte)", kcal: 220, p: 4, c: 26, g: 11, m: [["piccolo (120 g)", 120], ["medio (140 g)", 140], ["grande (160 g)", 160], ["massimo (200 g)", 200]] },
+  { n: "Gelato Bacio di Latte morango", kcal: 200, p: 3, c: 28, g: 8.5, m: [["piccolo (120 g)", 120], ["medio (140 g)", 140], ["grande (160 g)", 160], ["massimo (200 g)", 200]] },
+  { n: "Gelato Bacio di Latte cookies", kcal: 265, p: 4.5, c: 31, g: 14, m: [["piccolo (120 g)", 120], ["medio (140 g)", 140], ["grande (160 g)", 160], ["massimo (200 g)", 200]] },
+  { n: "Gelato Bacio di Latte Nutella", kcal: 275, p: 4.5, c: 30, g: 15.5, m: [["piccolo (120 g)", 120], ["medio (140 g)", 140], ["grande (160 g)", 160], ["massimo (200 g)", 200]] },
+  { n: "Gelato Bacio di Latte café", kcal: 225, p: 4, c: 27, g: 11.5, m: [["piccolo (120 g)", 120], ["medio (140 g)", 140], ["grande (160 g)", 160], ["massimo (200 g)", 200]] },
+  { n: "Sorbet Bacio di Latte limão siciliano", kcal: 130, p: 0, c: 32, g: 0, m: [["piccolo (120 g)", 120], ["medio (140 g)", 140], ["grande (160 g)", 160], ["massimo (200 g)", 200]] },
+  { n: "Sorbet Bacio di Latte frutas vermelhas", kcal: 135, p: 0.3, c: 33, g: 0, m: [["piccolo (120 g)", 120], ["medio (140 g)", 140], ["grande (160 g)", 160], ["massimo (200 g)", 200]] },
   { n: "Casquinha de gelato (cone, sem o sorvete)", kcal: 400, p: 7, c: 78, g: 6, m: [["unidade (15 g)", 15]] },
   { n: "Gelato italiano de gelateria (média dos sabores)", kcal: 240, p: 4, c: 28, g: 12.5, m: [["pequeno (100 g)", 100], ["médio (150 g)", 150], ["grande (200 g)", 200], ["bola (60 g)", 60]] },
   { n: "Gelato Häagen-Dazs (pote)", kcal: 260, p: 4.5, c: 26, g: 15, m: [["pote (100 ml)", 55], ["bola (60 g)", 60], ["pote (473 ml)", 260]] },

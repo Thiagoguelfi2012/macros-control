@@ -1139,7 +1139,7 @@ async function main() {
   mkdirSync(dirname(OUT), { recursive: true });
   // Ao regenerar a base com mudanças relevantes, incremente v e o
   // FOODS_VERSION correspondente em js/db.js para forçar a recarga no navegador.
-  const corpo = JSON.stringify({ v: 51, foods });
+  const corpo = JSON.stringify({ v: 52, foods });
   writeFileSync(OUT, corpo);
 
   // Manifesto: alguns bytes com a versão e o hash do conteúdo. O app busca ISTO
@@ -1147,7 +1147,7 @@ async function main() {
   // um v novo com conteúdo igual não custa download a ninguém, e conteúdo novo
   // chega mesmo que alguém esqueça de subir o v.
   const hash = createHash('sha1').update(corpo).digest('hex').slice(0, 16);
-  writeFileSync(MANIFESTO, JSON.stringify({ v: 51, h: hash, n: foods.length }));
+  writeFileSync(MANIFESTO, JSON.stringify({ v: 52, h: hash, n: foods.length }));
 
   const bytes = readFileSync(OUT).length;
   console.log(`manifesto: v51 · hash ${hash}`);
