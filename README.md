@@ -99,10 +99,23 @@ python3 -m http.server 8000
 
   Escolhida a montagem, as **porções são calculadas** para bater no alvo da
   refeição: a proteína manda, a gordura entra depois e o carboidrato fecha a
-  conta. O alvo é **o que ainda falta hoje de cada macro dividido entre as
-  refeições que ainda vêm** — e quantas vêm depende de **quantas refeições por
-  dia** você faz (3 a 6, configurável em **Ajustes**; com 4 o almoço leva uma
-  fatia maior do que com 6). A escolha entre as montagens é **sorteada** entre
+  conta. O alvo segue a **mesma régua do painel "Como o dia deve terminar"**:
+  do que ainda falta hoje, **reserva-se o que as refeições seguintes
+  historicamente custam** (a mediana da pessoa naquela janela), e o que sobra é
+  desta refeição. Ratear por peso do plano dava um almoço folgado para quem
+  janta muito — o plano diz como o dia *deveria* ser dividido, o histórico diz
+  como ele *é*. Quantas refeições existem depende de **quantas por dia** você
+  faz (3 a 6, configurável em **Ajustes**), refeição já registrada hoje sai da
+  reserva, e refeição sem histórico suficiente volta a valer pelo peso do plano.
+
+  O painel **diz a reserva em voz alta** ("Reservando 1.209 kcal para lanche da
+  tarde e jantar, do que você costuma comer neles"), porque senão a pergunta
+  óbvia fica sem resposta: por que o almoço sugerido encolheu. E quando o resto
+  do dia, do jeito de sempre, **não cabe** no que falta, a conta pura mandaria
+  sugerir um almoço de 190 kcal — correto e inútil. Aí entra um **piso** de 60%
+  da fatia do plano e o conflito é **dito**: "mesmo assim sobrariam só 61 kcal
+  para agora; para fechar o dia na meta, esses também precisam ficar abaixo do
+  de costume". Quem precisa encolher é o resto do dia, não só este prato. A escolha entre as montagens é **sorteada** entre
   as melhores colocadas (as que a pessoa mais come pesam mais, o que já foi
   comido hoje pesa menos), e **"Trocar" percorre as montagens**: as últimas seis
   mostradas ficam de fora da próxima escolha, então cada toque traz uma opção

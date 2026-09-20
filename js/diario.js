@@ -1008,6 +1008,18 @@
           ctx.metas.p ? ` · proteína ${restante.p > 0 ? `faltam ${fmt(restante.p, 0)} g` : 'no limite'}` : ''
         }`
       : 'defina a dieta alvo em Ajustes para sugestões mais certeiras';
+    // O prato é do tamanho do que sobra DEPOIS de reservar o que ainda vem —
+    // a mesma régua do painel "Como o dia deve terminar". Dizer isso evita a
+    // pergunta óbvia: por que o almoço sugerido encolheu.
+    const nomesProximas = (ctx.proximas || []).map((r) => r.nome.toLowerCase());
+    const reserva =
+      ctx.reserva > 0 && nomesProximas.length
+        ? `<p class="sug-reserva">Reservando <b>${fmt(ctx.reserva, 0)} kcal</b> para ${nomesProximas.join(' e ')}, do que você costuma comer neles.${
+            ctx.conflito
+              ? ` Mesmo assim sobrariam só <b>${fmt(ctx.sobraDepoisDaReserva, 0)} kcal</b> para agora: para fechar o dia na meta, ${nomesProximas.length === 1 ? 'esse' : 'esses'} também ${nomesProximas.length === 1 ? 'precisa' : 'precisam'} ficar abaixo do de costume.`
+              : ''
+          }</p>`
+        : '';
     // como o prato ficou perto do alvo desta refeição
     const linha = (rot, feito, meta, un) => {
       const pct = meta > 0 ? Math.min(140, (feito / meta) * 100) : 0;
@@ -1077,7 +1089,8 @@
         ${linha('Proteínas', total.p, alvo.p, 'g')}
         ${linha('Carboidratos', total.c, alvo.c, 'g')}
         ${linha('Gorduras', total.g, alvo.g, 'g')}
-        <p class="sug-legenda">Alvo desta refeição: o que falta hoje dividido entre as refeições que ainda vêm.</p>
+        <p class="sug-legenda">Alvo desta refeição: o que falta hoje, menos o que as refeições seguintes costumam custar.</p>
+        ${reserva}
       </div>
       ${
         ctx.metas.kcal

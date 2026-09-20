@@ -1508,6 +1508,15 @@ details.cmp-caros > summary b { margin-left: auto; font-size: 11.5px; color: var
 .proj.risco-leve .proj-alerta b { color: #d6a72a; }
 .proj-nota { margin: 8px 0 0; font-size: 11px; line-height: 1.5; color: var(--muted); }
 
+/* ---- Reserva do resto do dia, no painel de sugestão ---- */
+.sug-reserva {
+  margin: 8px 0 0; padding: 9px 11px; border-radius: 9px;
+  font-size: 11.5px; line-height: 1.55; color: var(--ink-2);
+  background: var(--surface-2, rgba(128, 128, 128, 0.1));
+  border-left: 3px solid var(--accent);
+}
+.sug-reserva b { color: var(--ink); }
+
 </style>
 </head>
 <body>
@@ -4737,11 +4746,50 @@ const Sugestao = (() => {
       c: metas.c ? metas.c - consumido.c : null,
       g: metas.g ? metas.g - consumido.g : null,
     };
-    // o que falta hoje cai nesta refeição na proporção dela entre as que ainda
-    // vêm — e quantas vêm depende do número de refeições configurado
+    // Quanto desta refeição cabe hoje. A régua é a mesma do painel "Como o dia
+    // deve terminar": do que falta no dia, reserva-se o que as refeições
+    // SEGUINTES historicamente custam, e o que sobra é desta aqui. Ratear por
+    // peso do plano dava um almoço folgado para quem janta muito — o plano diz
+    // como o dia deveria ser dividido, o histórico diz como ele é.
     const idx = plano.indexOf(ref);
     const pesoRestante = plano.slice(idx).reduce((n, r) => n + r.peso, 0) || ref.peso;
-    const fatia = ref.peso / pesoRestante;
+    const fatiaDoPlano = ref.peso / pesoRestante;
+
+    // refeições de hoje que já têm registro não são mais "o que ainda vem"
+    const feitasHoje = new Set();
+    for (const e of entries) {
+      if (chaveDia(new Date(e.ts)) !== hoje) continue;
+      feitasHoje.add(refeicaoDe(new Date(e.ts), plano).chave);
+    }
+    const proximas = plano.slice(idx + 1).filter((r) => !feitasHoje.has(r.chave));
+    let reserva = 0;
+    let reservaMedida = 0;
+    if (proximas.length) {
+      const custo =
+        typeof Projecao !== 'undefined' ? Projecao.custoPorRefeicao(entries, plano, data) : null;
+      for (const r of proximas) {
+        const c = custo && custo.get(r.chave);
+        // sem histórico bastante para a refeição, o plano volta a mandar nela
+        if (c && c.medido) {
+          reserva += c.kcal;
+          reservaMedida++;
+        } else if (metas.kcal) {
+          reserva += metas.kcal * r.peso;
+        }
+      }
+    }
+    // Quanto do que falta sobra para agora, depois da reserva. Com piso: quando
+    // o que a pessoa costuma comer mais tarde não cabe no que falta, a conta
+    // pura manda sugerir um almoço de 190 kcal — correto e inútil. O piso
+    // mantém a refeição sendo uma refeição (60% da fatia do plano) e o conflito
+    // é DITO em vez de escondido dentro de um prato minúsculo: quem precisa
+    // encolher é o resto do dia, não só este prato.
+    const pisoFatia = fatiaDoPlano * 0.6;
+    const fatiaCrua = metas.kcal && restante.kcal > 0 ? (restante.kcal - reserva) / restante.kcal : null;
+    const fatia = fatiaCrua == null ? fatiaDoPlano : Math.min(1, Math.max(pisoFatia, fatiaCrua));
+    // o resto do dia, do jeito que costuma ser, não cabe no que sobrou
+    const conflito = fatiaCrua != null && fatiaCrua < pisoFatia && proximas.length > 0;
+    const sobraDepoisDaReserva = metas.kcal ? Math.round(restante.kcal - reserva) : null;
     const tetoKcal = metas.kcal ? metas.kcal * ref.peso * 1.8 : 700;
     const alvoKcal =
       restante.kcal != null ? Math.max(80, Math.min(restante.kcal * fatia, tetoKcal)) : Math.min(450, tetoKcal);
@@ -4760,9 +4808,14 @@ const Sugestao = (() => {
       (restante.kcal != null && restante.kcal <= 0) ||
       (metas.p && restante.p <= 0 && metas.c && restante.c <= 0);
     const apertado =
-      estourou || (metas.kcal && restante.kcal < Math.max(0.12 * metas.kcal, alvoKcal * 0.5));
+      estourou ||
+      (metas.kcal && restante.kcal < Math.max(0.12 * metas.kcal, alvoKcal * 0.5)) ||
+      // o que ainda vem já consome o que falta: esta refeição tem de ser pequena
+      (metas.kcal && reserva > 0 && restante.kcal - reserva < 0.08 * metas.kcal);
     return {
-      data, plano, ref, metas, consumido, restante, alvo, alvoKcal, fatia, apertado, estourou,
+      data, plano, ref, metas, consumido, restante, alvo, alvoKcal, fatia, fatiaDoPlano,
+      apertado, estourou, conflito, sobraDepoisDaReserva,
+      reserva: Math.round(reserva), reservaMedida, proximas,
       comidosHoje, recentes, frequencia, refeicoes, treino, preTreino,
     };
   }
@@ -6588,6 +6641,18 @@ if (typeof window !== 'undefined') window.Barras = Barras;
           ctx.metas.p ? ` · proteína ${restante.p > 0 ? `faltam ${fmt(restante.p, 0)} g` : 'no limite'}` : ''
         }`
       : 'defina a dieta alvo em Ajustes para sugestões mais certeiras';
+    // O prato é do tamanho do que sobra DEPOIS de reservar o que ainda vem —
+    // a mesma régua do painel "Como o dia deve terminar". Dizer isso evita a
+    // pergunta óbvia: por que o almoço sugerido encolheu.
+    const nomesProximas = (ctx.proximas || []).map((r) => r.nome.toLowerCase());
+    const reserva =
+      ctx.reserva > 0 && nomesProximas.length
+        ? `<p class="sug-reserva">Reservando <b>${fmt(ctx.reserva, 0)} kcal</b> para ${nomesProximas.join(' e ')}, do que você costuma comer neles.${
+            ctx.conflito
+              ? ` Mesmo assim sobrariam só <b>${fmt(ctx.sobraDepoisDaReserva, 0)} kcal</b> para agora: para fechar o dia na meta, ${nomesProximas.length === 1 ? 'esse' : 'esses'} também ${nomesProximas.length === 1 ? 'precisa' : 'precisam'} ficar abaixo do de costume.`
+              : ''
+          }</p>`
+        : '';
     // como o prato ficou perto do alvo desta refeição
     const linha = (rot, feito, meta, un) => {
       const pct = meta > 0 ? Math.min(140, (feito / meta) * 100) : 0;
@@ -6657,7 +6722,8 @@ if (typeof window !== 'undefined') window.Barras = Barras;
         ${linha('Proteínas', total.p, alvo.p, 'g')}
         ${linha('Carboidratos', total.c, alvo.c, 'g')}
         ${linha('Gorduras', total.g, alvo.g, 'g')}
-        <p class="sug-legenda">Alvo desta refeição: o que falta hoje dividido entre as refeições que ainda vêm.</p>
+        <p class="sug-legenda">Alvo desta refeição: o que falta hoje, menos o que as refeições seguintes costumam custar.</p>
+        ${reserva}
       </div>
       ${
         ctx.metas.kcal
