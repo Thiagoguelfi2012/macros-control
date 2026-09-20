@@ -146,14 +146,23 @@ python3 -m http.server 8000
   toda janela até 90 dias — só a de 1 ano agrupa por mês, que é onde a barra
   diária vira um traço fino demais para ler. A média semanal saiu de propósito:
   ela escondia justamente o que interessa, porque o dia fora da curva some
-  dentro da semana. O gráfico traz linha do gasto estimado e da dieta alvo;
+  dentro da semana. Os gráficos com eixo de tempo **cortam as pontas vazias**:
+  a janela de 90 dias costuma começar muito antes do primeiro registro, e
+  desenhar esse vazio gastava metade da largura à toa. Só as **pontas** saem —
+  buraco no meio é dia sem registro de verdade, e apagá-lo faria o eixo mentir
+  sobre o intervalo entre as barras. Cada gráfico usa a própria régua do que é
+  "ter dado": um dia com água e sem comida conta para o gráfico de água e não
+  conta para o de calorias. O gráfico traz linha do gasto estimado e da dieta alvo;
   déficit calórico acumulado; distribuição dos macros;
   **déficit/superávit calórico** do período, calculado a partir do gasto médio
   diário definido em Configurações. Tem também um **gráfico de água**: uma barra
   por dia (ou por mês, na janela de 1 ano), **cheia nos dias em que a meta foi
   batida** e vazada nos outros, com a linha da meta por cima e, embaixo, o total
-  do período, a média por dia e **quantos dias bateram a meta**. O cartão só
-  aparece quando há água registrada na janela. O **último cartão da tela** é
+  do trecho mostrado, a média por dia e **quantos dias bateram a meta**. A média
+  sai do **trecho desenhado**, não da janela inteira: com água anotada só nos
+  últimos dias, dividir por 90 daria um número que não descreve nada — e aí o
+  rodapé diz "desde o primeiro registro de água" em vez de "no período". O
+  cartão só aparece quando há água registrada na janela. O **último cartão da tela** é
   **O que mudou**: o período é dividido em dois por um **divisor** (uma data que você escolhe, ou o
   botão **achar sozinho**, que procura o ponto de virada — o corte que deixa as
   duas metades mais diferentes entre si). O cartão devolve o **déficit médio por

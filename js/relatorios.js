@@ -159,6 +159,21 @@
     return buckets;
   }
 
+  // Corta as pontas vazias: a janela de 90 dias começa muito antes do primeiro
+  // registro, e o gráfico gastava metade da largura desenhando nada. Só as
+  // PONTAS saem — buraco no meio é dia sem registro de verdade, e apagá-lo
+  // faria o eixo mentir sobre o intervalo entre as barras.
+  //
+  // Cada gráfico traz a própria régua do que é "ter dado": um dia com água e
+  // sem comida é dado para o gráfico de água e vazio para o de calorias.
+  function recortarComDados(buckets, temDado) {
+    let ini = buckets.findIndex(temDado);
+    if (ini < 0) return buckets; // nada no período: deixa como está
+    let fim = buckets.length - 1;
+    while (fim > ini && !temDado(buckets[fim])) fim--;
+    return buckets.slice(ini, fim + 1);
+  }
+
   /* ---- Tiles ---- */
 
   function renderTiles(tot, dias, diasReais) {
@@ -435,14 +450,21 @@
       return;
     }
     card.hidden = false;
-    const media = total / Math.max(dias, 1);
+    // A média sai do trecho DESENHADO, não da janela inteira: com água anotada
+    // só nos últimos dias, dividir por 90 daria uma média que não descreve nada
+    // — nem o hábito de quem registra, nem o de quem não registra.
+    const diasMostrados = granularidade === 'dia' ? buckets.length : dias;
+    const recorte = buckets.reduce((n, b) => n + b.agua, 0);
+    const media = recorte / Math.max(diasMostrados, 1);
+    const parcial = granularidade === 'dia' && buckets.length < dias;
     // dias que bateram a meta (só faz sentido na granularidade de dia)
     let cumpridos = null;
     if (metaAgua && granularidade === 'dia') {
       cumpridos = buckets.filter((b) => b.agua >= metaAgua).length;
     }
     $('#agua-sub').textContent =
-      `${fmtVol(total)} no período · média de ${fmtVol(media)} por dia` +
+      `${fmtVol(total)} ${parcial ? 'desde o primeiro registro de água' : 'no período'}` +
+      ` · média de ${fmtVol(media)} por dia` +
       (metaAgua ? ` · meta de ${fmtVol(metaAgua)}` : '') +
       (cumpridos != null ? ` · ${cumpridos} de ${buckets.length} ${buckets.length === 1 ? 'dia bateu' : 'dias bateram'} a meta` : '');
 
@@ -910,8 +932,8 @@
     renderAcumulado(entries, inicio, fim);
     renderAlvo(tot, dias);
     const buckets = agregar(entries, inicio, fim, granularidade);
-    renderCharts(buckets, granularidade, tot, dias);
-    renderAgua(buckets, granularidade, entries, dias);
+    renderCharts(recortarComDados(buckets, (b) => b.kcal > 0), granularidade, tot, dias);
+    renderAgua(recortarComDados(buckets, (b) => b.agua > 0), granularidade, entries, dias);
     renderComparar(entries);
   }
 
