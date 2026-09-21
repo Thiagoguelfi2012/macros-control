@@ -190,7 +190,6 @@ export const MARCAS = [
   { n: 'Doce de leite Itambé', kcal: 310, p: 5.5, c: 58, g: 6.5, m: [['colher de sopa (20 g)', 20]] },
   { n: 'Goiabada Predilecta', kcal: 250, p: 0.4, c: 62, g: 0, m: [['fatia (30 g)', 30]] },
   { n: 'Bananada (bananinha) Paoletti', kcal: 280, p: 1, c: 68, g: 0.5, m: [['unidade (30 g)', 30]] },
-  { n: 'Bala Fini dentadura (tubes)', kcal: 340, p: 5.5, c: 78, g: 0, m: [['porção (25 g)', 25]] },
   { n: 'Bala 7 Belo', kcal: 390, p: 0, c: 92, g: 2.5, m: [['unidade (4,6 g)', 4.6]] },
   { n: 'Chiclete Trident menta', kcal: 190, p: 0, c: 63, g: 0, m: [['unidade (1,8 g)', 1.8]] },
 
@@ -783,6 +782,34 @@ export const MARCAS = [
   { n: "Pirulito Pop (Dori)", kcal: 385, p: 0, c: 96, g: 0, m: [["unidade (10 g)", 10]] },
   { n: "Chiclete Bubbaloo (Adams)", kcal: 300, p: 0, c: 75, g: 0, m: [["unidade (5 g)", 5]] },
   { n: "Marshmallow Fini", kcal: 330, p: 3, c: 80, g: 0, m: [["unidade (7 g)", 7], ["porção (30 g)", 30]] },
+
+  // Balas Fini. O Bananas tem rótulo conferido — 351 kcal, 83 g de carboidrato
+  // (59 de açúcares), 4,4 g de proteína (é a gelatina) e zero gordura por 100 g,
+  // com porção de 20 g valendo três balas e meia. Os outros de goma seguem a
+  // mesma família de formulação; os de marshmallow têm menos gelatina e por isso
+  // menos proteína.
+  { n: "Bala de gelatina Fini Bananas", kcal: 351, p: 4.4, c: 83, g: 0, m: [["unidade (6 g)", 6], ["porção (20 g)", 20], ["pacote (90 g)", 90], ["pacote grande (500 g)", 500]] },
+  { n: "Bala de gelatina Fini Dentaduras", kcal: 345, p: 5.5, c: 81, g: 0, m: [["unidade (6 g)", 6], ["porção (20 g)", 20], ["pacote (90 g)", 90], ["pacote grande (500 g)", 500]] },
+  { n: "Bala de gelatina Fini Minhocas", kcal: 345, p: 5.5, c: 81, g: 0, m: [["unidade (6 g)", 6], ["porção (20 g)", 20], ["pacote (90 g)", 90], ["pacote grande (500 g)", 500]] },
+  { n: "Bala de gelatina Fini Ursinhos", kcal: 345, p: 5.5, c: 81, g: 0, m: [["unidade (6 g)", 6], ["porção (20 g)", 20], ["pacote (90 g)", 90], ["pacote grande (500 g)", 500]] },
+  { n: "Bala de gelatina Fini Morangos", kcal: 345, p: 5, c: 82, g: 0, m: [["unidade (6 g)", 6], ["porção (20 g)", 20], ["pacote (90 g)", 90], ["pacote grande (500 g)", 500]] },
+  { n: "Bala de gelatina Fini Melancia", kcal: 345, p: 5, c: 82, g: 0, m: [["unidade (6 g)", 6], ["porção (20 g)", 20], ["pacote (90 g)", 90], ["pacote grande (500 g)", 500]] },
+  { n: "Bala de gelatina Fini Aros (argolas de frutas)", kcal: 340, p: 4.5, c: 82, g: 0, m: [["unidade (6 g)", 6], ["porção (20 g)", 20], ["pacote (90 g)", 90], ["pacote grande (500 g)", 500]] },
+  { n: "Bala de gelatina Fini Cerejas", kcal: 345, p: 5, c: 82, g: 0, m: [["unidade (6 g)", 6], ["porção (20 g)", 20], ["pacote (90 g)", 90], ["pacote grande (500 g)", 500]] },
+  { n: "Bala de gelatina Fini Tubes tutti-frutti", kcal: 335, p: 5, c: 78, g: 0, m: [["unidade (6 g)", 6], ["porção (20 g)", 20], ["pacote (90 g)", 90], ["pacote grande (500 g)", 500]] },
+  { n: "Bala Fini Beijos chocolate (marshmallow)", kcal: 345, p: 3, c: 79, g: 2.5, m: [["unidade (7 g)", 7], ["porção (20 g)", 20], ["pacote (80 g)", 80]] },
+  { n: "Bala Fini Ovinhos (marshmallow)", kcal: 330, p: 3, c: 80, g: 0, m: [["unidade (7 g)", 7], ["porção (20 g)", 20], ["pacote (80 g)", 80]] },
+  { n: "Bala Fini ácida (sour, sortida)", kcal: 340, p: 4.5, c: 82, g: 0, m: [["unidade (6 g)", 6], ["porção (20 g)", 20], ["pacote (90 g)", 90], ["pacote grande (500 g)", 500]] },
+
+  // Gelatina em pó da collab Dr. Oetker × Fini, nos três sabores das balas. O
+  // sachê de 20 g rende 500 ml, então a versão PREPARADA é o que se come de
+  // fato — a em pó fica para quem pesa o sachê.
+  { n: "Gelatina em pó Dr. Oetker Bananas Fini (sachê 20 g)", kcal: 370, p: 8, c: 85, g: 0, m: [["sachê (20 g)", 20], ["colher de sopa (10 g)", 10]] },
+  { n: "Gelatina em pó Dr. Oetker Dentaduras Fini (sachê 20 g)", kcal: 370, p: 8, c: 85, g: 0, m: [["sachê (20 g)", 20], ["colher de sopa (10 g)", 10]] },
+  { n: "Gelatina em pó Dr. Oetker Beijos Fini (sachê 20 g)", kcal: 370, p: 8, c: 85, g: 0, m: [["sachê (20 g)", 20], ["colher de sopa (10 g)", 10]] },
+  { n: "Gelatina Dr. Oetker Bananas Fini, preparada", kcal: 15, p: 0.3, c: 3.4, g: 0, l: 1, m: [["taça (125 ml)", 125], ["porção (100 ml)", 100], ["receita inteira (500 ml)", 500]] },
+  { n: "Gelatina Dr. Oetker Dentaduras Fini, preparada", kcal: 15, p: 0.3, c: 3.4, g: 0, l: 1, m: [["taça (125 ml)", 125], ["porção (100 ml)", 100], ["receita inteira (500 ml)", 500]] },
+  { n: "Gelatina Dr. Oetker Beijos Fini, preparada", kcal: 15, p: 0.3, c: 3.4, g: 0, l: 1, m: [["taça (125 ml)", 125], ["porção (100 ml)", 100], ["receita inteira (500 ml)", 500]] },
   { n: "Jujuba (bala de goma açucarada)", kcal: 340, p: 0, c: 85, g: 0, m: [["unidade (5 g)", 5], ["porção (30 g)", 30]] },
   { n: "Bala de leite caseira (leite ninho)", kcal: 390, p: 3, c: 78, g: 7, m: [["unidade (8 g)", 8]] },
   // ---- Gelaterias: gelato italiano por sabor (tamanhos da casquinha/pote) ----
