@@ -37,6 +37,16 @@ python3 -m http.server 8000
   cabeçalho (ou no ícone de lápis) abre a **refeição inteira para editar** — os
   itens voltam para a cesta do modal, onde dá para trocar quantidades, remover,
   acrescentar alimentos e mudar o horário de todos de uma vez.
+
+  Na cesta, o **olho** desliga um item sem apagá-lo, e isso agora tem
+  consequência no salvar: só os **visíveis** viram registro, e os **ocultos
+  ficam guardados** para a próxima vez que você abrir o "+ Adicionar", já
+  preenchidos e ainda ocultos. Serve para montar o prato inteiro de uma vez e ir
+  salvando por refeição, sem redigitar o que ficou para mais tarde — desligar o
+  olho quer dizer "não é agora", não "esquece isso"; quem quer descartar usa a
+  lixeira. Uma nota no alto da cesta explica de onde vieram esses itens, e a
+  cesta só com guardados **não reabre o modal sozinha** ao abrir o app (isso é
+  reservado à refeição que ficou pela metade).
 - **Meta de água, com ritmo do dia**: um cartão no Diário mostra quanto você já
   bebeu hoje contra a meta, com **atalhos de um toque** — +200 ml (copo),
   +330 ml (garrafinha) e +500 ml (garrafa) — e um "desfazer" para o último

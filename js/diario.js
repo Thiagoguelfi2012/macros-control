@@ -312,6 +312,12 @@
       editandoId != null ? 'Salvar' : editandoRefeicao ? `Salvar refeição (${n} ${n === 1 ? 'item' : 'itens'})` : n > 1 ? `Salvar (${n} itens)` : 'Salvar';
   }
 
+  // O que fica guardado depois de salvar: os itens ocultos. Desligar o olho
+  // quer dizer "não é agora", não "esquece isso" — quem quis descartar usa a
+  // lixeira. Assim dá para montar o prato inteiro de uma vez e ir salvando por
+  // refeição, sem digitar de novo o que ficou para mais tarde.
+  const guardados = () => cesta.filter((it) => it.off);
+
   function renderCesta() {
     const wrap = $('#cesta-wrap');
     if (!cesta.length || editandoId != null) {
@@ -321,6 +327,18 @@
     wrap.hidden = false;
     const titulo = wrap.querySelector('.imp-title');
     if (titulo) titulo.textContent = editandoRefeicao ? 'Itens desta refeição' : 'Refeição atual';
+    // cesta só com ocultos: são sobras da refeição anterior, e dizer isso evita
+    // a dúvida de por que elas reapareceram sozinhas
+    const nota = $('#cesta-nota');
+    if (nota) {
+      const soGuardados = cesta.length > 0 && cesta.every((it) => it.off);
+      nota.hidden = !soGuardados;
+      if (soGuardados)
+        nota.textContent =
+          cesta.length === 1
+            ? 'Este item ficou guardado da refeição anterior. Toque no olho para incluir agora, ou na lixeira para descartar.'
+            : `Estes ${cesta.length} itens ficaram guardados da refeição anterior. Toque no olho para incluir agora, ou na lixeira para descartar.`;
+    }
     const lista = $('#cesta-itens');
     lista.innerHTML = '';
     cesta.forEach((it, idx) => {
@@ -367,7 +385,7 @@
       `<span class="ct-parte">· P <b>${fmt(t.p)}</b> g</span> ` +
       `<span class="ct-parte">· C <b>${fmt(t.c)}</b> g</span> ` +
       `<span class="ct-parte">· G <b>${fmt(t.g)}</b> g</span>` +
-      (fora ? ` <span class="cesta-fora">(${fora} item${fora > 1 ? 'ns' : ''} desativado${fora > 1 ? 's' : ''})</span>` : '');
+      (fora ? ` <span class="cesta-fora">(${fora} ${fora > 1 ? 'itens' : 'item'} desativado${fora > 1 ? 's' : ''})</span>` : '');
   }
 
   // Abre um item já incluído para conferir e mudar: o alimento volta para o
@@ -784,7 +802,7 @@
       for (const id of editandoRefeicao.ids) await MacroDB.deleteEntry(id);
       for (const item of itens) await MacroDB.addEntry({ ts, ...item });
       editandoRefeicao = null;
-      cesta = [];
+      cesta = guardados();
       salvarCesta();
       renderCesta();
       fecharModal();
@@ -798,7 +816,7 @@
     for (const item of itens) {
       await MacroDB.addEntry({ ts, ...item });
     }
-    cesta = [];
+    cesta = guardados();
     salvarCesta();
     renderCesta();
     fecharModal();
@@ -1712,9 +1730,11 @@
     await render();
     // diário na tela: agora sim a base, sem disputar a primeira pintura
     carregarBase();
-    // refeição recuperada de uma recarga: reabre o modal onde o usuário parou.
+    // Refeição recuperada de uma recarga: reabre o modal onde o usuário parou.
+    // Só quando há item ATIVO — cesta só com guardados é tralha para depois, e
+    // reabrir o modal a cada visita por causa dela seria um estorvo.
     // Aí sim vale esperar a base, porque o modal é onde a busca faz falta.
-    if (cesta.length) {
+    if (cesta.some((it) => !it.off)) {
       await carregarBase();
       abrirModal();
     }
