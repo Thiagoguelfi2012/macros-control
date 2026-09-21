@@ -641,6 +641,15 @@ const PT_MEASURES = [
   [/^caqui/i, [['unidade', 110]]],
   [/^kiwi/i, [['unidade', 76]]],
   [/^abacate/i, [['metade', 215]]],
+  // Pão francês simples: a padaria vende de 50 a 80 g e a diferença entre a
+  // unidade pequena e a grande é quase meia unidade — vale escolher em vez de
+  // fixar uma média. A negativa de "com" deixa de fora os recheados (pão
+  // francês com requeijão, com geleia…), onde a unidade pesa o pão mais o
+  // recheio e cai na regra seguinte.
+  [
+    /^p[ãa]o[, ].*franc[êe]s(?!.*\scom\s)/i,
+    [['unidade pequena (50 g)', 50], ['unidade média (65 g)', 65], ['unidade grande (80 g)', 80]],
+  ],
   [/^p[ãa]o.*franc[êe]s/i, [['unidade', 50]]],
   [/^p[ãa]o.*forma/i, [['fatia', 25]]],
   [/^p[ãa]o.*integral/i, [['fatia', 25]]],
@@ -1139,7 +1148,7 @@ async function main() {
   mkdirSync(dirname(OUT), { recursive: true });
   // Ao regenerar a base com mudanças relevantes, incremente v e o
   // FOODS_VERSION correspondente em js/db.js para forçar a recarga no navegador.
-  const corpo = JSON.stringify({ v: 57, foods });
+  const corpo = JSON.stringify({ v: 58, foods });
   writeFileSync(OUT, corpo);
 
   // Manifesto: alguns bytes com a versão e o hash do conteúdo. O app busca ISTO
@@ -1147,7 +1156,7 @@ async function main() {
   // um v novo com conteúdo igual não custa download a ninguém, e conteúdo novo
   // chega mesmo que alguém esqueça de subir o v.
   const hash = createHash('sha1').update(corpo).digest('hex').slice(0, 16);
-  writeFileSync(MANIFESTO, JSON.stringify({ v: 57, h: hash, n: foods.length }));
+  writeFileSync(MANIFESTO, JSON.stringify({ v: 58, h: hash, n: foods.length }));
 
   const bytes = readFileSync(OUT).length;
   console.log(`manifesto: v51 · hash ${hash}`);

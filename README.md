@@ -85,7 +85,12 @@ python3 -m http.server 8000
   consultado no **Open Food Facts** (sai daqui só o número do código) e, ao
   usar, fica gravado como alimento próprio: da segunda vez em diante ele é
   encontrado **offline**, na busca normal, sem nova consulta à rede. Porção e
-  tamanho da embalagem do rótulo viram medidas caseiras.
+  tamanho da embalagem do rótulo viram medidas caseiras. Quando o alimento é
+  vendido em **mais de um tamanho**, as medidas trazem os três: o pão francês de
+  padaria vai de **unidade pequena (50 g)** a **grande (80 g)** — 150 a 240 kcal,
+  quase meio pão de diferença —, e os gelatos da Bacio di Latte trazem os quatro
+  copinhos do cardápio. Os recheados ficam de fora dessa régua (num "pão francês
+  com requeijão" a unidade pesa o pão mais o recheio).
 - **Sugestão de refeição**: o botão **✨ Sugestão** monta um **prato inteiro**
   para o horário. O prato nunca é combinado item a item — sai de uma
   **montagem**: ou uma **combinação típica brasileira** escrita à mão (PF de
