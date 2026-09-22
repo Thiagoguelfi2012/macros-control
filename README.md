@@ -46,7 +46,9 @@ python3 -m http.server 8000
   olho quer dizer "não é agora", não "esquece isso"; quem quer descartar usa a
   lixeira. Uma nota no alto da cesta explica de onde vieram esses itens, e a
   cesta só com guardados **não reabre o modal sozinha** ao abrir o app (isso é
-  reservado à refeição que ficou pela metade).
+  reservado à refeição que ficou pela metade). A cesta vale por **24 h sem
+  mexer** — o relógio reinicia a cada gravação, então quem usa o app todo dia
+  nunca perde o que guardou.
 - **Meta de água, com ritmo do dia**: um cartão no Diário mostra quanto você já
   bebeu hoje contra a meta, com **atalhos de um toque** — +200 ml (copo),
   +330 ml (garrafinha) e +500 ml (garrafa) — e um "desfazer" para o último

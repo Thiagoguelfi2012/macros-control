@@ -5893,10 +5893,15 @@ if (typeof window !== 'undefined') window.Barras = Barras;
     }
   }
 
+  // Validade da cesta: 24 h SEM MEXER — o relógio reinicia a cada gravação, então
+  // quem usa o app todo dia nunca perde o que guardou. Com as 12 h de antes, um
+  // item deixado na ceia morria antes do jantar do dia seguinte.
+  const VALIDADE_CESTA = 24 * 3600000;
+
   function restaurarCesta() {
     try {
       const salvo = JSON.parse(localStorage.getItem(LS_CESTA) || 'null');
-      if (salvo && Array.isArray(salvo.itens) && Date.now() - salvo.t < 12 * 3600000) {
+      if (salvo && Array.isArray(salvo.itens) && Date.now() - salvo.t < VALIDADE_CESTA) {
         cesta = salvo.itens;
         // edição de refeição também sobrevive ao app ir para segundo plano:
         // sem isso a volta viraria uma refeição nova, duplicando a original
