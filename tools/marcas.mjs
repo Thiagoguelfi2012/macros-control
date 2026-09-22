@@ -612,6 +612,18 @@ export const MARCAS = [
   { n: "Barra de proteína Bold original ao leite", kcal: 360, p: 30, c: 35, g: 11, m: [["unidade (60 g)", 60]] },
   { n: "Barra de proteína Integralmédica Best Whey", kcal: 380, p: 33.3, c: 40, g: 10, m: [["unidade (33 g)", 33]] },
 
+  // Barras da Nutrata. Dois rótulos conferidos servem de âncora: a Charge Bar
+  // (parceria com a Nestlé) tem 45 g, 196 kcal e 11 g de proteína; a Whey Grego
+  // Bar tem 40 g, 154 kcal e os mesmos 11 g. Dentro de cada linha os sabores
+  // mudam pouco, então eles herdam a composição da âncora — a gordura é o que
+  // separa as duas, porque a Charge leva amendoim e cobertura de chocolate.
+  { n: "Barra de proteína Nutrata Charge Bar (caramelo, amendoim e chocolate)", kcal: 436, p: 24.4, c: 40, g: 20, m: [["unidade (45 g)", 45]] },
+  { n: "Barra de proteína Nutrata Charge Dark Bar (chocolate meio amargo)", kcal: 433, p: 24.4, c: 35.6, g: 22.2, m: [["unidade (45 g)", 45]] },
+  { n: "Barra de proteína Nutrata Whey Grego doce de leite Havanna", kcal: 385, p: 27.5, c: 46.3, g: 10, m: [["unidade (40 g)", 40]] },
+  { n: "Barra de proteína Nutrata Whey Grego beijinho", kcal: 385, p: 27.5, c: 46.3, g: 10, m: [["unidade (40 g)", 40]] },
+  { n: "Barra de proteína Nutrata Whey Grego brigadeiro", kcal: 385, p: 27.5, c: 46.3, g: 10, m: [["unidade (40 g)", 40]] },
+  { n: "Barra de proteína Nutrata Whey Grego maracujá", kcal: 385, p: 27.5, c: 46.3, g: 10, m: [["unidade (40 g)", 40]] },
+
   // Sorvetes de pote e açaí
   { n: "Sorvete Kibon pote napolitano", kcal: 180, p: 2.8, c: 25, g: 7.5, m: [["bola (60 g)", 60], ["porção (75 g)", 75]] },
   { n: "Sorvete Kibon pote creme", kcal: 190, p: 3, c: 24, g: 8.8, m: [["bola (60 g)", 60], ["porção (75 g)", 75]] },
