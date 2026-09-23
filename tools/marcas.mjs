@@ -458,6 +458,14 @@ export const MARCAS = [
   { n: "Pão Wickbold Vita Fibras zero açúcar", kcal: 216, p: 10.4, c: 40, g: 1.6, m: [["fatia (25 g)", 25], ["2 fatias (50 g)", 50]] },
   { n: "Pão de forma Pullman tradicional", kcal: 260, p: 8, c: 48, g: 3.6, m: [["fatia (25 g)", 25], ["2 fatias (50 g)", 50]] },
   { n: "Pão de forma integral Pullman", kcal: 240, p: 9.6, c: 43, g: 3, m: [["fatia (25 g)", 25], ["2 fatias (50 g)", 50]] },
+
+  // Linha Artesano: a fatia é bem mais grossa que a do pão de forma comum. O
+  // rótulo declara porção de 50 g valendo UMA FATIA E MEIA, o que põe a fatia em
+  // 33 g — contra os 25 g da linha tradicional. Trocar um pelo outro na conta
+  // erra em um terço, que é o motivo de ela ter entrada própria.
+  { n: "Pão de forma Pullman Artesano original", kcal: 250, p: 9.4, c: 48.5, g: 2.4, m: [["fatia (33 g)", 33], ["2 fatias (66 g)", 66], ["porção do rótulo (50 g)", 50]] },
+  { n: "Pão de forma Pullman Artesano integral (30% integral)", kcal: 256, p: 10, c: 45, g: 3.5, m: [["fatia (33 g)", 33], ["2 fatias (66 g)", 66], ["porção do rótulo (50 g)", 50]] },
+  { n: "Pão de forma Pullman Artesano pão na chapa", kcal: 260, p: 8.5, c: 46, g: 4.5, m: [["fatia (33 g)", 33], ["2 fatias (66 g)", 66], ["porção do rótulo (50 g)", 50]] },
   { n: "Pão de forma Plus Vita tradicional", kcal: 255, p: 8.2, c: 47.5, g: 3.2, m: [["fatia (25 g)", 25]] },
   { n: "Pão de forma Panco tradicional", kcal: 258, p: 8, c: 48, g: 3.4, m: [["fatia (25 g)", 25]] },
   { n: "Pão de forma Seven Boys tradicional", kcal: 262, p: 8, c: 49, g: 3.5, m: [["fatia (25 g)", 25]] },
