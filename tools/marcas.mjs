@@ -620,6 +620,31 @@ export const MARCAS = [
   { n: "Barra de proteína Bold original ao leite", kcal: 360, p: 30, c: 35, g: 11, m: [["unidade (60 g)", 60]] },
   { n: "Barra de proteína Integralmédica Best Whey", kcal: 380, p: 33.3, c: 40, g: 10, m: [["unidade (33 g)", 33]] },
 
+  // Barras da Pinati (amendoim). Âncoras de rótulo: a Double Bar tem 35 g e
+  // 149 kcal, e a Double Whey tem 50 g com 15 g de proteína, as duas sem açúcar
+  // adicionado. A Double Bar é vendida como barra de cereal no supermercado,
+  // embora seja de amendoim com cobertura de chocolate meio amargo.
+  { n: "Barra Pinati Double Bar doce de leite", kcal: 426, p: 14.3, c: 34.3, g: 25.7, m: [["unidade (35 g)", 35]] },
+  { n: "Barra Pinati Double Bar coco, amendoim e chocolate", kcal: 426, p: 14.3, c: 34.3, g: 25.7, m: [["unidade (35 g)", 35]] },
+  { n: "Barra de proteína Pinati Double Whey avelã e leite", kcal: 400, p: 30, c: 30, g: 18, m: [["unidade (50 g)", 50]] },
+  { n: "Barra de proteína Pinati Double Whey cookies and cream", kcal: 400, p: 30, c: 30, g: 18, m: [["unidade (50 g)", 50]] },
+  { n: "Barra de proteína Pinati Double Whey coco frappé", kcal: 400, p: 30, c: 30, g: 18, m: [["unidade (50 g)", 50]] },
+  { n: "Pinati Nuts original (amendoim)", kcal: 560, p: 24, c: 20, g: 42, m: [["pacote (30 g)", 30]] },
+  { n: "Pinati Protein Cups pasta de amendoim", kcal: 500, p: 24, c: 30, g: 31, m: [["unidade (21 g)", 21]] },
+
+  // Barras de cereal de mercado. Cada uma ancorada na caloria por unidade que a
+  // marca publica — Trio brigadeiro 72 kcal em 20 g, Ritter brigadeiro 80 e
+  // brownie 90 nos mesmos 20 g, Nutry Nuts 150 em 30 g. Os macros seguem a
+  // composição da categoria (aveia, xarope e arroz puffado) ajustada para fechar
+  // nessa caloria.
+  { n: "Barra de cereal Trio brigadeiro", kcal: 360, p: 4.5, c: 68, g: 7, m: [["unidade (20 g)", 20]] },
+  { n: "Barra de cereal Trio tradicional", kcal: 380, p: 5, c: 71, g: 7.5, m: [["unidade (20 g)", 20]] },
+  { n: "Barra de cereal Ritter brigadeiro", kcal: 400, p: 5, c: 68, g: 11, m: [["unidade (20 g)", 20]] },
+  { n: "Barra de cereal Ritter brownie com cobertura branca", kcal: 450, p: 5, c: 62, g: 20, m: [["unidade (20 g)", 20]] },
+  { n: "Barra de cereal Ritter banana", kcal: 390, p: 4.5, c: 72, g: 8, m: [["unidade (20 g)", 20]] },
+  { n: "Barra de cereal Nutry tradicional", kcal: 409, p: 5, c: 70, g: 12, m: [["unidade (22 g)", 22]] },
+  { n: "Barra de cereal Nutry Nuts original", kcal: 500, p: 12, c: 40, g: 32, m: [["unidade (30 g)", 30]] },
+
   // Barras da Nutrata. Dois rótulos conferidos servem de âncora: a Charge Bar
   // (parceria com a Nestlé) tem 45 g, 196 kcal e 11 g de proteína; a Whey Grego
   // Bar tem 40 g, 154 kcal e os mesmos 11 g. Dentro de cada linha os sabores

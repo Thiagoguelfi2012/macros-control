@@ -529,7 +529,7 @@ externas — use o app no endereço próprio (GitHub Pages) ou no arquivo standa
   abertura de página; em um registro é uma leitura (120 ms → 34 ms no
   laboratório, proporcionalmente mais no celular). Quem já tinha a base no
   formato antigo é migrado sem baixar nada de novo.
-- Banco de alimentos: `data/foods.json` (~2,3 MB, **18.166 itens**, ~10.900 com
+- Banco de alimentos: `data/foods.json` (~2,3 MB, **18.180 itens**, ~10.900 com
   medidas caseiras e ~890 líquidos medidos em ml/L), carregado no IndexedDB na
   primeira visita. Valores por 100 g (ou 100 ml). Fontes, na ordem de prioridade da
   busca:
@@ -538,7 +538,7 @@ externas — use o app no endereço próprio (GitHub Pages) ou no arquivo standa
   | --- | ---: | --- |
   | **TACO** (UNICAMP) | 590 | alimentos brasileiros in natura e preparados, PT nativo |
   | **TBCA** (USP/BRASILFOODS) | 5.340 | a maior fonte em PT: além dos alimentos, muita **preparação e prato pronto** — sushi, feijoada, pizzas, lasanhas, salgados, bolos, saladas, com variações "com/sem sal", "com/sem óleo", frito/assado/cozido |
-  | **Marcas** (`tools/marcas.mjs`) | 702 | produtos de marcas brasileiras com valores de rótulo (iogurtes, leites, queijos, congelados, biscoitos, chocolates, bebidas, suplementos, as guloseimas e biscoitos da **Arcor** — 7Belo, Poosh, Big Big, Aymoré e Triunfo…). As gelaterias entram com os **tamanhos do próprio cardápio**: os gelatos da Bacio di Latte trazem os quatro copinhos (pequeno 120 g, médio 140 g, grande 160 g e **massimo 300 g**) e os quatro potes de viagem (Maxi 250 ml, Solo 490 ml, Amici 630 ml, Famiglia 1,3 L). O pote é vendido por volume, então a grama vem de uma conversão a **0,75 g/ml** — gelato artesanal tem pouco ar, ao contrário do sorvete industrial, que fica na metade disso. Entra também a linha **Bacio Zero** (sem adição de açúcar) nos três clássicos e os **milkshakes Pro + Zero**, de 30 g de proteína no copo de 410 ml. As balas da **Fini** entram por produto (Bananas, Dentaduras, Minhocas, Ursinhos, Morangos, Melancia, Aros, Cerejas, Beijos, Ovinhos…), e com elas a **gelatina em pó da collab Dr. Oetker × Fini** — em pó e preparada, porque o sachê de 20 g rende 500 ml e é o preparado que se come. As **barras da Nutrata** entram pelas duas linhas: Charge e Charge Dark (parceria com a Nestlé, 45 g) e as Whey Grego de 40 g. A linha **Pullman Artesano** tem entrada própria porque a fatia dela é de **33 g** contra 25 g da tradicional — usar uma pela outra erra a conta em um terço |
+  | **Marcas** (`tools/marcas.mjs`) | 716 | produtos de marcas brasileiras com valores de rótulo (iogurtes, leites, queijos, congelados, biscoitos, chocolates, bebidas, suplementos, as guloseimas e biscoitos da **Arcor** — 7Belo, Poosh, Big Big, Aymoré e Triunfo…). As gelaterias entram com os **tamanhos do próprio cardápio**: os gelatos da Bacio di Latte trazem os quatro copinhos (pequeno 120 g, médio 140 g, grande 160 g e **massimo 300 g**) e os quatro potes de viagem (Maxi 250 ml, Solo 490 ml, Amici 630 ml, Famiglia 1,3 L). O pote é vendido por volume, então a grama vem de uma conversão a **0,75 g/ml** — gelato artesanal tem pouco ar, ao contrário do sorvete industrial, que fica na metade disso. Entra também a linha **Bacio Zero** (sem adição de açúcar) nos três clássicos e os **milkshakes Pro + Zero**, de 30 g de proteína no copo de 410 ml. As balas da **Fini** entram por produto (Bananas, Dentaduras, Minhocas, Ursinhos, Morangos, Melancia, Aros, Cerejas, Beijos, Ovinhos…), e com elas a **gelatina em pó da collab Dr. Oetker × Fini** — em pó e preparada, porque o sachê de 20 g rende 500 ml e é o preparado que se come. As **barras da Nutrata** entram pelas duas linhas: Charge e Charge Dark (parceria com a Nestlé, 45 g) e as Whey Grego de 40 g. A linha **Pullman Artesano** tem entrada própria porque a fatia dela é de **33 g** contra 25 g da tradicional — usar uma pela outra erra a conta em um terço. As **barras de cereal** entram por marca (Trio, Ritter, Nutry) e a **Pinati** com as linhas Double Bar, Double Whey, Nuts e Protein Cups |
   | **Chocolates** (`tools/chocolates.mjs`) | 169 | catálogo de chocolates e bombons: Cacau Show (Lacreme, Zero, Mil Folhas, trufas, tabletes, bombons, Lanut), Kopenhagen, Brasil Cacau, Lacta, Garoto, Nestlé, Hershey's, Ferrero/Kinder, Lindt, Arcor, Neugebauer, Havanna, **Arcor** (Block, Bon o Bon, Tortuguita), **Dois Frades** (o "chocolate do padre") e os bean-to-bar brasileiros (Dengo, Amma, Luisa Abram, Nugali, Baianí, Mendoá) |
   | **Pastas** (`tools/pastas.mjs`) | 70 | pastas de amendoim, castanhas e sementes: Dr. Peanut e Vitapower (todos os sabores), Amendocrem, Reese's, Skippy, Jif, as integrais de mercado natural (Mandubim, Pura Vida, Vitao, Jasmine, Mãe Terra), as de marcas de suplemento e as de castanha de caju, amêndoa, pistache, gergelim (tahine) e coco |
   | **Sorvetes** (`tools/sorvetes.mjs`) | 58 | picolés, sorvetes e gelaterias: a linha licenciada de picolé (Prestígio, Sonho de Valsa, Ouro Branco, Diamante Negro, Bis, Laka, Oreo, Nescau, Kit Kat, Moça, Alpino, Brigadeiro, Serenata, Chokito), Kibon (Magnum, Cornetto, Sandubon, Fruttare), os potes de Kibon/Nestlé/Moça e os light, La Frutta, os premium (Häagen-Dazs, Ben & Jerry's, Diletto, paleta mexicana) e as redes de sorveteria (Chiquinho: casquinha, sundae, especial, milk shake, açaí com adicionais) |
@@ -557,7 +557,11 @@ externas — use o app no endereço próprio (GitHub Pages) ou no arquivo standa
   por último, o USDA traduzido. O **plural digitado** também encontra: as tabelas
   guardam "cookie" e "pão de queijo", e a busca aceita "cookies recheados" e
   "pães de queijo" (inclusive os plurais que mudam a palavra — pastéis, feijões,
-  pudins).
+  pudins). O **diminutivo também**: quase ninguém digita "barra de cereal", digita
+  **"barrinha"** — e nenhum produto se chama assim, então a busca troca o termo.
+  Vale notar a regra por trás: sinônimo que **troca** um termo é seguro; sinônimo
+  que **acrescenta** um segundo termo passa a exigir os dois e quebra a busca de
+  quem digitou só o primeiro.
 
 Para regenerar o banco (baixa os dados brutos das fontes públicas no GitHub):
 

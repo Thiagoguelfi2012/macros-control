@@ -53,6 +53,11 @@ const FoodSearch = (() => {
       .replace(/\bamendo ?crem(e)?\b/g, 'amendocrem')
       .replace(/\bdr ?peanut\b/g, 'dr peanut')
       .replace(/\bvita ?power\b/g, 'vitapower')
+      // "barrinha" é como quase todo mundo pede, e não existe em nome nenhum:
+      // os produtos se chamam "Barra de cereal", "Barra de proteína". Trocar o
+      // token (em vez de somar outro) não cobra nada a mais de quem digita
+      // "barra", então não quebra a busca de ninguém.
+      .replace(/\bbarrinhas?\b/g, 'barra')
       // granola proteica Taeq: o sabor é "chocolate com café" no rótulo, mas
       // quem procura escreve das duas outras formas
       .replace(/\bcacau (com|e) cafe\b/g, 'chocolate com cafe')

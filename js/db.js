@@ -4,7 +4,7 @@ const MacroDB = (() => {
   const DB_VERSION = 4;
   const FOODS_URL = 'data/foods.json';
   const MANIFESTO_URL = 'data/foods-manifest.json';
-  const FOODS_VERSION = 60; // deve acompanhar o campo v de data/foods.json
+  const FOODS_VERSION = 61; // deve acompanhar o campo v de data/foods.json
   let dbPromise = null;
   let foodsCache = null; // array em memória para busca instantânea
   let versaoCarregada = null; // versão que de fato entrou na busca
