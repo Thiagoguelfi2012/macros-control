@@ -113,8 +113,27 @@ export const CURADOS = [
   { n: 'Folhado de frango', kcal: 330, p: 9, c: 30, g: 19, m: [['unidade (100 g)', 100]] },
   { n: 'Croissant simples', kcal: 405, p: 8, c: 45, g: 21, m: [['unidade (60 g)', 60]] },
   { n: 'Croissant de presunto e queijo', kcal: 350, p: 13, c: 35, g: 18, m: [['unidade (90 g)', 90]] },
-  { n: 'Pastel de feira, carne', kcal: 320, p: 9, c: 33, g: 17, m: [['unidade (100 g)', 100]] },
-  { n: 'Pastel de feira, queijo', kcal: 340, p: 10, c: 33, g: 19, m: [['unidade (100 g)', 100]] },
+  // Pastel de feira. A massa frita é quase toda a caloria e não muda de sabor
+  // para sabor — o que muda é o recheio, que mexe na proteína e na gordura. Por
+  // isso os sabores saem dos dois de sempre (carne e queijo) variando só o
+  // recheio, e não de uma tabela nova para cada um. O de feira é grande: 100 g
+  // é o comum e 130 g o tamanhão.
+  { n: 'Pastel de feira, carne', kcal: 320, p: 9, c: 33, g: 17, m: [['unidade (100 g)', 100], ['unidade grande (130 g)', 130]] },
+  { n: 'Pastel de feira, queijo (mussarela)', kcal: 340, p: 10, c: 33, g: 19, m: [['unidade (100 g)', 100], ['unidade grande (130 g)', 130]] },
+  { n: 'Pastel de feira, carne seca com mussarela (charque)', kcal: 355, p: 14, c: 31, g: 19.5, m: [['unidade (100 g)', 100], ['unidade grande (130 g)', 130]] },
+  { n: 'Pastel de feira, carne seca com catupiry (charque)', kcal: 360, p: 13, c: 31, g: 20.5, m: [['unidade (100 g)', 100], ['unidade grande (130 g)', 130]] },
+  { n: 'Pastel de feira, carne com queijo', kcal: 345, p: 12, c: 32, g: 19, m: [['unidade (100 g)', 100], ['unidade grande (130 g)', 130]] },
+  { n: 'Pastel de feira, frango com catupiry', kcal: 340, p: 12, c: 32, g: 18, m: [['unidade (100 g)', 100], ['unidade grande (130 g)', 130]] },
+  { n: 'Pastel de feira, frango com queijo', kcal: 345, p: 13, c: 31, g: 19, m: [['unidade (100 g)', 100], ['unidade grande (130 g)', 130]] },
+  { n: 'Pastel de feira, pizza (mussarela, tomate e orégano)', kcal: 335, p: 10, c: 34, g: 17.5, m: [['unidade (100 g)', 100], ['unidade grande (130 g)', 130]] },
+  { n: 'Pastel de feira, calabresa com queijo', kcal: 370, p: 12, c: 31, g: 22, m: [['unidade (100 g)', 100], ['unidade grande (130 g)', 130]] },
+  { n: 'Pastel de feira, quatro queijos', kcal: 365, p: 13, c: 31, g: 21, m: [['unidade (100 g)', 100], ['unidade grande (130 g)', 130]] },
+  { n: 'Pastel de feira, palmito', kcal: 315, p: 6, c: 35, g: 17, m: [['unidade (100 g)', 100], ['unidade grande (130 g)', 130]] },
+  { n: 'Pastel de feira, camarão', kcal: 320, p: 11, c: 33, g: 16, m: [['unidade (100 g)', 100], ['unidade grande (130 g)', 130]] },
+  { n: 'Pastel de feira, bacalhau', kcal: 325, p: 12, c: 33, g: 16, m: [['unidade (100 g)', 100], ['unidade grande (130 g)', 130]] },
+  { n: 'Pastel de feira doce, chocolate', kcal: 375, p: 6, c: 46, g: 19, m: [['unidade (100 g)', 100], ['unidade grande (130 g)', 130]] },
+  { n: 'Pastel de feira doce, banana com canela e açúcar', kcal: 330, p: 5, c: 47, g: 14, m: [['unidade (100 g)', 100], ['unidade grande (130 g)', 130]] },
+  { n: 'Pastel de feira doce, Romeu e Julieta (queijo com goiabada)', kcal: 365, p: 8, c: 48, g: 16, m: [['unidade (100 g)', 100], ['unidade grande (130 g)', 130]] },
   { n: 'Empada de frango', kcal: 380, p: 9, c: 36, g: 22, m: [['unidade (60 g)', 60]] },
   { n: 'Empadão de frango (fatia)', kcal: 310, p: 11, c: 28, g: 17, m: [['fatia (120 g)', 120]] },
   { n: 'Bauru (misto quente com tomate)', kcal: 260, p: 13, c: 27, g: 11, m: [['unidade (160 g)', 160]] },
