@@ -215,7 +215,6 @@ export const MARCAS = [
   { n: 'Aveia em flocos Quaker', kcal: 394, p: 14, c: 67, g: 8, m: [['colher de sopa (15 g)', 15], ['porção (30 g)', 30]] },
   { n: 'Barra de cereais Nutry banana com chocolate', kcal: 400, p: 4.5, c: 73, g: 10, m: [['unidade (22 g)', 22]] },
   { n: 'Barra de cereais Trio castanhas', kcal: 430, p: 8, c: 60, g: 17, m: [['unidade (20 g)', 20]] },
-  { n: 'Barra de proteína Bold Snack', kcal: 360, p: 30, c: 35, g: 11, m: [['unidade (50 g)', 50]] },
   { n: 'Barra de proteína Integralmédica Best Whey', kcal: 380, p: 33, c: 37, g: 11, m: [['unidade (33 g)', 33]] },
   { n: 'Bolinho Ana Maria original', kcal: 390, p: 5.5, c: 52, g: 17.5, m: [['unidade (40 g)', 40]] },
   { n: 'Bolinho Bauducco duo chocolate', kcal: 395, p: 5, c: 53, g: 18, m: [['unidade (40 g)', 40]] },
@@ -617,7 +616,18 @@ export const MARCAS = [
   { n: "Albumina Naturovos", kcal: 373, p: 80, c: 6.7, g: 0, m: [["dose (30 g)", 30], ["colher de sopa (15 g)", 15]] },
   { n: "Hipercalórico Growth Mass", kcal: 400, p: 15, c: 75, g: 3.5, m: [["dose (100 g)", 100]] },
   { n: "Pasta de amendoim Power One integral", kcal: 580, p: 26, c: 17, g: 46, m: [["colher de sopa (15 g)", 15]] },
-  { n: "Barra de proteína Bold original ao leite", kcal: 360, p: 30, c: 35, g: 11, m: [["unidade (60 g)", 60]] },
+  // Bold Bar: a barra é de 60 g, não 50 — e o rótulo dela é mais magro em
+  // carboidrato e mais gordo do que estava aqui. Valores de 60 g publicados:
+  // 205 kcal com 20 g de proteína no geral, 201 kcal no cookies & cream e
+  // 247 kcal no leite e avelã, todas zero açúcar adicionado e com 5 g de fibra.
+  //
+  // A soma de Atwater fica ~10% acima da caloria declarada, e isso está certo:
+  // fibra e poliol entram no carboidrato do rótulo mas rendem menos energia que
+  // os 4 kcal/g da conta. Corrigir "para fechar" seria falsear o rótulo.
+  { n: "Barra de proteína Bold Bar bombom crocante", kcal: 342, p: 33.3, c: 26.7, g: 15, m: [["unidade (60 g)", 60]] },
+  { n: "Barra de proteína Bold Bar cookies & cream", kcal: 335, p: 33.3, c: 30, g: 13.3, m: [["unidade (60 g)", 60]] },
+  { n: "Barra de proteína Bold Bar leite e avelã", kcal: 412, p: 35, c: 25, g: 23.3, m: [["unidade (60 g)", 60]] },
+  { n: "Barra de proteína Bold Bar mousse de maracujá", kcal: 342, p: 33.3, c: 26.7, g: 15, m: [["unidade (60 g)", 60]] },
   { n: "Barra de proteína Integralmédica Best Whey", kcal: 380, p: 33.3, c: 40, g: 10, m: [["unidade (33 g)", 33]] },
 
   // Barras da Pinati (amendoim). Âncoras de rótulo: a Double Bar tem 35 g e
