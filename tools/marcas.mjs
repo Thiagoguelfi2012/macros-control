@@ -416,6 +416,21 @@ export const MARCAS = [
   // Leites (mais marcas)
   { n: "Leite integral Parmalat", kcal: 60, p: 3.2, c: 4.7, g: 3.2, l: 1, m: [["copo (200 ml)", 200], ["caixa (1 L)", 1000]] },
   { n: "Leite desnatado Parmalat", kcal: 35, p: 3.3, c: 4.9, g: 0, l: 1, m: [["copo (200 ml)", 200], ["caixa (1 L)", 1000]] },
+
+  // Linha Parmalat WheyFit. A bebida pronta é a caixinha de 250 ml com 15 g de
+  // proteína, zero lactose e zero açúcar adicionado — o rótulo do chocolate traz
+  // 146 kcal, 14 g de carboidrato e 3 g de gordura na caixinha. Baunilha e
+  // morango repetem os 15 g e o mesmo perfil; a caixa mudou de fórmula
+  // recentemente, então valores antigos de internet não servem.
+  { n: "Bebida láctea Parmalat WheyFit chocolate (15 g proteína, zero lactose)", kcal: 58, p: 6, c: 5.6, g: 1.2, l: 1, m: [["caixinha (250 ml)", 250]] },
+  { n: "Bebida láctea Parmalat WheyFit baunilha (15 g proteína, zero lactose)", kcal: 58, p: 6, c: 5.6, g: 1.2, l: 1, m: [["caixinha (250 ml)", 250]] },
+  { n: "Bebida láctea Parmalat WheyFit morango (15 g proteína, zero lactose)", kcal: 58, p: 6, c: 5.6, g: 1.2, l: 1, m: [["caixinha (250 ml)", 250]] },
+
+  // O pó da mesma linha, em pacote de 450 g: 21 g de proteína na dose de 33 g.
+  // Só esse par é de rótulo; o resto da composição é estimativa de whey
+  // concentrado com o açúcar de fora.
+  { n: "Whey protein em pó Parmalat WheyFit chocolate", kcal: 394, p: 63.6, c: 21.2, g: 6, m: [["dose (33 g)", 33], ["pacote (450 g)", 450]] },
+  { n: "Whey protein em pó Parmalat WheyFit morango", kcal: 394, p: 63.6, c: 21.2, g: 6, m: [["dose (33 g)", 33], ["pacote (450 g)", 450]] },
   { n: "Leite integral Italac", kcal: 60, p: 3.2, c: 4.7, g: 3.2, l: 1, m: [["copo (200 ml)", 200], ["caixa (1 L)", 1000]] },
   { n: "Leite desnatado Italac", kcal: 36, p: 3.3, c: 4.9, g: 0.1, l: 1, m: [["copo (200 ml)", 200], ["caixa (1 L)", 1000]] },
   { n: "Leite semidesnatado Italac", kcal: 45, p: 3.2, c: 4.8, g: 1.3, l: 1, m: [["copo (200 ml)", 200], ["caixa (1 L)", 1000]] },
