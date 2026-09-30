@@ -645,6 +645,23 @@ export const MARCAS = [
   { n: "Barra de proteína Bold Bar mousse de maracujá", kcal: 342, p: 33.3, c: 26.7, g: 15, m: [["unidade (60 g)", 60]] },
   { n: "Barra de proteína Integralmédica Best Whey", kcal: 380, p: 33.3, c: 40, g: 10, m: [["unidade (33 g)", 33]] },
 
+  // Protein Crisp Bar, da Integralmédica: a barra de 45 g com crisps de soja.
+  // Rótulo: 196 kcal, 12 g de proteína e 22 g de carboidrato na unidade — a
+  // gordura sai por diferença e fecha a conta em cima. Os sabores repetem esse
+  // perfil, com o de leite em pó e creme de avelã declarando 13 g de proteína.
+  { n: "Barra de proteína Integralmédica Protein Crisp Ovomaltine", kcal: 436, p: 26.7, c: 48.9, g: 14.9, m: [["unidade (45 g)", 45]] },
+  { n: "Barra de proteína Integralmédica Protein Crisp Romeu e Julieta", kcal: 436, p: 26.7, c: 48.9, g: 14.9, m: [["unidade (45 g)", 45]] },
+  { n: "Barra de proteína Integralmédica Protein Crisp trufa de avelã", kcal: 436, p: 26.7, c: 48.9, g: 14.9, m: [["unidade (45 g)", 45]] },
+  { n: "Barra de proteína Integralmédica Protein Crisp torta de limão", kcal: 436, p: 26.7, c: 48.9, g: 14.9, m: [["unidade (45 g)", 45]] },
+  { n: "Barra de proteína Integralmédica Protein Crisp doce de coco", kcal: 436, p: 26.7, c: 48.9, g: 14.9, m: [["unidade (45 g)", 45]] },
+  { n: "Barra de proteína Integralmédica Protein Crisp Duo Crunch", kcal: 436, p: 26.7, c: 48.9, g: 14.9, m: [["unidade (45 g)", 45]] },
+  { n: "Barra de proteína Integralmédica Protein Crisp leite Ninho com creme de avelã", kcal: 440, p: 28.9, c: 47, g: 15.1, m: [["unidade (45 g)", 45]] },
+
+  // Power Protein Bar, da Max Titanium: barra grande, de 90 g. Rótulo: 359 kcal
+  // com 29 g de proteína e 29 de carboidrato.
+  { n: "Barra de proteína Max Titanium Power Protein Bar milk caramel", kcal: 399, p: 32.2, c: 32.2, g: 15.7, m: [["unidade (90 g)", 90], ["meia barra (45 g)", 45]] },
+  { n: "Barra de proteína Max Titanium Power Protein Bar chocolate", kcal: 399, p: 32.2, c: 32.2, g: 15.7, m: [["unidade (90 g)", 90], ["meia barra (45 g)", 45]] },
+
   // Barras da Pinati (amendoim). Âncoras de rótulo: a Double Bar tem 35 g e
   // 149 kcal, e a Double Whey tem 50 g com 15 g de proteína, as duas sem açúcar
   // adicionado. A Double Bar é vendida como barra de cereal no supermercado,
