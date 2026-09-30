@@ -23,6 +23,9 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const RAW_DIR = process.argv[2] || join(ROOT, 'tools', '.cache');
 const OUT = join(ROOT, 'data', 'foods.json');
 const MANIFESTO = join(ROOT, 'data', 'foods-manifest.json');
+
+// Versão da base. Deve acompanhar o FOODS_VERSION de js/db.js.
+const VERSAO = 67;
 const TARGET_TOTAL = 25000; // efetivamente "tudo": inclui todas as fontes
 
 const SOURCES = {
@@ -1154,7 +1157,7 @@ async function main() {
   mkdirSync(dirname(OUT), { recursive: true });
   // Ao regenerar a base com mudanças relevantes, incremente v e o
   // FOODS_VERSION correspondente em js/db.js para forçar a recarga no navegador.
-  const corpo = JSON.stringify({ v: 66, foods });
+  const corpo = JSON.stringify({ v: VERSAO, foods });
   writeFileSync(OUT, corpo);
 
   // Manifesto: alguns bytes com a versão e o hash do conteúdo. O app busca ISTO
@@ -1162,10 +1165,10 @@ async function main() {
   // um v novo com conteúdo igual não custa download a ninguém, e conteúdo novo
   // chega mesmo que alguém esqueça de subir o v.
   const hash = createHash('sha1').update(corpo).digest('hex').slice(0, 16);
-  writeFileSync(MANIFESTO, JSON.stringify({ v: 66, h: hash, n: foods.length }));
+  writeFileSync(MANIFESTO, JSON.stringify({ v: VERSAO, h: hash, n: foods.length }));
 
   const bytes = readFileSync(OUT).length;
-  console.log(`manifesto: v51 · hash ${hash}`);
+  console.log(`manifesto: v${VERSAO} · hash ${hash}`);
   console.log(`foods.json gerado: ${foods.length} alimentos (${(bytes / 1024 / 1024).toFixed(2)} MB)`);
   console.log(`  TACO: ${nTaco} | TBCA: ${nTbca} | Curados: ${nCurados} | Marcas: ${nMarcas} | Chocolates: ${nChocolates} | Pastas: ${nPastas} | Sorvetes: ${nSorvetes} | IBGE: ${nIbge} | USDA SR28 traduzido: ${nUsda}`);
   const comMedidas = foods.filter((f) => f.m && f.m.length).length;

@@ -448,6 +448,29 @@ export const MARCAS = [
   { n: "Requeijão cremoso Itambé", kcal: 250, p: 9, c: 3.3, g: 22.7, m: [["colher de sopa (30 g)", 30]] },
   { n: "Requeijão cremoso Tirolez", kcal: 240, p: 9.3, c: 3, g: 21.7, m: [["colher de sopa (30 g)", 30]] },
   { n: "Requeijão cremoso Danúbio light", kcal: 173, p: 10.7, c: 5.7, g: 12, m: [["colher de sopa (30 g)", 30]] },
+
+  // Laticínio Scala (Sacramento-MG). O requeijão cremoso vem do rótulo da marca
+  // (266 kcal / P 10 / C 0,8 / G 25 por 100 g; porção de 30 g = 80 kcal).
+  // As variações e os queijos abaixo são estimativas por categoria: a marca não
+  // publica a tabela nutricional de cada peça, e queijo maturado varia pouco
+  // entre fabricantes. Troque pelos valores do rótulo quando tiver a embalagem.
+  { n: "Requeijão cremoso Scala", kcal: 266, p: 10, c: 0.8, g: 25, m: [["colher de sopa (30 g)", 30], ["pote (200 g)", 200]] },
+  { n: "Requeijão cremoso Scala zero lactose", kcal: 266, p: 10, c: 0.8, g: 25, m: [["colher de sopa (30 g)", 30], ["pote (200 g)", 200]] },
+  { n: "Requeijão cremoso Scala reduzido em gorduras e calorias", kcal: 180, p: 11, c: 4, g: 13, m: [["colher de sopa (30 g)", 30], ["pote (200 g)", 200]] },
+  { n: "Requeijão cremoso Scala linha profissional (bisnaga)", kcal: 266, p: 10, c: 0.8, g: 25, m: [["colher de sopa (30 g)", 30], ["bisnaga (1,5 kg)", 1500]] },
+  { n: "Cream cheese Scala", kcal: 250, p: 6, c: 4.5, g: 23, m: [["colher de sopa (30 g)", 30], ["pote (150 g)", 150]] },
+  { n: "Queijo mussarela Scala (peça)", kcal: 330, p: 22.7, c: 3, g: 25.3, m: [["fatia (20 g)", 20], ["porção (30 g)", 30], ["peça (500 g)", 500]] },
+  { n: "Queijo mussarela Scala ralada para pizza", kcal: 330, p: 22.7, c: 3, g: 25.3, m: [["porção (30 g)", 30], ["pacote (500 g)", 500]] },
+  { n: "Queijo prato Scala", kcal: 360, p: 25, c: 2, g: 28, m: [["fatia (20 g)", 20]] },
+  { n: "Queijo parmesão Scala (pedaço)", kcal: 440, p: 36, c: 3.5, g: 31.5, m: [["fatia (20 g)", 20], ["colher ralado (10 g)", 10]] },
+  { n: "Queijo parmesão ralado Scala", kcal: 450, p: 35, c: 4, g: 32, m: [["colher de sopa (10 g)", 10], ["sachê (50 g)", 50]] },
+  { n: "Queijo provolone Scala", kcal: 370, p: 25, c: 2, g: 29, m: [["fatia (20 g)", 20]] },
+  { n: "Queijo gorgonzola Scala", kcal: 350, p: 20, c: 2.5, g: 29, m: [["fatia (30 g)", 30]] },
+  { n: "Queijo minas padrão Scala", kcal: 330, p: 22, c: 2.5, g: 26, m: [["fatia (30 g)", 30]] },
+  { n: "Queijo colonial Scala", kcal: 350, p: 24, c: 2.5, g: 27, m: [["fatia (30 g)", 30]] },
+  { n: "Queijo meia-cura Scala", kcal: 340, p: 23, c: 2.8, g: 26.5, m: [["fatia (30 g)", 30]] },
+  { n: "Queijo de coalho Scala", kcal: 325, p: 22.5, c: 3.2, g: 25.5, m: [["fatia (30 g)", 30], ["espeto (100 g)", 100]] },
+  { n: "Manteiga Scala com sal", kcal: 733, p: 0.7, c: 0, g: 81.3, m: [["colher de chá (10 g)", 10], ["ponta de faca (5 g)", 5]] },
   { n: "Cream cheese Philadelphia original", kcal: 253, p: 5.7, c: 6, g: 23, m: [["colher de sopa (30 g)", 30]] },
   { n: "Cream cheese Philadelphia light", kcal: 177, p: 8, c: 6.7, g: 13, m: [["colher de sopa (30 g)", 30]] },
   { n: "Creme de leite Nestlé (lata)", kcal: 217, p: 2.4, c: 4.5, g: 20.9, m: [["colher de sopa (15 g)", 15], ["lata (300 g)", 300]] },
