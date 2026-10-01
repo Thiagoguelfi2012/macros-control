@@ -58,6 +58,13 @@ const FoodSearch = (() => {
       // token (em vez de somar outro) não cobra nada a mais de quem digita
       // "barra", então não quebra a busca de ninguém.
       .replace(/\bbarrinhas?\b/g, 'barra')
+      // Estrogonofe tem quatro grafias vivas — a das tabelas ("Estrogonofe"),
+      // a do cardápio ("Strogonoff"), a russa ("Stroganoff") e a híbrida
+      // ("Estrogonoffe") —, e o app tinha alimentos em todas elas. Quem
+      // digitava uma só achava os dela. Como a normalização passa no nome
+      // guardado e no que se digita, canonizar as quatro para um token só une
+      // os dois lados: nenhuma grafia some, todas se encontram.
+      .replace(/\be?strog[oa]nof+e?\b/g, 'strogonofe')
       // granola proteica Taeq: o sabor é "chocolate com café" no rótulo, mas
       // quem procura escreve das duas outras formas
       .replace(/\bcacau (com|e) cafe\b/g, 'chocolate com cafe')

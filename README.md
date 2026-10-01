@@ -563,6 +563,15 @@ externas — use o app no endereço próprio (GitHub Pages) ou no arquivo standa
   que **acrescenta** um segundo termo passa a exigir os dois e quebra a busca de
   quem digitou só o primeiro.
 
+  A mesma troca resolve o caso em que **a base discorda de si mesma**. O
+  estrogonofe aparecia escrito de quatro maneiras — "Estrogonofe" (TACO/TBCA),
+  "Strogonoff" (cardápio), "Stroganoff" (russa) e "Estrogonoffe" (híbrida) —, e
+  cada grafia digitada achava só os itens escritos daquele jeito: quem procurava
+  "strogonoff de carne" via o prato com arroz e batata palha, mas não o
+  estrogonofe puro. Como a normalização roda tanto no nome guardado quanto no que
+  se digita, canonizar as quatro para um token só une os dois lados de uma vez —
+  nenhuma grafia some, todas se encontram.
+
 Para regenerar o banco (baixa os dados brutos das fontes públicas no GitHub):
 
 ```bash
