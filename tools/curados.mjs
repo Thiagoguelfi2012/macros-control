@@ -213,6 +213,18 @@ export const CURADOS = [
   { n: 'Morango do amor', kcal: 330, p: 2, c: 60, g: 9, m: [['unidade (90 g)', 90]] },
   { n: 'Maçã do amor', kcal: 280, p: 1, c: 65, g: 3, m: [['unidade (130 g)', 130]] },
   { n: 'Cajuzinho', kcal: 380, p: 8, c: 50, g: 16, m: [['unidade (20 g)', 20]] },
+
+  // ---- Família Dadinho: o que veio depois da bala ----
+  // A bala clássica tem rótulo e está em marcas.mjs. Estes quatro são a linha
+  // que a marca abriu a partir de 2016 (Zero, Duo, Roll e os bombons) e para
+  // os quais não achei tabela publicada: os valores são estimativa a partir da
+  // bala tradicional mais a cobertura ou o wafer de cada um, e os pesos de
+  // unidade também. O app marca tudo isto como estimativa — vale conferir na
+  // embalagem antes de usar como referência.
+  { n: 'Bala Dadinho Zero (sem adição de açúcar)', kcal: 480, p: 7, c: 55, g: 27, m: [['unidade (6 g)', 6], ['porção (30 g)', 30]] },
+  { n: 'Bala Dadinho Duo (com chocolate)', kcal: 530, p: 7, c: 57, g: 31, m: [['unidade (15 g)', 15], ['porção (30 g)', 30]] },
+  { n: 'Wafer Dadinho Roll (coberto de chocolate)', kcal: 510, p: 6, c: 58, g: 28, m: [['unidade (20 g)', 20], ['porção (30 g)', 30]] },
+  { n: 'Bombom de Dadinho (creme de amendoim com chocolate)', kcal: 520, p: 6.5, c: 57, g: 30, m: [['unidade (15 g)', 15], ['porção (30 g)', 30]] },
   { n: 'Bicho de pé (docinho de morango)', kcal: 350, p: 4, c: 55, g: 12, m: [['unidade (20 g)', 20]] },
   { n: 'Olho de sogra', kcal: 370, p: 4, c: 58, g: 13, m: [['unidade (25 g)', 25]] },
   { n: 'Camafeu de nozes', kcal: 420, p: 6, c: 50, g: 21, m: [['unidade (25 g)', 25]] },
@@ -763,6 +775,25 @@ export const CURADOS = [
   { n: 'Cookie recheado com Kinder Bueno', kcal: 495, p: 7, c: 56, g: 26.5, m: [['unidade (100 g)', 100], ['metade (50 g)', 50]] },
   { n: 'Cookie gigante recheado (cookeria)', kcal: 480, p: 6, c: 58, g: 24.5, m: [['unidade (150 g)', 150]] },
   { n: 'Cookie Mr. Cheney (unidade)', kcal: 470, p: 5.5, c: 59, g: 23, m: [['unidade (60 g)', 60]] },
+
+  // ---- Queijos do Laticínio Scala ----
+  // A marca é conhecida pela mussarela de pizzaria, e o requeijão dela (esse
+  // sim com rótulo) está em marcas.mjs. Para as peças a Scala não publica
+  // tabela, então estes valores são os típicos da categoria — queijo maturado
+  // varia pouco entre fabricantes, mas é estimativa, e o app diz isso.
+  { n: "Cream cheese Scala", kcal: 250, p: 6, c: 4.5, g: 23, m: [["colher de sopa (30 g)", 30], ["pote (150 g)", 150]] },
+  { n: "Queijo mussarela Scala (peça)", kcal: 330, p: 22.7, c: 3, g: 25.3, m: [["fatia (20 g)", 20], ["porção (30 g)", 30], ["peça (500 g)", 500]] },
+  { n: "Queijo mussarela Scala ralada para pizza", kcal: 330, p: 22.7, c: 3, g: 25.3, m: [["porção (30 g)", 30], ["pacote (500 g)", 500]] },
+  { n: "Queijo prato Scala", kcal: 360, p: 25, c: 2, g: 28, m: [["fatia (20 g)", 20]] },
+  { n: "Queijo parmesão Scala (pedaço)", kcal: 440, p: 36, c: 3.5, g: 31.5, m: [["fatia (20 g)", 20], ["colher ralado (10 g)", 10]] },
+  { n: "Queijo parmesão ralado Scala", kcal: 450, p: 35, c: 4, g: 32, m: [["colher de sopa (10 g)", 10], ["sachê (50 g)", 50]] },
+  { n: "Queijo provolone Scala", kcal: 370, p: 25, c: 2, g: 29, m: [["fatia (20 g)", 20]] },
+  { n: "Queijo gorgonzola Scala", kcal: 350, p: 20, c: 2.5, g: 29, m: [["fatia (30 g)", 30]] },
+  { n: "Queijo minas padrão Scala", kcal: 330, p: 22, c: 2.5, g: 26, m: [["fatia (30 g)", 30]] },
+  { n: "Queijo colonial Scala", kcal: 350, p: 24, c: 2.5, g: 27, m: [["fatia (30 g)", 30]] },
+  { n: "Queijo meia-cura Scala", kcal: 340, p: 23, c: 2.8, g: 26.5, m: [["fatia (30 g)", 30]] },
+  { n: "Queijo de coalho Scala", kcal: 325, p: 22.5, c: 3.2, g: 25.5, m: [["fatia (30 g)", 30], ["espeto (100 g)", 100]] },
+  { n: "Manteiga Scala com sal", kcal: 733, p: 0.7, c: 0, g: 81.3, m: [["colher de chá (10 g)", 10], ["ponta de faca (5 g)", 5]] },
 
   // ---- Água: o que o app precisa para acompanhar a meta de hidratação ----
   { n: 'Água', kcal: 0, p: 0, c: 0, g: 0, l: 1, m: [['copo (200 ml)', 200], ['copo grande (300 ml)', 300], ['garrafinha (330 ml)', 330], ['garrafa (500 ml)', 500], ['garrafa (1 L)', 1000], ['garrafa (1,5 L)', 1500], ['garrafa (2 L)', 2000]] },

@@ -65,6 +65,11 @@ const FoodSearch = (() => {
       // guardado e no que se digita, canonizar as quatro para um token só une
       // os dois lados: nenhuma grafia some, todas se encontram.
       .replace(/\be?strog[oa]nof+e?\b/g, 'strogonofe')
+      // A bala Dadinho nasceu "IV Centenário" em 1954, e a embalagem prateada
+      // ainda traz esse nome — mas ninguém digita algarismo romano: escreve
+      // "4 centenário" ou "quarto centenário". As três formas têm dois tokens,
+      // então a troca é de um par por outro e não passa a exigir nada a mais.
+      .replace(/\b(4|iv|quarto)o? centenario\b/g, 'iv centenario')
       // granola proteica Taeq: o sabor é "chocolate com café" no rótulo, mas
       // quem procura escreve das duas outras formas
       .replace(/\bcacau (com|e) cafe\b/g, 'chocolate com cafe')
