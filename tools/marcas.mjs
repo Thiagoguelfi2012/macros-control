@@ -440,6 +440,26 @@ export const MARCAS = [
   // concentrado com o açúcar de fora.
   { n: "Whey protein em pó Parmalat WheyFit chocolate", kcal: 394, p: 63.6, c: 21.2, g: 6, m: [["dose (33 g)", 33], ["pacote (450 g)", 450]] },
   { n: "Whey protein em pó Parmalat WheyFit morango", kcal: 394, p: 63.6, c: 21.2, g: 6, m: [["dose (33 g)", 33], ["pacote (450 g)", 450]] },
+
+  // Linha Itambé Protein (a caixinha também é vendida como "Itambé Whey", e o
+  // nome mudou sem o produto mudar — por isso os dois estão no nome daqui).
+  // São 15 g de proteína na caixinha de 250 ml, zero lactose e zero açúcar
+  // adicionado: o açúcar que aparece na tabela é o do próprio leite, já
+  // quebrado pela lactase. A caixa traz "nova fórmula", e circulam na internet
+  // duas tabelas diferentes para o chocolate — 118 e 138 kcal na caixinha.
+  // Fiquei com a segunda porque é a que fecha em Atwater (6 · 4 + 5,6 · 4 +
+  // 1,0 · 9 = 55,4 contra 55 declaradas); a de 118 kcal erra por 4%, que é a
+  // cara de tabela transcrita errado. A baunilha é mais magra de verdade.
+  { n: "Itambé Protein chocolate (bebida láctea whey, 15 g de proteína, zero lactose)", kcal: 55, p: 6, c: 5.6, g: 1, l: 1, m: [["caixinha (250 ml)", 250]] },
+  { n: "Itambé Protein baunilha (bebida láctea whey, 15 g de proteína, zero lactose)", kcal: 44, p: 6, c: 3.5, g: 0.7, l: 1, m: [["caixinha (250 ml)", 250]] },
+  { n: "Itambé Protein morango (bebida láctea whey, 15 g de proteína, zero lactose)", kcal: 55, p: 6, c: 5.6, g: 1, l: 1, m: [["caixinha (250 ml)", 250]] },
+
+  // O pó da mesma marca, pote de 450 g: 21 g de proteína na dose, que é de
+  // 33 g no chocolate e 31 g nos outros dois — por isso o chocolate rende
+  // menos por 100 g.
+  { n: "Whey protein em pó Itambé chocolate", kcal: 369.7, p: 63.6, c: 15.2, g: 6.1, m: [["dose (33 g)", 33], ["pote (450 g)", 450]] },
+  { n: "Whey protein em pó Itambé baunilha", kcal: 406.5, p: 67.7, c: 19.4, g: 6.5, m: [["dose (31 g)", 31], ["pote (450 g)", 450]] },
+  { n: "Whey protein em pó Itambé morango", kcal: 406.5, p: 67.7, c: 19.4, g: 6.5, m: [["dose (31 g)", 31], ["pote (450 g)", 450]] },
   { n: "Leite integral Italac", kcal: 60, p: 3.2, c: 4.7, g: 3.2, l: 1, m: [["copo (200 ml)", 200], ["caixa (1 L)", 1000]] },
   { n: "Leite desnatado Italac", kcal: 36, p: 3.3, c: 4.9, g: 0.1, l: 1, m: [["copo (200 ml)", 200], ["caixa (1 L)", 1000]] },
   { n: "Leite semidesnatado Italac", kcal: 45, p: 3.2, c: 4.8, g: 1.3, l: 1, m: [["copo (200 ml)", 200], ["caixa (1 L)", 1000]] },
