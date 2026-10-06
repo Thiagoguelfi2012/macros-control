@@ -70,6 +70,11 @@ const FoodSearch = (() => {
       // "4 centenário" ou "quarto centenário". As três formas têm dois tokens,
       // então a troca é de um par por outro e não passa a exigir nada a mais.
       .replace(/\b(4|iv|quarto)o? centenario\b/g, 'iv centenario')
+      // Número colado na unidade vira dois tokens. A embalagem escreve "21g de
+      // proteína" e o nome guardado pode ter "21 g": sem isso, "bold 21g" e
+      // "bold 21 g" procuram coisas diferentes e uma das duas não acha nada.
+      // A regra roda nos dois lados, então os dois jeitos de digitar convergem.
+      .replace(/\b(\d+)(g|kg|mg|ml|l)\b/g, '$1 $2')
       // granola proteica Taeq: o sabor é "chocolate com café" no rótulo, mas
       // quem procura escreve das duas outras formas
       .replace(/\bcacau (com|e) cafe\b/g, 'chocolate com cafe')

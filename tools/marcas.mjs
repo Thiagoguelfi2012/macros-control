@@ -670,18 +670,22 @@ export const MARCAS = [
   { n: "Albumina Naturovos", kcal: 373, p: 80, c: 6.7, g: 0, m: [["dose (30 g)", 30], ["colher de sopa (15 g)", 15]] },
   { n: "Hipercalórico Growth Mass", kcal: 400, p: 15, c: 75, g: 3.5, m: [["dose (100 g)", 100]] },
   { n: "Pasta de amendoim Power One integral", kcal: 580, p: 26, c: 17, g: 46, m: [["colher de sopa (15 g)", 15]] },
-  // Bold Bar: a barra é de 60 g, não 50 — e o rótulo dela é mais magro em
-  // carboidrato e mais gordo do que estava aqui. Valores de 60 g publicados:
-  // 205 kcal com 20 g de proteína no geral, 201 kcal no cookies & cream e
-  // 247 kcal no leite e avelã, todas zero açúcar adicionado e com 5 g de fibra.
+  // Bold: a marca não tem uma barra, tem três linhas, e elas se distinguem pela
+  // proteína na embalagem — BOLD 21 g e BOLD Crunch 18 g, as duas na barra de
+  // 60 g, e BOLD Tube 10 g, que é o tubo de wafer de 40 g. (Existem ainda a
+  // BOLD 14 g e a BOLD Thin de 12 g, que não entraram aqui.)
   //
-  // A soma de Atwater fica ~10% acima da caloria declarada, e isso está certo:
-  // fibra e poliol entram no carboidrato do rótulo mas rendem menos energia que
-  // os 4 kcal/g da conta. Corrigir "para fechar" seria falsear o rótulo.
-  { n: "Barra de proteína Bold Bar bombom crocante", kcal: 342, p: 33.3, c: 26.7, g: 15, m: [["unidade (60 g)", 60]] },
-  { n: "Barra de proteína Bold Bar cookies & cream", kcal: 335, p: 33.3, c: 30, g: 13.3, m: [["unidade (60 g)", 60]] },
-  { n: "Barra de proteína Bold Bar leite e avelã", kcal: 412, p: 35, c: 25, g: 23.3, m: [["unidade (60 g)", 60]] },
-  { n: "Barra de proteína Bold Bar mousse de maracujá", kcal: 342, p: 33.3, c: 26.7, g: 15, m: [["unidade (60 g)", 60]] },
+  // Os valores de 205 kcal que estavam aqui eram da fórmula antiga, de 20 g de
+  // proteína. A atual declara ~230 kcal na barra, e é ela que fecha: 21 · 4 +
+  // (18 − 5) · 4 + 5 · 2 + 9,5 · 9 = 231,5 contra as 232 do rótulo, contando a
+  // fibra a 2 kcal/g. Com a fibra a 4 kcal/g — que é como a conferência rápida
+  // do projeto soma — dá ~4% a mais, e esse excesso é esperado, não erro.
+  { n: "Barra de proteína BOLD bombom crocante (21 g de proteína, 60 g)", kcal: 386.7, p: 35, c: 30, g: 15.8, m: [["unidade (60 g)", 60]] },
+  { n: "Barra de proteína BOLD doce de leite (21 g de proteína, 60 g)", kcal: 381.7, p: 35, c: 33.3, g: 13.8, m: [["unidade (60 g)", 60]] },
+  { n: "Barra de proteína BOLD café e doce de leite (21 g de proteína, 60 g)", kcal: 385, p: 33.3, c: 31.7, g: 13.3, m: [["unidade (60 g)", 60]] },
+  { n: "Barra de proteína BOLD Crunch brigadeiro (18 g de proteína, 60 g)", kcal: 358.3, p: 30, c: 28.3, g: 16.3, m: [["unidade (60 g)", 60]] },
+  { n: "Barra de proteína BOLD Crunch cookies & cream (18 g de proteína, 60 g)", kcal: 350, p: 30, c: 28.3, g: 15.8, m: [["unidade (60 g)", 60]] },
+  { n: "BOLD Tube avelã (tubo de wafer recheado, 10 g de proteína, 40 g)", kcal: 447.5, p: 25, c: 27.5, g: 30, m: [["unidade (40 g)", 40]] },
   { n: "Barra de proteína Integralmédica Best Whey", kcal: 380, p: 33.3, c: 40, g: 10, m: [["unidade (33 g)", 33]] },
 
   // Protein Crisp Bar, da Integralmédica: a barra de 45 g com crisps de soja.

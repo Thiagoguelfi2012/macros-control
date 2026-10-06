@@ -776,6 +776,29 @@ export const CURADOS = [
   { n: 'Cookie gigante recheado (cookeria)', kcal: 480, p: 6, c: 58, g: 24.5, m: [['unidade (150 g)', 150]] },
   { n: 'Cookie Mr. Cheney (unidade)', kcal: 470, p: 5.5, c: 59, g: 23, m: [['unidade (60 g)', 60]] },
 
+  // ---- Demais sabores das barras BOLD ----
+  // Os sabores com tabela publicada estão em marcas.mjs. Destes eu não achei
+  // rótulo, então repetem o perfil da própria linha: dentro de uma linha o que
+  // muda é o recheio e a cobertura, e isso mexe pouco na conta. As duas
+  // exceções são pistache e avelã, que levam castanha de verdade e por isso
+  // entram mais gordas. A unidade é a mesma da linha — 60 g na BOLD e na
+  // Crunch, 40 g no Tube.
+  { n: 'Barra de proteína BOLD cookies & cream (21 g de proteína, 60 g)', kcal: 385, p: 35, c: 30, g: 15.5, m: [['unidade (60 g)', 60]] },
+  { n: 'Barra de proteína BOLD cookies black (21 g de proteína, 60 g)', kcal: 385, p: 35, c: 30, g: 15.5, m: [['unidade (60 g)', 60]] },
+  { n: 'Barra de proteína BOLD trufa de chocolate (21 g de proteína, 60 g)', kcal: 385, p: 35, c: 30, g: 15.5, m: [['unidade (60 g)', 60]] },
+  { n: 'Barra de proteína BOLD mousse de maracujá (21 g de proteína, 60 g)', kcal: 385, p: 35, c: 30, g: 15.5, m: [['unidade (60 g)', 60]] },
+  { n: 'Barra de proteína BOLD brownie (21 g de proteína, 60 g)', kcal: 385, p: 35, c: 30, g: 15.5, m: [['unidade (60 g)', 60]] },
+  { n: 'Barra de proteína BOLD paçoca com chocolate (21 g de proteína, 60 g)', kcal: 385, p: 35, c: 30, g: 15.5, m: [['unidade (60 g)', 60]] },
+  { n: 'Barra de proteína BOLD frutas vermelhas (21 g de proteína, 60 g)', kcal: 385, p: 35, c: 30, g: 15.5, m: [['unidade (60 g)', 60]] },
+  { n: 'Barra de proteína BOLD pistache (21 g de proteína, 60 g)', kcal: 405, p: 33.3, c: 28.3, g: 18.3, m: [['unidade (60 g)', 60]] },
+  { n: 'Barra de proteína BOLD leite e avelã (21 g de proteína, 60 g)', kcal: 405, p: 33.3, c: 28.3, g: 18.3, m: [['unidade (60 g)', 60]] },
+  { n: 'Barra de proteína BOLD Crunch morango com chantilly (18 g de proteína, 60 g)', kcal: 354, p: 30, c: 28.3, g: 16, m: [['unidade (60 g)', 60]] },
+  { n: 'Barra de proteína BOLD Crunch pistache (18 g de proteína, 60 g)', kcal: 372, p: 30, c: 26.7, g: 18.3, m: [['unidade (60 g)', 60]] },
+  { n: 'BOLD Tube speculoos (tubo de wafer recheado, 10 g de proteína, 40 g)', kcal: 447.5, p: 25, c: 27.5, g: 30, m: [['unidade (40 g)', 40]] },
+  { n: 'BOLD Tube trufa de chocolate (tubo de wafer recheado, 10 g de proteína, 40 g)', kcal: 447.5, p: 25, c: 27.5, g: 30, m: [['unidade (40 g)', 40]] },
+  { n: 'BOLD Tube pistache (tubo de wafer recheado, 10 g de proteína, 40 g)', kcal: 460, p: 25, c: 26.3, g: 31.5, m: [['unidade (40 g)', 40]] },
+  { n: 'BOLD Tube paçoca (tubo de wafer recheado, 10 g de proteína, 40 g)', kcal: 447.5, p: 25, c: 27.5, g: 30, m: [['unidade (40 g)', 40]] },
+
   // ---- Queijos do Laticínio Scala ----
   // A marca é conhecida pela mussarela de pizzaria, e o requeijão dela (esse
   // sim com rótulo) está em marcas.mjs. Para as peças a Scala não publica
