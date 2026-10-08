@@ -776,6 +776,24 @@ export const CURADOS = [
   { n: 'Cookie gigante recheado (cookeria)', kcal: 480, p: 6, c: 58, g: 24.5, m: [['unidade (150 g)', 150]] },
   { n: 'Cookie Mr. Cheney (unidade)', kcal: 470, p: 5.5, c: 59, g: 23, m: [['unidade (60 g)', 60]] },
 
+  // ---- Demais sabores da linha Piracanjuba ProForce ----
+  // Cacau, cookies and cream e chocolate têm tabela e estão em marcas.mjs.
+  // Destes não achei rótulo: repetem o perfil da própria versão, que é o que
+  // a marca promete em todos os sabores — zero lactose, zero açúcar
+  // adicionado, baixa gordura e a proteína estampada na frente.
+  //
+  // Os 15 g são o lado mais frágil disto: há varejista publicando 120 kcal na
+  // caixinha e outro 150, e não consegui abrir o site da marca para desempatar.
+  // Fiquei com o perfil que já estava no banco. Vale conferir na embalagem.
+  { n: 'Piracanjuba ProForce frutas vermelhas (bebida láctea whey, 23 g de proteína, 250 ml)', kcal: 68, p: 9.2, c: 6.8, g: 0.3, l: 1, m: [['caixinha (250 ml)', 250]] },
+  { n: 'Piracanjuba ProForce pasta de amendoim (bebida láctea whey, 23 g de proteína, 250 ml)', kcal: 68, p: 9.2, c: 6.8, g: 0.3, l: 1, m: [['caixinha (250 ml)', 250]] },
+  { n: 'Piracanjuba ProForce banoffee (bebida láctea whey, 23 g de proteína, 250 ml)', kcal: 68, p: 9.2, c: 6.8, g: 0.3, l: 1, m: [['caixinha (250 ml)', 250]] },
+  { n: 'Piracanjuba ProForce morango (bebida láctea whey, 15 g de proteína, 250 ml)', kcal: 60, p: 6, c: 8.4, g: 0, l: 1, m: [['caixinha (250 ml)', 250]] },
+  { n: 'Piracanjuba ProForce coco (bebida láctea whey, 15 g de proteína, 250 ml)', kcal: 60, p: 6, c: 8.4, g: 0, l: 1, m: [['caixinha (250 ml)', 250], ['caixa (1 L)', 1000]] },
+  { n: 'Piracanjuba ProForce café+ (bebida láctea whey, 15 g de proteína, 250 ml)', kcal: 60, p: 6, c: 8.4, g: 0, l: 1, m: [['caixinha (250 ml)', 250]] },
+  { n: 'Whey protein em pó Piracanjuba ProForce chocolate', kcal: 393, p: 70, c: 8, g: 6.7, m: [['dose (30 g)', 30], ['pote (450 g)', 450]] },
+  { n: 'Whey protein em pó Piracanjuba ProForce milk', kcal: 393, p: 70, c: 8, g: 6.7, m: [['dose (30 g)', 30], ['pote (450 g)', 450]] },
+
   // ---- Demais sabores das barras BOLD ----
   // Os sabores com tabela publicada estão em marcas.mjs. Destes eu não achei
   // rótulo, então repetem o perfil da própria linha: dentro de uma linha o que

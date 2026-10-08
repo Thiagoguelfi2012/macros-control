@@ -86,8 +86,21 @@ export const MARCAS = [
   { n: 'Iogurte grego Nestlé tradicional', kcal: 120, p: 5, c: 15.6, g: 4.2, m: [['pote (90 g)', 90]] },
   { n: 'Iogurte YoPRO 15g proteínas morango', kcal: 64, p: 6, c: 6.8, g: 1.2, l: 1, m: [['garrafa (250 ml)', 250]] },
   { n: 'Iogurte YoPRO 25g proteínas chocolate', kcal: 76, p: 10, c: 6.8, g: 1.2, l: 1, m: [['garrafa (250 ml)', 250]] },
-  { n: 'Iogurte proteico Piracanjuba Whey morango', kcal: 62, p: 8.6, c: 6.6, g: 0, l: 1, m: [['garrafa (250 ml)', 250]] },
-  { n: 'Bebida láctea Piracanjuba Whey Zero 15g proteína', kcal: 60, p: 6, c: 8.4, g: 0, l: 1, m: [['garrafa (250 ml)', 250]] },
+  { n: 'Iogurte proteico Piracanjuba Whey ProForce morango', kcal: 62, p: 8.6, c: 6.6, g: 0, l: 1, m: [['garrafa (250 ml)', 250]] },
+
+  // Piracanjuba ProForce — a linha proteica que até pouco tempo se chamava
+  // "Piracanjuba Whey". O nome mudou, o produto não, e as prateleiras ainda
+  // usam os dois: por isso os dois estão no nome guardado.
+  //
+  // A de 23 g traz ainda 4 g de colágeno e 5 g de BCAA, e o perfil por 100 ml
+  // vem de duas fontes independentes que concordam — a tabela de varejo da
+  // caixinha (170 kcal, 17 g de carboidrato, 0,8 g de gordura em 250 ml) e o
+  // Open Food Facts (68 kcal e 9,2 g de proteína por 100 ml). Há varejista
+  // publicando 120 kcal na mesma caixinha, e isso não pode estar certo: só a
+  // proteína já são 92 kcal, e sobrariam 28 para todo o resto.
+  { n: 'Piracanjuba ProForce cacau (bebida láctea whey, 23 g de proteína, 250 ml)', kcal: 68, p: 9.2, c: 6.8, g: 0.3, l: 1, m: [['caixinha (250 ml)', 250]] },
+  { n: 'Piracanjuba ProForce cookies and cream (bebida láctea whey, 23 g de proteína, 250 ml)', kcal: 68, p: 9.2, c: 6.8, g: 0.3, l: 1, m: [['caixinha (250 ml)', 250]] },
+  { n: 'Piracanjuba ProForce chocolate (bebida láctea whey, 15 g de proteína, 250 ml)', kcal: 60, p: 6, c: 8.4, g: 0, l: 1, m: [['caixinha (250 ml)', 250], ['caixa (1 L)', 1000]] },
   { n: 'Iogurte Vigor Viv morango (bandeja)', kcal: 85, p: 2.6, c: 15, g: 1.6, m: [['unidade (90 g)', 90]] },
   { n: 'Danoninho morango', kcal: 105, p: 5.6, c: 14.4, g: 2.7, m: [['unidade (45 g)', 45], ['bandeja 8 un (360 g)', 360]] },
   { n: 'Chambinho (Nestlé) morango', kcal: 103, p: 5.5, c: 14, g: 2.8, m: [['unidade (45 g)', 45]] },

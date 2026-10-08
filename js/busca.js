@@ -75,6 +75,9 @@ const FoodSearch = (() => {
       // "bold 21 g" procuram coisas diferentes e uma das duas não acha nada.
       // A regra roda nos dois lados, então os dois jeitos de digitar convergem.
       .replace(/\b(\d+)(g|kg|mg|ml|l)\b/g, '$1 $2')
+      // A embalagem escreve "PRO FORCE" em duas linhas e o site escreve
+      // "ProForce" junto. Dois tokens viram um só, nos dois lados.
+      .replace(/\bpro ?force\b/g, 'proforce')
       // granola proteica Taeq: o sabor é "chocolate com café" no rótulo, mas
       // quem procura escreve das duas outras formas
       .replace(/\bcacau (com|e) cafe\b/g, 'chocolate com cafe')
