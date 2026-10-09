@@ -78,6 +78,12 @@ const FoodSearch = (() => {
       // A embalagem escreve "PRO FORCE" em duas linhas e o site escreve
       // "ProForce" junto. Dois tokens viram um só, nos dois lados.
       .replace(/\bpro ?force\b/g, 'proforce')
+      // "tortinha" é como se pede a individual da vitrine, e as tabelas só
+      // guardam "torta". Nenhuma das duas é prefixo da outra, então sem isto
+      // quem digita "tortinha de limão" não acha a torta de limão que já
+      // existe no banco — e vice-versa. Trocar o diminutivo pela base une os
+      // dois lados, do mesmo jeito que "barrinha" → "barra".
+      .replace(/\btortinhas?\b/g, 'torta')
       // granola proteica Taeq: o sabor é "chocolate com café" no rótulo, mas
       // quem procura escreve das duas outras formas
       .replace(/\bcacau (com|e) cafe\b/g, 'chocolate com cafe')

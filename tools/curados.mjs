@@ -467,6 +467,22 @@ export const CURADOS = [
   { n: "Carolina com recheio de doce de leite", kcal: 330, p: 6, c: 42, g: 15, m: [["unidade (25 g)", 25]] },
   { n: "Pastel de nata (pastel de Belém)", kcal: 300, p: 6, c: 38, g: 14, m: [["unidade (45 g)", 45]] },
 
+  // ---- Tortinhas de padaria (a individual da vitrine) ----
+  // Não é fatia de torta: é a tortinha inteira, de massa podre com creme de
+  // confeiteiro e cobertura. A vitrine varia de 90 a 130 g, e 110 é o meio —
+  // a medida "mini" é a do tamanho de festa. Os valores saem da composição
+  // (massa ~35% do peso, creme ~40%, fruta e brilho o resto), porque padaria
+  // não publica tabela; o que muda de um sabor para o outro é a cobertura.
+  { n: 'Tortinha de morango (padaria)', kcal: 245, p: 3.9, c: 31, g: 11.2, m: [['unidade (110 g)', 110], ['mini (50 g)', 50]] },
+  { n: 'Tortinha de frutas (padaria)', kcal: 245, p: 3.9, c: 31, g: 11.2, m: [['unidade (110 g)', 110], ['mini (50 g)', 50]] },
+  { n: 'Tortinha de uva (padaria)', kcal: 245, p: 3.9, c: 31, g: 11.2, m: [['unidade (110 g)', 110], ['mini (50 g)', 50]] },
+  { n: 'Tortinha de limão com merengue (padaria)', kcal: 300, p: 4, c: 44, g: 12, m: [['unidade (110 g)', 110], ['mini (50 g)', 50]] },
+  { n: 'Tortinha de maracujá (padaria)', kcal: 270, p: 4, c: 36, g: 12, m: [['unidade (110 g)', 110], ['mini (50 g)', 50]] },
+  { n: 'Tortinha de banana com chocolate (padaria)', kcal: 280, p: 4, c: 37, g: 13, m: [['unidade (110 g)', 110], ['mini (50 g)', 50]] },
+  { n: 'Tortinha de leite ninho com morango (padaria)', kcal: 300, p: 5, c: 36, g: 15, m: [['unidade (110 g)', 110], ['mini (50 g)', 50]] },
+  { n: 'Tortinha de chocolate com ganache (padaria)', kcal: 330, p: 4.5, c: 38, g: 17.5, m: [['unidade (110 g)', 110], ['mini (50 g)', 50]] },
+  { n: 'Tortinha de doce de leite (padaria)', kcal: 320, p: 4.5, c: 42, g: 15, m: [['unidade (110 g)', 110], ['mini (50 g)', 50]] },
+
   // Pães e salgados de padaria
   { n: "Pão italiano", kcal: 270, p: 9, c: 54, g: 2, m: [["fatia (30 g)", 30], ["unidade pequena (170 g)", 170]] },
   { n: "Pão australiano", kcal: 260, p: 8, c: 48, g: 4, m: [["fatia (25 g)", 25], ["unidade (85 g)", 85]] },
