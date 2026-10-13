@@ -223,4 +223,12 @@ export const CHOCOLATES = [
   { n: 'Chocolate em pó Dois Frades 50% cacau (chocolate do padre)', kcal: 365, p: 8, c: 58, g: 11, m: [['colher de sopa (10 g)', 10], ['porção 2 colheres (20 g)', 20], ['pacote (200 g)', 200]] },
   { n: 'Cobertura de chocolate Dois Frades ao leite (chocolate do padre)', kcal: 530, p: 7, c: 57, g: 30, m: [['quadrado (10 g)', 10], ['barra (1 kg)', 1000]] },
   { n: 'Cobertura de chocolate Dois Frades meio amargo (chocolate do padre)', kcal: 500, p: 5.5, c: 55, g: 29, m: [['quadrado (10 g)', 10], ['barra (1 kg)', 1000]] },
+
+  // ---- Nissin Croc Choco: a entrada da marca de miojo na prateleira de
+  // chocolate. É chocolate com flocos de milho, na caixinha de 44 g — que é
+  // também a porção do rótulo, então a caixa inteira é a unidade.
+  // As duas tabelas fecham em Atwater com 0,2% de diferença, que é assinatura
+  // de rótulo transcrito direito.
+  { n: 'Chocolate Nissin Croc Choco ao leite (com flocos de milho)', kcal: 493.2, p: 4.8, c: 68.2, g: 22.3, m: [['caixa (44 g)', 44], ['porção (22 g)', 22]] },
+  { n: 'Chocolate Nissin Croc Choco branco (com flocos de milho)', kcal: 504.5, p: 4.3, c: 70.5, g: 22.7, m: [['caixa (44 g)', 44], ['porção (22 g)', 22]] },
 ];

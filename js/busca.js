@@ -84,6 +84,10 @@ const FoodSearch = (() => {
       // existe no banco — e vice-versa. Trocar o diminutivo pela base une os
       // dois lados, do mesmo jeito que "barrinha" → "barra".
       .replace(/\btortinhas?\b/g, 'torta')
+      // O chocolate da Nissin se chama "Croc Choco", e quase todo mundo lembra
+      // dele como "choco crock" — troca a ordem e põe um K no fim. A ordem a
+      // busca já perdoa; o K não, porque "crock" não é prefixo de "croc".
+      .replace(/\bcrocks?\b/g, 'croc')
       // granola proteica Taeq: o sabor é "chocolate com café" no rótulo, mas
       // quem procura escreve das duas outras formas
       .replace(/\bcacau (com|e) cafe\b/g, 'chocolate com cafe')
