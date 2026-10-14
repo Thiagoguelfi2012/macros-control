@@ -483,6 +483,29 @@ export const CURADOS = [
   { n: 'Tortinha de chocolate com ganache (padaria)', kcal: 330, p: 4.5, c: 38, g: 17.5, m: [['unidade (110 g)', 110], ['mini (50 g)', 50]] },
   { n: 'Tortinha de doce de leite (padaria)', kcal: 320, p: 4.5, c: 42, g: 15, m: [['unidade (110 g)', 110], ['mini (50 g)', 50]] },
 
+  // ---- Trudel: o doce romeno de espeto (kürtőskalács / trdelník) ----
+  // Massa doce enrolada num cilindro, assada girando, caramelizada por fora e
+  // passada no açúcar com canela — depois recheada. No Brasil quem popularizou
+  // foi a Royal Trudel, de Gramado, e é por ela que as pessoas procuram; daí o
+  // "tipo Royal Trudel" no nome. A marca não publica tabela, então os valores
+  // saem da composição: a massa assada (~180 g, no padrão de pão doce
+  // enriquecido) mais o peso de cada recheio.
+  //
+  // Vale dizer o que a conta mostra: com recheio isto passa de 800 kcal na
+  // unidade. Por isso cada um tem também a medida "metade" — é um doce que
+  // normalmente se divide, e registrar a unidade inteira sem dividir é o que
+  // faz o dia estourar sem a pessoa entender por quê.
+  { n: 'Trudel tradicional com açúcar e canela (doce romeno, tipo Royal Trudel)', kcal: 330, p: 7.5, c: 52, g: 10, m: [['unidade (180 g)', 180], ['metade (90 g)', 90]] },
+  { n: 'Trudel de doce de leite com amendoim (tipo Royal Trudel)', kcal: 348, p: 8.7, c: 49.7, g: 12.6, m: [['unidade (250 g)', 250], ['metade (125 g)', 125]] },
+  { n: 'Trudel de doce de leite (tipo Royal Trudel)', kcal: 326, p: 7.1, c: 52.8, g: 9.3, m: [['unidade (240 g)', 240], ['metade (120 g)', 120]] },
+  { n: 'Trudel de Nutella (tipo Royal Trudel)', kcal: 380, p: 7.1, c: 53.3, g: 15.3, m: [['unidade (240 g)', 240], ['metade (120 g)', 120]] },
+  { n: 'Trudel de Nutella com leite Ninho (tipo Royal Trudel)', kcal: 380, p: 8.7, c: 51.8, g: 15.3, m: [['unidade (245 g)', 245], ['metade (122 g)', 122]] },
+  { n: 'Trudel de sorvete com Nutella (tipo Royal Trudel)', kcal: 322, p: 6.2, c: 45.2, g: 12.8, m: [['unidade (300 g)', 300], ['metade (150 g)', 150]] },
+  { n: 'Trudel banoffee, banana com doce de leite (tipo Royal Trudel)', kcal: 283, p: 5.9, c: 44.9, g: 9, m: [['unidade (300 g)', 300], ['metade (150 g)', 150]] },
+  { n: 'Trudel de chocolate (tipo Royal Trudel)', kcal: 377, p: 7.4, c: 53.2, g: 14.7, m: [['unidade (235 g)', 235], ['metade (117 g)', 117]] },
+  { n: 'Trudel salgado de cheddar com bacon (tipo Royal Trudel)', kcal: 341, p: 14.1, c: 34.9, g: 15.6, m: [['unidade (245 g)', 245], ['metade (122 g)', 122]] },
+  { n: 'Trudel salgado de requeijão com calabresa (tipo Royal Trudel)', kcal: 293, p: 9.8, c: 33.3, g: 13.1, m: [['unidade (260 g)', 260], ['metade (130 g)', 130]] },
+
   // Pães e salgados de padaria
   { n: "Pão italiano", kcal: 270, p: 9, c: 54, g: 2, m: [["fatia (30 g)", 30], ["unidade pequena (170 g)", 170]] },
   { n: "Pão australiano", kcal: 260, p: 8, c: 48, g: 4, m: [["fatia (25 g)", 25], ["unidade (85 g)", 85]] },

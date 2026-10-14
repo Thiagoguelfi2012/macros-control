@@ -88,6 +88,12 @@ const FoodSearch = (() => {
       // dele como "choco crock" — troca a ordem e põe um K no fim. A ordem a
       // busca já perdoa; o K não, porque "crock" não é prefixo de "croc".
       .replace(/\bcrocks?\b/g, 'croc')
+      // O doce romeno tem um nome em cada país — kürtőskalács na Hungria,
+      // trdelník na Chéquia, chimney cake em inglês — e "trudel" no Brasil.
+      // Todos viram trudel: trocar um nome inteiro por outro não cobra token
+      // a mais de ninguém.
+      .replace(/\bk[uü]rt[oő]s ?kal[aá]cs?\b/g, 'trudel')
+      .replace(/\b(trdelnik|chimney cake|bolo chamine)\b/g, 'trudel')
       // granola proteica Taeq: o sabor é "chocolate com café" no rótulo, mas
       // quem procura escreve das duas outras formas
       .replace(/\bcacau (com|e) cafe\b/g, 'chocolate com cafe')
