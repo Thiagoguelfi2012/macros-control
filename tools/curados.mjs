@@ -329,6 +329,21 @@ export const CURADOS = [
   { n: 'Macarrão à carbonara', kcal: 190, p: 8, c: 22, g: 8, m: [['prato (400 g)', 400]] },
   { n: 'Macarrão ao molho branco com frango', kcal: 170, p: 9, c: 19, g: 7, m: [['prato (400 g)', 400]] },
   { n: 'Nhoque ao sugo', kcal: 140, p: 4, c: 24, g: 3, m: [['prato (350 g)', 350]] },
+
+  // Nhoque de banana da terra: a massa é banana cozida amassada com um pouco
+  // de farinha e gema — as receitas com peso ficam em torno de 90% banana e
+  // 10% farinha, não o contrário. Daí vem o aviso que a conta dá: trocar a
+  // batata pela banana da terra tira pouca caloria (150 contra 181 por 100 g
+  // do nhoque de batata da TACO) e não tira carboidrato nenhum, porque
+  // banana da terra é amido. É uma troca de sabor e de glúten, não de macro.
+  //
+  // A soma de Atwater fica ~5% acima da caloria, e isso vem da própria
+  // banana: ela tem fibra e amido resistente, que entram no carboidrato mas
+  // rendem menos energia que 4 kcal/g.
+  { n: 'Nhoque de banana da terra (cozido, sem molho)', kcal: 150, p: 2.7, c: 33.5, g: 1.5, m: [['porção (150 g)', 150], ['prato (300 g)', 300]] },
+  { n: 'Nhoque de banana da terra ao sugo', kcal: 124, p: 2.4, c: 25.9, g: 1.9, m: [['prato (350 g)', 350], ['porção (175 g)', 175]] },
+  { n: 'Nhoque de banana da terra com carne seca', kcal: 167, p: 7.6, c: 26.2, g: 4.2, m: [['prato (320 g)', 320], ['porção (160 g)', 160]] },
+  { n: 'Nhoque de banana da terra na manteiga com sálvia', kcal: 202, p: 3.7, c: 30.1, g: 8.3, m: [['prato (280 g)', 280], ['porção (140 g)', 140]] },
   { n: 'Ravióli de queijo ao sugo', kcal: 180, p: 8, c: 26, g: 5, m: [['prato (350 g)', 350]] },
   { n: 'Risoto de camarão', kcal: 160, p: 7, c: 20, g: 6, m: [['prato (400 g)', 400]] },
   { n: 'Risoto de frango', kcal: 170, p: 9, c: 21, g: 6, m: [['prato (400 g)', 400]] },
