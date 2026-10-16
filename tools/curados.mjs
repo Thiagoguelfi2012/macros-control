@@ -563,6 +563,28 @@ export const CURADOS = [
   // ---- Fast food: cardápios das principais redes (valores do sanduíche montado) ----
 
   // McDonald's
+  // Molhos do McDonald's. Os de mergulhar vêm no blíster de 23 g — é o peso
+  // que a própria rede informa, e é por isso que o sachê inteiro é a medida.
+  //
+  // Nenhum destes é tabela oficial: a rede não publica a dos molhos, e os
+  // números vêm de base de terceiros. Dois deles dão para conferir contra
+  // fonte independente e batem — o ranch sai em 474 kcal por 100 g, contra as
+  // 468 do registro do USDA para o mesmo molho, e o barbecue em 174 contra as
+  // 172 do barbecue genérico. Isso dá confiança no agridoce e no caipira, que
+  // vêm da mesma base. Mostarda e mel, ketchup, maionese e o molho especial
+  // são estimativa por composição.
+  //
+  // O que a conta mostra e surpreende: o ranch tem mais caloria que dois
+  // sachês de agridoce e dois de barbecue somados. Molho cremoso é gordura.
+  { n: "McDonald's molho agridoce (sachê 23 g)", kcal: 191, p: 0.9, c: 47.8, g: 0.1, m: [['sachê (23 g)', 23]] },
+  { n: "McDonald's molho barbecue (sachê 23 g)", kcal: 174, p: 0.8, c: 41, g: 0.6, m: [['sachê (23 g)', 23]] },
+  { n: "McDonald's molho caipira (sachê 23 g)", kcal: 222, p: 1, c: 27.4, g: 11.7, m: [['sachê (23 g)', 23]] },
+  { n: "McDonald's molho ranch (sachê 23 g)", kcal: 474, p: 1.1, c: 3.5, g: 52, m: [['sachê (23 g)', 23]] },
+  { n: "McDonald's molho mostarda e mel (sachê 23 g)", kcal: 250, p: 0.8, c: 30, g: 13.5, m: [['sachê (23 g)', 23]] },
+  { n: "McDonald's ketchup (sachê)", kcal: 100, p: 1.2, c: 24, g: 0.1, m: [['sachê (9 g)', 9]] },
+  { n: "McDonald's maionese (sachê)", kcal: 650, p: 1, c: 2, g: 70, m: [['sachê (10 g)', 10]] },
+  { n: "McDonald's molho especial do Big Mac", kcal: 370, p: 1, c: 15, g: 34, m: [['colher de sopa (15 g)', 15], ['porção do sanduíche (20 g)', 20]] },
+
   { n: "McDonald's Big Tasty", kcal: 233, p: 12, c: 14, g: 14, m: [['unidade (348 g)', 348]] },
   { n: "McDonald's Big Tasty Bacon", kcal: 245, p: 13, c: 14, g: 15, m: [['unidade (365 g)', 365]] },
   { n: "McDonald's McNífico Bacon", kcal: 250, p: 13, c: 20, g: 13, m: [['unidade (232 g)', 232]] },
