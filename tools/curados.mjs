@@ -344,6 +344,21 @@ export const CURADOS = [
   { n: 'Nhoque de banana da terra ao sugo', kcal: 124, p: 2.4, c: 25.9, g: 1.9, m: [['prato (350 g)', 350], ['porção (175 g)', 175]] },
   { n: 'Nhoque de banana da terra com carne seca', kcal: 167, p: 7.6, c: 26.2, g: 4.2, m: [['prato (320 g)', 320], ['porção (160 g)', 160]] },
   { n: 'Nhoque de banana da terra na manteiga com sálvia', kcal: 202, p: 3.7, c: 30.1, g: 8.3, m: [['prato (280 g)', 280], ['porção (140 g)', 140]] },
+
+  // ---- Joelho de porco (Eisbein) com chucrute ----
+  // O que o restaurante traz é o joelho COM OSSO, e o osso, a pele que
+  // ninguém come e a gordura que fica no prato são mais da metade do peso:
+  // de um joelho de 900 g sai algo perto de 350 g de carne. Por isso as
+  // medidas daqui falam em grama de CARNE, não do que veio à mesa — pesar o
+  // prato inteiro contaria o osso como se fosse comida.
+  //
+  // A carne com pele fica em 260-280 kcal por 100 g nas fontes, com proteína
+  // e gordura quase empatadas. É o oposto do lombo (210 kcal, P 35,7, G 6,4
+  // na TACO): mesmo porco, outro corte, outra conta.
+  { n: 'Joelho de porco assado (Eisbein, só a carne)', kcal: 268, p: 20.5, c: 0, g: 20.5, m: [['porção de carne (180 g)', 180], ['joelho inteiro, só a carne (350 g)', 350]] },
+  { n: 'Joelho de porco com chucrute (prato, Eisbein)', kcal: 207, p: 14.9, c: 1.3, g: 15.7, m: [['prato (420 g)', 420], ['meia porção (210 g)', 210]] },
+  { n: 'Joelho de porco com chucrute e purê de batata (prato, Eisbein)', kcal: 182, p: 11.5, c: 4.9, g: 12.8, m: [['prato (570 g)', 570], ['meia porção (285 g)', 285]] },
+  { n: 'Chucrute refogado', kcal: 55, p: 1, c: 4.5, g: 3.8, m: [['porção (120 g)', 120], ['colher de sopa (25 g)', 25]] },
   { n: 'Ravióli de queijo ao sugo', kcal: 180, p: 8, c: 26, g: 5, m: [['prato (350 g)', 350]] },
   { n: 'Risoto de camarão', kcal: 160, p: 7, c: 20, g: 6, m: [['prato (400 g)', 400]] },
   { n: 'Risoto de frango', kcal: 170, p: 9, c: 21, g: 6, m: [['prato (400 g)', 400]] },

@@ -96,6 +96,8 @@ const FoodSearch = (() => {
       .replace(/\b(trdelnik|chimney cake|bolo chamine)\b/g, 'trudel')
       // O cardápio escreve "gnocchi", as tabelas guardam "nhoque".
       .replace(/\bgnocchi\b/g, 'nhoque')
+      // O mesmo joelho de porco tem dois nomes alemães na mesa brasileira.
+      .replace(/\bschweinshaxe\b/g, 'eisbein')
       // granola proteica Taeq: o sabor é "chocolate com café" no rótulo, mas
       // quem procura escreve das duas outras formas
       .replace(/\bcacau (com|e) cafe\b/g, 'chocolate com cafe')
