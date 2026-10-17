@@ -293,6 +293,21 @@ export const CURADOS = [
   { n: 'Filé mignon ao molho madeira', kcal: 150, p: 18, c: 4, g: 7, m: [['porção (250 g)', 250]] },
   { n: 'Filé mignon ao molho mostarda', kcal: 170, p: 17, c: 3, g: 10, m: [['porção (250 g)', 250]] },
   { n: 'Filé mignon ao molho gorgonzola', kcal: 200, p: 18, c: 2, g: 13, m: [['porção (250 g)', 250]] },
+
+  // Molho de cerveja: cerveja reduzida com cebola, manteiga e um pouco de
+  // creme — prato de casa alemã, comum em Gramado e Blumenau. O álcool evapora
+  // na redução; o que fica é o malte, e por isso o molho tem carboidrato onde
+  // o madeira quase não tem.
+  //
+  // O par do pato é o que vale olhar: com pele, a porção tem quase 50% mais
+  // caloria que a mesma porção de filé, e a diferença é gordura da pele quase
+  // inteira. Tirar a pele derruba a porção de 635 para 405 kcal — por isso as
+  // duas versões estão separadas, e não numa média que não corresponde a
+  // nenhum prato real.
+  { n: 'Filé mignon ao molho de cerveja com cogumelos', kcal: 170, p: 19.5, c: 3, g: 8.8, m: [['porção (250 g)', 250]] },
+  { n: 'Pato ao molho de cerveja (com pele)', kcal: 254, p: 13.4, c: 2.2, g: 21.2, m: [['porção (250 g)', 250]] },
+  { n: 'Pato ao molho de cerveja (sem a pele)', kcal: 162, p: 18.2, c: 2.2, g: 8.7, m: [['porção (250 g)', 250]] },
+  { n: 'Molho de cerveja com cogumelos', kcal: 95, p: 2, c: 6, g: 7, m: [['colher de sopa (20 g)', 20], ['porção (90 g)', 90]] },
   { n: 'Frango à parmegiana', kcal: 190, p: 14, c: 12, g: 10, m: [['porção (300 g)', 300]] },
   { n: 'Frango ao catupiry', kcal: 180, p: 16, c: 6, g: 10, m: [['porção (250 g)', 250]] },
   { n: 'Frango xadrez', kcal: 120, p: 11, c: 8, g: 5, m: [['porção (300 g)', 300]] },
@@ -496,6 +511,22 @@ export const CURADOS = [
   { n: "Torta de nozes com doce de leite (fatia)", kcal: 400, p: 6, c: 40, g: 25, m: [["fatia (110 g)", 110]] },
   { n: "Carolina com recheio de doce de leite", kcal: 330, p: 6, c: 42, g: 15, m: [["unidade (25 g)", 25]] },
   { n: "Pastel de nata (pastel de Belém)", kcal: 300, p: 6, c: 38, g: 14, m: [["unidade (45 g)", 45]] },
+
+  // ---- Pavlova ----
+  // Merengue assado por fora e macio por dentro, chantilly e fruta por cima.
+  // Não tem farinha nem gordura na base: a gordura toda vem do chantilly, e o
+  // carboidrato quase todo do açúcar do merengue. Por isso a conta fica num
+  // lugar inesperado para uma sobremesa de confeitaria — 248 kcal por 100 g na
+  // de frutas vermelhas, contra 380 da torta de nozes com doce de leite e 350
+  // da torta mousse de chocolate que já estão aqui. A fruta fresca e o ar
+  // batido no merengue ocupam volume sem peso.
+  //
+  // Proporção usada: ~35% merengue, ~35% chantilly, ~30% fruta. As de maracujá
+  // e limão sobem porque a cobertura é calda ou curd, não fruta in natura.
+  { n: 'Pavlova de frutas vermelhas (fatia)', kcal: 248, p: 2.9, c: 39.1, g: 8.8, m: [['fatia (120 g)', 120], ['mini, unidade (90 g)', 90]] },
+  { n: 'Pavlova de morango (fatia)', kcal: 248, p: 2.9, c: 39.1, g: 8.8, m: [['fatia (120 g)', 120], ['mini, unidade (90 g)', 90]] },
+  { n: 'Pavlova de maracujá (fatia)', kcal: 292, p: 2.9, c: 48.1, g: 9.7, m: [['fatia (120 g)', 120], ['mini, unidade (90 g)', 90]] },
+  { n: 'Pavlova de limão (fatia)', kcal: 292, p: 2.9, c: 48.1, g: 9.7, m: [['fatia (120 g)', 120], ['mini, unidade (90 g)', 90]] },
 
   // ---- Tortinhas de padaria (a individual da vitrine) ----
   // Não é fatia de torta: é a tortinha inteira, de massa podre com creme de
