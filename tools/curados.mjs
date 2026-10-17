@@ -377,6 +377,20 @@ export const CURADOS = [
   { n: 'Ravióli de queijo ao sugo', kcal: 180, p: 8, c: 26, g: 5, m: [['prato (350 g)', 350]] },
   { n: 'Risoto de camarão', kcal: 160, p: 7, c: 20, g: 6, m: [['prato (400 g)', 400]] },
   { n: 'Risoto de frango', kcal: 170, p: 9, c: 21, g: 6, m: [['prato (400 g)', 400]] },
+  // O resto da carta de risoto, no prato de 400 g como os dois acima. Montados
+  // pela composição: base de arroz com manteiga, parmesão e caldo (~160 kcal
+  // por 100 g) mais o que dá nome ao prato.
+  //
+  // O de linguiça com tomate seco pesa por um motivo que não está no nome: o
+  // tomate seco vem conservado em óleo, então ele e a calabresa empilham
+  // gordura em cima de uma base que já leva manteiga e queijo. Dá 793 kcal no
+  // prato, contra 680 do de frango e 540 do de funghi — só o de quatro queijos
+  // passa dele, com 832.
+  { n: 'Risoto de linguiça com tomate seco', kcal: 198, p: 6.5, c: 18.3, g: 11.2, m: [['prato (400 g)', 400], ['meia porção (200 g)', 200]] },
+  { n: 'Risoto de funghi (cogumelos)', kcal: 135, p: 3.3, c: 19.8, g: 4.5, m: [['prato (400 g)', 400], ['meia porção (200 g)', 200]] },
+  { n: 'Risoto de quatro queijos', kcal: 208, p: 8.1, c: 18, g: 11.1, m: [['prato (400 g)', 400], ['meia porção (200 g)', 200]] },
+  { n: 'Risoto de filé mignon', kcal: 176, p: 11.9, c: 16.3, g: 6.7, m: [['prato (400 g)', 400], ['meia porção (200 g)', 200]] },
+  { n: 'Risoto de abóbora com gorgonzola', kcal: 157, p: 5, c: 17.3, g: 7.3, m: [['prato (400 g)', 400], ['meia porção (200 g)', 200]] },
   { n: 'X-burguer', kcal: 250, p: 12, c: 23, g: 12, m: [['unidade (200 g)', 200]] },
   { n: 'X-salada', kcal: 230, p: 12, c: 20, g: 11, m: [['unidade (250 g)', 250]] },
   { n: 'X-bacon', kcal: 280, p: 14, c: 20, g: 16, m: [['unidade (250 g)', 250]] },
