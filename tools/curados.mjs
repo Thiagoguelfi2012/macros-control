@@ -867,6 +867,19 @@ export const CURADOS = [
   { n: 'Cookie gigante recheado (cookeria)', kcal: 480, p: 6, c: 58, g: 24.5, m: [['unidade (150 g)', 150]] },
   { n: 'Cookie Mr. Cheney (unidade)', kcal: 470, p: 5.5, c: 59, g: 23, m: [['unidade (60 g)', 60]] },
 
+  // ---- Demais sabores da linha Parmalat Fit ----
+  // Chocolate (nas duas sublinhas) tem rótulo e está em marcas.mjs. Destes não
+  // achei tabela: repetem o perfil da própria sublinha, que é o que a marca
+  // promete em todos os sabores — zero lactose, zero açúcar adicionado e a
+  // proteína estampada na frente.
+  { n: 'Bebida láctea Parmalat Fit FlexForce morango (23 g de proteína, 8 g de colágeno)', kcal: 65, p: 9.2, c: 4.8, g: 1, l: 1, m: [['caixinha (250 ml)', 250]] },
+  { n: 'Bebida láctea Parmalat Fit WheyFit cappuccino (15 g de proteína, zero lactose)', kcal: 58, p: 6, c: 5.6, g: 1.2, l: 1, m: [['caixinha (250 ml)', 250]] },
+  { n: 'Bebida láctea Parmalat Fit WheyFit coco com batata doce (15 g de proteína, zero lactose)', kcal: 58, p: 6, c: 5.6, g: 1.2, l: 1, m: [['caixinha (250 ml)', 250]] },
+  { n: 'Bebida láctea Parmalat Fit WheyFit abacate (15 g de proteína, zero lactose)', kcal: 58, p: 6, c: 5.6, g: 1.2, l: 1, m: [['caixinha (250 ml)', 250]] },
+  { n: 'Bebida láctea Parmalat Fit WheyFit milho (15 g de proteína, zero lactose)', kcal: 58, p: 6, c: 5.6, g: 1.2, l: 1, m: [['caixinha (250 ml)', 250]] },
+  { n: 'Bebida láctea Parmalat Fit WheyFit pistache (15 g de proteína, zero lactose)', kcal: 58, p: 6, c: 5.6, g: 1.2, l: 1, m: [['caixinha (250 ml)', 250]] },
+  { n: 'Whey protein em pó Parmalat Fit WheyFit baunilha', kcal: 394, p: 63.6, c: 21.2, g: 6, m: [['dose (33 g)', 33], ['pote (450 g)', 450]] },
+
   // ---- Demais sabores da linha Piracanjuba ProForce ----
   // Cacau, cookies and cream e chocolate têm tabela e estão em marcas.mjs.
   // Destes não achei rótulo: repetem o perfil da própria versão, que é o que

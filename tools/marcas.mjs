@@ -439,20 +439,34 @@ export const MARCAS = [
   { n: "Leite integral Parmalat", kcal: 60, p: 3.2, c: 4.7, g: 3.2, l: 1, m: [["copo (200 ml)", 200], ["caixa (1 L)", 1000]] },
   { n: "Leite desnatado Parmalat", kcal: 35, p: 3.3, c: 4.9, g: 0, l: 1, m: [["copo (200 ml)", 200], ["caixa (1 L)", 1000]] },
 
-  // Linha Parmalat WheyFit. A bebida pronta é a caixinha de 250 ml com 15 g de
-  // proteína, zero lactose e zero açúcar adicionado — o rótulo do chocolate traz
-  // 146 kcal, 14 g de carboidrato e 3 g de gordura na caixinha. Baunilha e
-  // morango repetem os 15 g e o mesmo perfil; a caixa mudou de fórmula
-  // recentemente, então valores antigos de internet não servem.
-  { n: "Bebida láctea Parmalat WheyFit chocolate (15 g proteína, zero lactose)", kcal: 58, p: 6, c: 5.6, g: 1.2, l: 1, m: [["caixinha (250 ml)", 250]] },
-  { n: "Bebida láctea Parmalat WheyFit baunilha (15 g proteína, zero lactose)", kcal: 58, p: 6, c: 5.6, g: 1.2, l: 1, m: [["caixinha (250 ml)", 250]] },
-  { n: "Bebida láctea Parmalat WheyFit morango (15 g proteína, zero lactose)", kcal: 58, p: 6, c: 5.6, g: 1.2, l: 1, m: [["caixinha (250 ml)", 250]] },
+  // Linha Parmalat Fit. A caixinha grande diz "Parmalat FIT" e, embaixo, qual
+  // das sublinhas é — WheyFit (15 g de proteína) ou FlexForce (23 g, sendo 8 g
+  // de colágeno). Os dois nomes estão aqui porque é assim que a embalagem se
+  // apresenta, e porque sem o "Fit" solto quem digitava "parmalat fit" não
+  // achava nada: "fit" não é prefixo de "wheyfit".
+  //
+  // WheyFit pronto: zero lactose e zero açúcar adicionado, e o rótulo do
+  // chocolate traz 146 kcal, 14 g de carboidrato e 3 g de gordura na caixinha.
+  { n: "Bebida láctea Parmalat Fit WheyFit chocolate (15 g de proteína, zero lactose)", kcal: 58, p: 6, c: 5.6, g: 1.2, l: 1, m: [["caixinha (250 ml)", 250]] },
+  { n: "Bebida láctea Parmalat Fit WheyFit baunilha (15 g de proteína, zero lactose)", kcal: 58, p: 6, c: 5.6, g: 1.2, l: 1, m: [["caixinha (250 ml)", 250]] },
+  { n: "Bebida láctea Parmalat Fit WheyFit morango (15 g de proteína, zero lactose)", kcal: 58, p: 6, c: 5.6, g: 1.2, l: 1, m: [["caixinha (250 ml)", 250]] },
 
-  // O pó da mesma linha, em pacote de 450 g: 21 g de proteína na dose de 33 g.
+  // FlexForce: a caixinha de 23 g de proteína, das quais 8 g são colágeno
+  // hidrolisado. Os 162 kcal declarados na caixinha fecham em Atwater com 0,3%
+  // de diferença (9,2 · 4 + 4,8 · 4 + 1,0 · 9 = 64,6 contra 64,8 por 100 ml),
+  // o que é assinatura de rótulo, não de chute.
+  //
+  // Um aviso que o número não dá: colágeno é proteína incompleta, pobre em
+  // triptofano e sem os aminoácidos que puxam a síntese muscular. Para contar
+  // proteína do dia ele entra; para construir músculo, os 8 g valem menos que
+  // os 15 g de soro ao lado deles.
+  { n: "Bebida láctea Parmalat Fit FlexForce chocolate (23 g de proteína, 8 g de colágeno)", kcal: 65, p: 9.2, c: 4.8, g: 1, l: 1, m: [["caixinha (250 ml)", 250]] },
+
+  // O pó da mesma linha, em pote de 450 g: 21 g de proteína na dose de 33 g.
   // Só esse par é de rótulo; o resto da composição é estimativa de whey
   // concentrado com o açúcar de fora.
-  { n: "Whey protein em pó Parmalat WheyFit chocolate", kcal: 394, p: 63.6, c: 21.2, g: 6, m: [["dose (33 g)", 33], ["pacote (450 g)", 450]] },
-  { n: "Whey protein em pó Parmalat WheyFit morango", kcal: 394, p: 63.6, c: 21.2, g: 6, m: [["dose (33 g)", 33], ["pacote (450 g)", 450]] },
+  { n: "Whey protein em pó Parmalat Fit WheyFit chocolate", kcal: 394, p: 63.6, c: 21.2, g: 6, m: [["dose (33 g)", 33], ["pote (450 g)", 450]] },
+  { n: "Whey protein em pó Parmalat Fit WheyFit morango", kcal: 394, p: 63.6, c: 21.2, g: 6, m: [["dose (33 g)", 33], ["pote (450 g)", 450]] },
 
   // Linha Itambé Protein (a caixinha também é vendida como "Itambé Whey", e o
   // nome mudou sem o produto mudar — por isso os dois estão no nome daqui).

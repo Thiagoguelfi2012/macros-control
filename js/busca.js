@@ -78,6 +78,8 @@ const FoodSearch = (() => {
       // A embalagem escreve "PRO FORCE" em duas linhas e o site escreve
       // "ProForce" junto. Dois tokens viram um só, nos dois lados.
       .replace(/\bpro ?force\b/g, 'proforce')
+      // Mesma história na Parmalat: a caixinha escreve "FLEXFORCE" junto.
+      .replace(/\bflex ?force\b/g, 'flexforce')
       // "tortinha" é como se pede a individual da vitrine, e as tabelas só
       // guardam "torta". Nenhuma das duas é prefixo da outra, então sem isto
       // quem digita "tortinha de limão" não acha a torta de limão que já
