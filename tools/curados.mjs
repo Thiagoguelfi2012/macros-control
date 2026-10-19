@@ -642,6 +642,17 @@ export const CURADOS = [
   { n: "McDonald's Duplo McFish (McFish duplo)", kcal: 244, p: 12.4, c: 21, g: 12.4, m: [['unidade (210 g)', 210]] },
   { n: "McDonald's McChicken Duplo", kcal: 242, p: 12, c: 21.5, g: 12, m: [['unidade (260 g)', 260]] },
   { n: "McDonald's McChicken Bacon", kcal: 255, p: 10, c: 24, g: 13, m: [['unidade (190 g)', 190]] },
+  // Chicken Jr.: o frango pequeno, que a rede já chamou de McChicken Júnior e
+  // hoje lista como Chicken Jr. Os dois nomes estão aqui porque os dois
+  // circulam, e quem procura por um não acharia o outro.
+  //
+  // O rótulo de terceiros dá 349 kcal com P 12, C 43 e G 15 na unidade, e
+  // fecha em Atwater. O peso não vinha junto: 140 g é o que sai quando se
+  // aplica a densidade do McChicken grande (249 kcal por 100 g) às 349 kcal
+  // declaradas. Serve para pesar meia unidade; para a unidade inteira, o que
+  // vale é o total.
+  { n: "McDonald's Chicken Jr. (McChicken Júnior)", kcal: 249, p: 8.6, c: 30.7, g: 10.7, m: [['unidade (140 g)', 140]] },
+  { n: "McDonald's McCrispy Chicken Deluxe", kcal: 238, p: 11.9, c: 23.3, g: 10.5, m: [['unidade (215 g)', 215]] },
   { n: "McDonald's hambúrguer simples", kcal: 255, p: 13, c: 30, g: 9, m: [['unidade (100 g)', 100]] },
   { n: "McDonald's McMuffin ovo com bacon", kcal: 245, p: 14, c: 23, g: 11, m: [['unidade (135 g)', 135]] },
   { n: "McDonald's McFritas (batata frita)", kcal: 310, p: 4, c: 41, g: 15, m: [['pequena (70 g)', 70], ['média (110 g)', 110], ['grande (150 g)', 150]] },

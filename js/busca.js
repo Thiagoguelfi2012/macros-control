@@ -106,6 +106,9 @@ const FoodSearch = (() => {
       .replace(/\bcacau (com|e) cafe\b/g, 'chocolate com cafe')
       .replace(/\bchocolate e cafe\b/g, 'chocolate com cafe')
       .replace(/\bmc ?donalds?\b/g, 'mcdonalds')
+      // "Jr." no cardápio, "júnior" na boca de quem pede — e nenhum dos dois é
+      // prefixo do outro, então "whopper junior" não achava o Whopper Jr.
+      .replace(/\bjr\b/g, 'junior')
       .replace(/\bhamburger(s)?\b/g, 'hamburguer$1')
       .replace(/\bsmash ?burguer(s)?\b/g, 'smash burger$1')
       .replace(/\bsmashburger(s)?\b/g, 'smash burger$1')
