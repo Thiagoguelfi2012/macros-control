@@ -743,6 +743,14 @@ export const CURADOS = [
   { n: 'Nhoque frito na airfryer', kcal: 195, p: 4.5, c: 34, g: 4, m: [['porção (100 g)', 100], ['porção pequena (80 g)', 80], ['porção grande (150 g)', 150]] },
 
   // ---- Granolas de marca (linha proteica com whey e as tradicionais) ----
+  // ---- Outros sabores da barra YoPRO ----
+  // O chocolate tem tabela e está em marcas.mjs. Estes dois repetem o perfil
+  // da linha: mesma barra de 55 g com os mesmos 15 g de proteína que a marca
+  // estampa na frente, mudando cobertura e recheio. O YoPRO+ ainda leva
+  // 75 mg de cafeína, que não entra em macro nenhum.
+  { n: 'Barra de proteína YoPRO Nutrata morango com chocolate branco (15 g de proteína, 55 g)', kcal: 416, p: 27.3, c: 27.3, g: 20, m: [['unidade (55 g)', 55]] },
+  { n: 'Barra de proteína YoPRO+ Nutrata cappuccino com nibs de cacau (15 g de proteína, 55 g)', kcal: 416, p: 27.3, c: 27.3, g: 20, m: [['unidade (55 g)', 55]] },
+
   // ---- Da Magrinha: as duas cujo rótulo não consegui ler inteiro ----
   // A Protein Granola 7 Grãos Amendoim leva whey e colágeno além da soja
   // texturizada, e a frente do pacote estampa "30 g PROTEÍNA" sem dizer por

@@ -385,7 +385,19 @@ export const MARCAS = [
   { n: "Granola Jasmine tradicional", kcal: 425, p: 10.5, c: 64, g: 13.5, m: [["porção (40 g)", 40]] },
   { n: "Granola Kobber tradicional", kcal: 420, p: 9.5, c: 66, g: 12.5, m: [["porção (40 g)", 40]] },
   { n: "Barra Grego Bar Vigor morango", kcal: 380, p: 20, c: 45, g: 13, m: [["unidade (40 g)", 40]] },
-  { n: "Barra YoPRO chocolate", kcal: 370, p: 32, c: 34, g: 11, m: [["unidade (55 g)", 55]] },
+  // Barra YoPRO, que a Nutrata fabrica para a Danone — o pacote traz as duas
+  // marcas, e por isso as duas estão no nome. Rótulo da unidade de 55 g: 229
+  // kcal, 15 g de proteína, 15 g de carboidrato (5 deles fibra) e 11 g de
+  // gordura.
+  //
+  // O que estava aqui dava 204 kcal e 17,6 g de proteína na mesma barra —
+  // perfil de uma barra de 32% de proteína, que esta não é. A frente do pacote
+  // diz 15 g, e é o rótulo que manda.
+  //
+  // A soma de Atwater fica ~4% ABAIXO da caloria declarada, e não acima como
+  // de costume. Deixei como está: é o rótulo, e remendar para fechar seria
+  // inventar um carboidrato que a tabela não declara.
+  { n: "Barra de proteína YoPRO Nutrata chocolate (15 g de proteína, 55 g)", kcal: 416, p: 27.3, c: 27.3, g: 20, m: [["unidade (55 g)", 55]] },
   { n: "Barra Supino Zero banana com chocolate", kcal: 330, p: 4, c: 65, g: 7, m: [["unidade (24 g)", 24]] },
   { n: "Barra Nutry castanhas com chocolate", kcal: 435, p: 7, c: 60, g: 18, m: [["unidade (22 g)", 22]] },
   { n: "Maionese Quero tradicional", kcal: 355, p: 0.5, c: 5, g: 36.5, m: [["colher de sopa (12 g)", 12]] },
