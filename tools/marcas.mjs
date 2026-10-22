@@ -678,6 +678,16 @@ export const MARCAS = [
   { n: "Cereal Nesfit original (Nestlé)", kcal: 367, p: 10, c: 76.7, g: 2.3, m: [["porção (30 g)", 30]] },
   { n: "Granola Mãe Terra tradicional", kcal: 430, p: 10, c: 62.5, g: 15, m: [["porção (40 g)", 40], ["colher de sopa (15 g)", 15]] },
   { n: "Granola Jasmine integral tradicional", kcal: 425, p: 9.5, c: 64, g: 14, m: [["porção (40 g)", 40], ["colher de sopa (15 g)", 15]] },
+
+  // Granolas Da Magrinha. A marca publica a tabela por porção de 40 g (meia
+  // xícara), com caloria, carboidrato e proteína — não a gordura. Ela está
+  // calculada aqui por diferença: o que sobra da caloria declarada depois de
+  // descontar proteína e carboidrato a 4 kcal/g. Não é chute, é a própria
+  // tabela fechada por aritmética, e por isso o Atwater bate exato.
+  { n: "Granola Da Magrinha 7 grãos tradicional", kcal: 348, p: 9.8, c: 60, g: 7.6, m: [["porção (40 g)", 40], ["colher de sopa (15 g)", 15], ["xícara (60 g)", 60]] },
+  { n: "Granola Da Magrinha 7 grãos maçã e canela", kcal: 378, p: 10, c: 67.5, g: 7.5, m: [["porção (40 g)", 40], ["colher de sopa (15 g)", 15], ["xícara (60 g)", 60]] },
+  { n: "Granola Da Magrinha integral cacau", kcal: 380, p: 9.5, c: 65, g: 9.1, m: [["porção (40 g)", 40], ["colher de sopa (15 g)", 15], ["xícara (60 g)", 60]] },
+  { n: "Granola Da Magrinha integral premium (amêndoas e castanha-do-pará)", kcal: 375, p: 10, c: 55, g: 12.8, m: [["porção (40 g)", 40], ["colher de sopa (15 g)", 15], ["xícara (60 g)", 60]] },
   { n: "Aveia em flocos Quaker", kcal: 394, p: 14, c: 66, g: 8, m: [["colher de sopa (15 g)", 15], ["porção (30 g)", 30]] },
   { n: "Farinha de aveia Quaker", kcal: 390, p: 13.5, c: 67, g: 7.5, m: [["colher de sopa (15 g)", 15], ["porção (30 g)", 30]] },
   { n: "Cuscuz de milho flocão Vitamilho (cozido)", kcal: 112, p: 2.2, c: 25, g: 0.4, m: [["fatia (60 g)", 60], ["porção (100 g)", 100]] },

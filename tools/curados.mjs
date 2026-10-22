@@ -743,6 +743,21 @@ export const CURADOS = [
   { n: 'Nhoque frito na airfryer', kcal: 195, p: 4.5, c: 34, g: 4, m: [['porção (100 g)', 100], ['porção pequena (80 g)', 80], ['porção grande (150 g)', 150]] },
 
   // ---- Granolas de marca (linha proteica com whey e as tradicionais) ----
+  // ---- Da Magrinha: as duas cujo rótulo não consegui ler inteiro ----
+  // A Protein Granola 7 Grãos Amendoim leva whey e colágeno além da soja
+  // texturizada, e a frente do pacote estampa "30 g PROTEÍNA" sem dizer por
+  // quanto. Pelo lugar do carimbo — o dos grãos integrais, ao lado, diz "23 g
+  // por porção", e este não diz nada — li como por 100 g, e é esse o número
+  // guardado. Montando pela lista de ingredientes eu chegaria perto de 22 g,
+  // então os dois valores não fecham entre si: fiquei com o do pacote, que é
+  // declaração regulada, mas vale conferir na tabela do verso.
+  //
+  // O resto dos macros é modelado em cima dessa proteína. Da "sem açúcar" só
+  // a caloria por 100 g é de fonte (345); proteína, carboidrato e gordura são
+  // estimativa pelo perfil da linha.
+  { n: 'Granola Da Magrinha Protein 7 grãos amendoim (whey e colágeno)', kcal: 400, p: 30, c: 40, g: 13, m: [['porção (40 g)', 40], ['colher de sopa (15 g)', 15], ['xícara (60 g)', 60], ['pacote (200 g)', 200]] },
+  { n: 'Granola Da Magrinha 7 grãos sem açúcar', kcal: 345, p: 11, c: 54, g: 9.8, m: [['porção (40 g)', 40], ['colher de sopa (15 g)', 15], ['xícara (60 g)', 60]] },
+
   { n: 'Granola Whey Vitalin tradicional', kcal: 425, p: 20, c: 55, g: 12.5, m: [['porção (40 g)', 40], ['colher de sopa (15 g)', 15], ['xícara (60 g)', 60]] },
   { n: 'Granola Whey Vitalin cacau (chocolate)', kcal: 430, p: 20, c: 54, g: 13.5, m: [['porção (40 g)', 40], ['colher de sopa (15 g)', 15], ['xícara (60 g)', 60]] },
   { n: 'Granola Whey Vitalin banana com canela', kcal: 420, p: 19, c: 57, g: 11.5, m: [['porção (40 g)', 40], ['colher de sopa (15 g)', 15], ['xícara (60 g)', 60]] },
