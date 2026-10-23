@@ -4,7 +4,7 @@ const MacroDB = (() => {
   const DB_VERSION = 4;
   const FOODS_URL = 'data/foods.json';
   const MANIFESTO_URL = 'data/foods-manifest.json';
-  const FOODS_VERSION = 88; // deve acompanhar o campo v de data/foods.json
+  const FOODS_VERSION = 89; // deve acompanhar o campo v de data/foods.json
   let dbPromise = null;
   let foodsCache = null; // array em memória para busca instantânea
   let versaoCarregada = null; // versão que de fato entrou na busca
@@ -300,6 +300,38 @@ const MacroDB = (() => {
   // líquido a quem virou líquido na base. E nunca TIRA a marca de ninguém —
   // quem anotou água na mão, ou cadastrou a própria bebida, continua com ela.
   // Por isso rodar de novo não desfaz nada e não há o que reverter.
+  /* Bebida reconhecida pelo NOME.
+
+     A base marca o que é líquido na geração, mas o alimento lido no código de
+     barras e o cadastrado à mão não passam por lá: vêm do Open Food Facts ou
+     do teclado, e chegam sem marca nenhuma. Foi assim que uma "Coca Cola Zero
+     Açúcar" acabou medida em grama no diário.
+
+     A lista é a mesma do gerador, de propósito — duas réguas diferentes para a
+     mesma pergunta seriam duas respostas diferentes para o mesmo refrigerante.
+     É conservadora: prefere deixar uma bebida de fora a transformar comida em
+     líquido, porque o erro barato é o primeiro. */
+  const LIQ_EXCL =
+    /(^|[ ,(])p[óo]([ ,)]|$)|desidratad|condensado|em barra|mistura|creme de leite|sorvete|xarope|picol[ée]|geladinho|gelatina|levedo|com suco de|molho de salada|biscoito|bolo|torta|bala|barrinha/i;
+  // Palavra que só existe em bebida: vale em qualquer posição do nome.
+  const LIQ_PALAVRA =
+    /(^|[ ,(/-])(cerveja|chope|refrigerante|refrigerantes|suco|n[ée]ctar|refresco|vinho|cacha[çc]a|aguardente|pinga|vodka|whisky|u[íi]sque|rum|gim|gin|licor|champanhe|espumante|sidra|caf[ée]|ch[áa]|mate|chimarr[ãa]o|terer[ée]|isot[ôo]nico|energ[ée]tico|smoothie|milk-?shake|kombucha|kefir|garapa|coquetel|caipirinha|capp?uccino|gemada|coca-?cola|pepsi|fanta|sprite|sprit|schweppes|sukita|tuba[íi]na|itubaina|itaba[íi]na|dolly|kuat|h2oh|gatorade|powerade|red bull|monster|yakult|toddynho|guaran[áa])([ ,)/-]|$)/i;
+
+  // Palavra que tanto nomeia a bebida quanto aparece no meio de um sólido:
+  // "Leite integral" é bebida, "chocolate ao leite" e "doce de leite" não são.
+  // Para essas, só vale quando abrem o nome — é onde o produto se apresenta.
+  const LIQ_INICIO = /^(leite|[áa]gua|bebida|vitamina|batida|achocolatado)([ ,(/-]|$)/i;
+
+  const pareceLiquido = (nome) => {
+    const n = String(nome || '').trim();
+    return !!n && !LIQ_EXCL.test(n) && (LIQ_PALAVRA.test(n) || LIQ_INICIO.test(n));
+  };
+
+  // "porção (200 g)" → "porção (200 ml)": o rótulo da medida é gravado junto
+  // com o registro, então marcar o registro como líquido sem mexer no rótulo
+  // deixaria a tela dizendo grama para sempre.
+  const rotuloEmMl = (rot) => String(rot || '').replace(/(\d[\d.,]*)\s*g\)/g, '$1 ml)');
+
   const chaveNome = (n) =>
     String(n || '')
       .toLowerCase()
@@ -322,7 +354,20 @@ const MacroDB = (() => {
     for (const e of entries) {
       if (e.ml) continue; // já é líquido: não mexe
       const f = (e.foodId && porId.get(e.foodId)) || porNome.get(chaveNome(e.nome));
-      if (f && f.l) mudar.push({ ...e, ml: 1 });
+      // o alimento manda; quando ele não sabe (lido de código de barras,
+      // cadastrado à mão), o nome do registro decide
+      if (!(f && f.l) && !pareceLiquido(e.nome)) continue;
+      mudar.push({ ...e, ml: 1, medida: e.medida === 'g' ? 'g' : rotuloEmMl(e.medida) });
+    }
+
+    // Alimento próprio que é bebida e não sabia: conserta a ficha também,
+    // senão o próximo registro dele nasce em grama de novo.
+    const proprios = await getCustomFoods();
+    for (const f of proprios) {
+      if (f.l || !pareceLiquido(f.n)) continue;
+      const corrigido = { ...f, l: 1 };
+      if (Array.isArray(f.m)) corrigido.m = f.m.map(([rot, gr]) => [rotuloEmMl(rot), gr]);
+      await addCustomFood(corrigido);
     }
     if (mudar.length) {
       try {
@@ -648,6 +693,7 @@ const MacroDB = (() => {
     updateEntry,
     deleteEntry,
     revisarLiquidos,
+    pareceLiquido,
     getEntry,
     getAllEntries,
     getEntriesBetween,

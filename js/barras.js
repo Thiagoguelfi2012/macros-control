@@ -127,13 +127,24 @@ const Barras = (() => {
       g: Math.round(g * 10) / 10,
       m: [],
     };
+    // Líquido ou sólido, decidido antes das medidas — o rótulo da medida é
+    // gravado junto com o registro e depois não tem conserto fácil.
+    //
+    // A embalagem é a primeira régua: "350 ml" não deixa dúvida. Mas o Open
+    // Food Facts nem sempre traz o volume, e aí uma Coca-Cola voltava sem
+    // marca e virava grama no diário. Quando a embalagem se cala, o nome
+    // responde, com a mesma régua que a base usa.
+    const diz = String(prod.quantity || prod.serving_size || '');
+    if (/\b(ml|l|litro|litros)\b/i.test(diz)) food.l = 1;
+    else if (typeof MacroDB !== 'undefined' && MacroDB.pareceLiquido && MacroDB.pareceLiquido(nome)) food.l = 1;
+    const un = food.l ? 'ml' : 'g';
+
     // porção do rótulo e tamanho da embalagem viram medidas caseiras
     const porcao = parseFloat(String(prod.serving_size || '').replace(',', '.'));
-    if (porcao > 0 && porcao < 2000) food.m.push([`porção (${Math.round(porcao)} g)`, Math.round(porcao)]);
+    if (porcao > 0 && porcao < 2000) food.m.push([`porção (${Math.round(porcao)} ${un})`, Math.round(porcao)]);
     const pacote = parseFloat(String(prod.quantity || '').replace(',', '.'));
     if (pacote > 0 && pacote <= 5000 && Math.round(pacote) !== Math.round(porcao || 0))
-      food.m.push([`embalagem (${Math.round(pacote)} g)`, Math.round(pacote)]);
-    if (/\b(ml|l|litro)\b/i.test(String(prod.quantity || prod.serving_size || ''))) food.l = 1;
+      food.m.push([`embalagem (${Math.round(pacote)} ${un})`, Math.round(pacote)]);
     if (!food.m.length) delete food.m;
     return food;
   }

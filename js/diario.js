@@ -1638,19 +1638,20 @@
      grama e virou ml —, o que já está anotado não muda sozinho, e a Coca de
      ontem fica de fora do gráfico de líquidos.
 
-     A revisão roda uma vez por versão da base, porque é aí que alimentos
-     mudam de lado. Ela só ACRESCENTA a marca a quem virou líquido: não mexe
-     em peso, caloria nem macro, e não tira a marca de ninguém. Por isso não
-     tem o que desfazer, e dizer o que fez é o suficiente — não é uma decisão
-     que precise de permissão, é um conserto de contabilidade. */
-  const CHAVE_REVISAO = 'liquidosRevisados';
+     Ela roda a cada abertura, não uma vez só. A primeira versão guardava um
+     "já revisei" por versão da base, e isso tinha um buraco: quem abrisse o
+     app com o histórico vazio — aparelho novo, antes do sync descer — ficava
+     marcado como revisado, e os registros que chegassem depois nunca seriam
+     olhados. Rodar sempre é mais simples e mais certo: a passagem é uma
+     leitura só, e sem nada a mudar ela não grava nem avisa.
 
+     Ela só ACRESCENTA a marca a quem virou líquido: não mexe em peso,
+     caloria nem macro, e não tira a marca de ninguém. Por isso não tem o que
+     desfazer, e dizer o que fez é o suficiente — não é uma decisão que
+     precise de permissão, é um conserto de contabilidade. */
   async function revisarLiquidosDoHistorico() {
-    const marca = String(MacroDB.foodsInfo().versao ?? '');
-    if (!marca || localStorage.getItem(CHAVE_REVISAO) === marca) return;
     try {
       const r = await MacroDB.revisarLiquidos();
-      localStorage.setItem(CHAVE_REVISAO, marca);
       if (r.atualizados > 0) {
         avisarRevisao(r);
         await render();
