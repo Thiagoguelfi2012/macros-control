@@ -25,7 +25,7 @@ const OUT = join(ROOT, 'data', 'foods.json');
 const MANIFESTO = join(ROOT, 'data', 'foods-manifest.json');
 
 // Versão da base. Deve acompanhar o FOODS_VERSION de js/db.js.
-const VERSAO = 85;
+const VERSAO = 86;
 const TARGET_TOTAL = 25000; // efetivamente "tudo": inclui todas as fontes
 
 const SOURCES = {
@@ -694,6 +694,11 @@ const PT_MEASURES = [
   [/^suco/i, [['copo (250 ml)', 250]]],
   [/^cerveja/i, [['lata (350 ml)', 350], ['garrafa (600 ml)', 600]]],
   [/^vinho/i, [['taça (150 ml)', 150]]],
+  // Café em PÓ não se bebe de xícara: a regra de baixo dava "xícara pequena
+  // (50 ml)" ao pó torrado, e 50 g de pó viram 209 kcal — um erro de duas
+  // ordens de grandeza para quem quisesse anotar um cafezinho. O pó vem antes
+  // e leva medida de colher.
+  [/^(bebida, )?caf[ée].*(em p[óo]|[, ]p[óo](,|$)|[, ]mo[íi]d[oa](,|$))/i, [['colher de sopa (6 g)', 6], ['colher de chá (2 g)', 2]]],
   [/^caf[ée][, ]/i, [['xícara pequena (50 ml)', 50], ['xícara (150 ml)', 150]]],
   [/^achocolatado/i, [['colher de sopa', 20]]],
   [/^chocolate/i, [['quadrado (25 g)', 25]]],

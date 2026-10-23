@@ -86,8 +86,9 @@
       b.c += e.c;
       b.g += e.g;
       if (ehAgua(e)) b.agua += e.gramas || 0;
+      else if (e.ml) b.outros += e.gramas || 0;
     };
-    const vazio = { kcal: 0, p: 0, c: 0, g: 0, agua: 0 };
+    const vazio = { kcal: 0, p: 0, c: 0, g: 0, agua: 0, outros: 0 };
     let buckets = [];
     if (granularidade === 'hora') {
       buckets = Array.from({ length: 24 }, (_, h) => ({ label: `${String(h).padStart(2, '0')}h`, ...vazio }));
@@ -440,8 +441,9 @@
   function renderAgua(buckets, granularidade, entries, dias) {
     const { metaAgua } = MacroDB.getSettings();
     const total = entries.reduce((n, e) => (ehAgua(e) ? n + (e.gramas || 0) : n), 0);
+    const outros = entries.reduce((n, e) => (e.ml && !ehAgua(e) ? n + (e.gramas || 0) : n), 0);
     const card = $('#card-agua');
-    if (!total && !metaAgua) {
+    if (!total && !outros && !metaAgua) {
       card.hidden = true;
       if (chartAgua) {
         chartAgua.destroy();
@@ -462,13 +464,20 @@
     if (metaAgua && granularidade === 'dia') {
       cumpridos = buckets.filter((b) => b.agua >= metaAgua).length;
     }
+    const recorteOutros = buckets.reduce((n, b) => n + b.outros, 0);
+    // o título conta o que o gráfico está mostrando de fato
+    $('#agua-titulo').textContent = recorteOutros > 0 ? 'Água e outros líquidos' : 'Água';
     $('#agua-sub').textContent =
-      `${fmtVol(total)} ${parcial ? 'desde o primeiro registro de água' : 'no período'}` +
+      `${fmtVol(total)} de água ${parcial ? 'desde o primeiro registro' : 'no período'}` +
       ` · média de ${fmtVol(media)} por dia` +
       (metaAgua ? ` · meta de ${fmtVol(metaAgua)}` : '') +
-      (cumpridos != null ? ` · ${cumpridos} de ${buckets.length} ${buckets.length === 1 ? 'dia bateu' : 'dias bateram'} a meta` : '');
+      (cumpridos != null ? ` · ${cumpridos} de ${buckets.length} ${buckets.length === 1 ? 'dia bateu' : 'dias bateram'} a meta` : '') +
+      (recorteOutros > 0 ? ` · mais ${fmtVol(recorteOutros)} em outros líquidos` : '');
 
     const azul = '#2aa5d6';
+    // Âmbar para os outros líquidos: café e refrigerante puxam para esse lado,
+    // e ele não se confunde nem com o azul da água nem com o roxo da meta.
+    const ambar = '#c08a3e';
     const datasets = [
       {
         label: 'Água',
@@ -477,13 +486,29 @@
           metaAgua && b.agua >= metaAgua * (b.dias || 1) ? azul : `${azul}88`
         ),
         borderColor: azul,
+        stack: 'bebida',
         ...formaDaBarra(buckets.length, 1),
       },
     ];
+    // Os outros líquidos empilham em cima da água em vez de virar barra ao
+    // lado: o que interessa é quanto o dia rendeu de líquido no total, e lado
+    // a lado isso vira uma conta de cabeça. A meta continua sendo de ÁGUA —
+    // por isso a cor cheia da barra e a contagem de dias cumpridos seguem
+    // olhando só a água, e o café não empurra ninguém para dentro da meta.
+    if (recorteOutros > 0) {
+      datasets.push({
+        label: 'Outros líquidos',
+        data: buckets.map((b) => Math.round(b.outros)),
+        backgroundColor: `${ambar}aa`,
+        borderColor: ambar,
+        stack: 'bebida',
+        ...formaDaBarra(buckets.length, 1),
+      });
+    }
     if (metaAgua && granularidade !== 'hora') {
       datasets.push({
         type: 'line',
-        label: 'Meta',
+        label: 'Meta de água',
         data: buckets.map((b) => metaAgua * (b.dias || 1)),
         borderColor: cssVar('--alvo-line'),
         borderWidth: 2,
@@ -491,6 +516,8 @@
         pointRadius: 0,
         pointHoverRadius: 4,
         fill: false,
+        // pilha própria: sem isto a linha subiria junto com as barras
+        stack: 'linha-meta',
       });
     }
     if (chartAgua) chartAgua.destroy();
@@ -502,12 +529,22 @@
         maintainAspectRatio: false,
         interaction: { mode: 'index', intersect: false },
         plugins: {
-          legend: { display: !!metaAgua, labels: { color: cssVar('--ink-2'), usePointStyle: true, pointStyleWidth: 10, boxHeight: 8, font: { size: 11 } } },
-          tooltip: { callbacks: { label: (ctx) => ` ${ctx.dataset.label}: ${fmtVol(ctx.parsed.y)}` } },
+          legend: { display: !!metaAgua || recorteOutros > 0, labels: { color: cssVar('--ink-2'), usePointStyle: true, pointStyleWidth: 10, boxHeight: 8, font: { size: 11 } } },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => ` ${ctx.dataset.label}: ${fmtVol(ctx.parsed.y)}`,
+              footer: (itens) => {
+                if (recorteOutros <= 0) return '';
+                const b = buckets[itens[0].dataIndex];
+                return `Total de líquido: ${fmtVol((b.agua || 0) + (b.outros || 0))}`;
+              },
+            },
+          },
         },
         scales: {
-          x: { grid: { color: cssVar('--grid'), drawTicks: false }, border: { display: false }, ticks: { color: cssVar('--muted'), font: { size: 10 }, maxRotation: 60 } },
+          x: { stacked: true, grid: { color: cssVar('--grid'), drawTicks: false }, border: { display: false }, ticks: { color: cssVar('--muted'), font: { size: 10 }, maxRotation: 60 } },
           y: {
+            stacked: true,
             beginAtZero: true,
             grid: { color: cssVar('--grid'), drawTicks: false },
             border: { display: false },
@@ -933,7 +970,7 @@
     renderAlvo(tot, dias);
     const buckets = agregar(entries, inicio, fim, granularidade);
     renderCharts(recortarComDados(buckets, (b) => b.kcal > 0), granularidade, tot, dias);
-    renderAgua(recortarComDados(buckets, (b) => b.agua > 0), granularidade, entries, dias);
+    renderAgua(recortarComDados(buckets, (b) => b.agua > 0 || b.outros > 0), granularidade, entries, dias);
     renderComparar(entries);
   }
 

@@ -99,6 +99,10 @@ const FoodSearch = (() => {
       // O cardápio escreve "gnocchi", as tabelas guardam "nhoque".
       .replace(/\bgnocchi\b/g, 'nhoque')
       .replace(/\brisott?os?\b/g, 'risoto')
+      // "café preto" e "café puro" é como se pede, mas nenhum nome de tabela
+      // usa essas palavras — as duas buscas voltavam vazias. Um par de tokens
+      // vira outro par, então ninguém passa a precisar digitar mais.
+      .replace(/\bcafe (preto|puro|sem leite)\b/g, 'cafe coado')
       // O mesmo joelho de porco tem dois nomes alemães na mesa brasileira.
       .replace(/\bschweinshaxe\b/g, 'eisbein')
       // granola proteica Taeq: o sabor é "chocolate com café" no rótulo, mas

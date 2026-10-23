@@ -1248,6 +1248,12 @@
   function cardAgua(doDia) {
     const { metaAgua } = MacroDB.getSettings();
     const bebido = doDia.filter(ehAgua).reduce((n, e) => n + (e.gramas || 0), 0);
+    // Café, refrigerante, suco, leite — tudo que foi registrado em ml e não é
+    // água. Aparece ao lado, nunca somado: a meta é de água, e deixar o
+    // refrigerante empurrar a barra para a direita seria mentir para quem a
+    // configurou. Mas esconder também seria: quem tomou 800 ml de café tem o
+    // direito de ver isso no mesmo lugar em que acompanha a hidratação.
+    const outros = doDia.reduce((n, e) => (e.ml && !ehAgua(e) ? n + (e.gramas || 0) : n), 0);
     const card = document.createElement('section');
     card.className = 'agua-card';
     const meta = metaAgua || 0;
@@ -1278,6 +1284,7 @@
         <span class="agua-label">Água de hoje</span>
         <span class="agua-val"><b>${fmtVol(bebido)}</b>${meta ? ` / ${fmtVol(meta)}` : ''}</span>
       </div>
+      ${outros > 0 ? `<div class="agua-outros">+ ${fmtVol(outros)} em outros líquidos · ${fmtVol(bebido + outros)} no total</div>` : ''}
       ${
         meta
           ? `<div class="agua-bar"><div style="width:${pct.toFixed(1)}%"></div>${marcas}</div>
