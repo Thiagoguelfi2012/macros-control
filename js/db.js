@@ -361,13 +361,16 @@ const MacroDB = (() => {
     }
 
     // Alimento próprio que é bebida e não sabia: conserta a ficha também,
-    // senão o próximo registro dele nasce em grama de novo.
+    // senão o próximo registro dele nasce em grama de novo — e é a ficha, não
+    // o registro, que manda no rótulo da medida que o modal oferece.
     const proprios = await getCustomFoods();
+    let alimentos = 0;
     for (const f of proprios) {
       if (f.l || !pareceLiquido(f.n)) continue;
       const corrigido = { ...f, l: 1 };
       if (Array.isArray(f.m)) corrigido.m = f.m.map(([rot, gr]) => [rotuloEmMl(rot), gr]);
       await addCustomFood(corrigido);
+      alimentos++;
     }
     if (mudar.length) {
       try {
@@ -390,6 +393,7 @@ const MacroDB = (() => {
     return {
       total: entries.length,
       atualizados: mudar.length,
+      alimentos,
       distintos: nomes.length,
       nomes: nomes.slice(0, 6),
     };

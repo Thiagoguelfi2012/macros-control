@@ -1652,6 +1652,11 @@
   async function revisarLiquidosDoHistorico() {
     try {
       const r = await MacroDB.revisarLiquidos();
+      // Ficha corrigida precisa chegar à busca AGORA. O índice já tinha sido
+      // montado com a lista velha, e sem remontar o modal continuaria
+      // oferecendo "porção (200 g)" até a próxima abertura — que foi
+      // exatamente o que apareceu na tela de quem relatou.
+      if (r.alimentos > 0) FoodSearch.buildIndex(await MacroDB.ensureFoods());
       if (r.atualizados > 0) {
         avisarRevisao(r);
         await render();

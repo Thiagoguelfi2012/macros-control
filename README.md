@@ -230,8 +230,10 @@ python3 -m http.server 8000
   alimento cadastrado à mão) o **nome** decide, com a mesma lista que o gerador
   usa. Junto vai o rótulo da medida: "porção (200 g)" vira "porção (200 ml)",
   senão a tela continuaria dizendo grama, porque o rótulo é gravado junto com o
-  registro. O alimento próprio também é corrigido, para o próximo registro dele
-  não nascer em grama. Ela só acrescenta: não mexe em peso, caloria nem macro,
+  registro. O alimento próprio também é corrigido — é a ficha dele, não o
+  registro, que manda no rótulo que o modal oferece —, e o índice da busca é
+  remontado na hora, senão o modal continuaria oferecendo "porção (200 g)" até
+  a abertura seguinte. Ela só acrescenta: não mexe em peso, caloria nem macro,
   e não tira a marca de ninguém, então rodar de novo não desfaz nada e não há o
   que reverter — e roda a cada abertura, não uma vez por versão da base, porque
   quem abrisse com o histórico vazio ficaria marcado como revisado e o que
