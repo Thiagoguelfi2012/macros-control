@@ -224,11 +224,18 @@ python3 -m http.server 8000
 
   Consertar a base, porém, não conserta o que já foi anotado: a marca de
   líquido é **copiada do alimento para o registro** na hora de salvar, então a
-  Coca de ontem continuaria fora da conta. Na primeira abertura depois de uma
-  base nova, o Diário faz uma **revisão do histórico** — acrescenta a marca aos
-  registros cujo alimento virou líquido e avisa quantos foram. Ela só
-  acrescenta: não mexe em peso, caloria nem macro, e não tira a marca de
-  ninguém, então rodar de novo não desfaz nada e não há o que reverter. Empilhados e não lado a lado porque o que interessa é quanto o dia
+  Coca de ontem continuaria fora da conta. A cada abertura, o Diário faz uma **revisão do histórico**: acrescenta a marca aos
+  registros de bebida e avisa quantos foram. A régua tem duas pernas — o
+  alimento manda, e quando ele não sabe (produto lido no código de barras,
+  alimento cadastrado à mão) o **nome** decide, com a mesma lista que o gerador
+  usa. Junto vai o rótulo da medida: "porção (200 g)" vira "porção (200 ml)",
+  senão a tela continuaria dizendo grama, porque o rótulo é gravado junto com o
+  registro. O alimento próprio também é corrigido, para o próximo registro dele
+  não nascer em grama. Ela só acrescenta: não mexe em peso, caloria nem macro,
+  e não tira a marca de ninguém, então rodar de novo não desfaz nada e não há o
+  que reverter — e roda a cada abertura, não uma vez por versão da base, porque
+  quem abrisse com o histórico vazio ficaria marcado como revisado e o que
+  chegasse depois pelo sync nunca seria olhado. Empilhados e não lado a lado porque o que interessa é quanto o dia
   rendeu de líquido no total, e lado a lado isso vira conta de cabeça. Mas a
   meta continua sendo **de água**: a cor cheia da barra e a contagem de dias
   cumpridos seguem olhando só a água, então o refrigerante não empurra ninguém
