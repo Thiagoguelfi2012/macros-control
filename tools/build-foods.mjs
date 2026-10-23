@@ -25,7 +25,7 @@ const OUT = join(ROOT, 'data', 'foods.json');
 const MANIFESTO = join(ROOT, 'data', 'foods-manifest.json');
 
 // Versão da base. Deve acompanhar o FOODS_VERSION de js/db.js.
-const VERSAO = 86;
+const VERSAO = 87;
 const TARGET_TOTAL = 25000; // efetivamente "tudo": inclui todas as fontes
 
 const SOURCES = {
@@ -985,17 +985,30 @@ function stableId(prefix, nome) {
 // delimitadores explícitos ([ ,)] ou fim).
 const LIQ_START =
   /^(cerveja|chope|refrigerante|suco|n[ée]ctar|refresco|[áa]gua|leite|bebida|vinho|cacha[çc]a|aguardente|pinga|vodka|whisky|u[íi]sque|rum|gim|gin|licor|champanhe|espumante|sidra|caf[ée]|ch[áa]|mate|chimarr[ãa]o|isot[ôo]nico|energ[ée]tico|vitamina|smoothie|milk-?shake|kombucha|caldo de cana|garapa|coquetel|caipirinha|batida|cappuccino|capuccino|chocolate quente|gemada|gin t[ôo]nica|cuba libre|refrigerantes?)([ ,(]|$)/i;
-const LIQ_EXCL = /(^|[ ,(])p[óo]([ ,)]|$)|desidratad|condensado|em barra|mistura|creme de leite|sorvete/i;
+const LIQ_EXCL = /(^|[ ,(])p[óo]([ ,)]|$)|desidratad|condensado|em barra|mistura|creme de leite|sorvete|xarope|picol[ée]|geladinho|gelatina|levedo|com suco de|molho de salada/i;
+
+// Algumas bebidas não começam pela palavra que as identifica — "Coca-cola
+// tradicional", "Sprit refrigerante tradicional", "Toddynho". A regra acima,
+// ancorada no início, deixava todas elas em grama, o que as tirava da conta
+// de líquidos. Aqui a marca vale em qualquer posição do nome, com
+// delimitadores explícitos porque \b do JS falha depois de acento.
+const LIQ_MARCA =
+  /(^|[ ,(/-])(coca-?cola|pepsi|fanta|sprite|sprit|schweppes|sukita|tuba[íi]na|itaba[íi]na|itaub[íi]na|itubaína|itubaina|dolly|kuat|h2oh|gatorade|powerade|red bull|monster|yakult|toddynho|guaran[áa]|refrigerante|refrigerantes|q-suco|terer[ée]|chimarr[ãa]o|suco|kefir|extrato de soja)([ ,)/-]|$)/i;
 
 function isLiquid(nome) {
-  return !LIQ_EXCL.test(nome) && LIQ_START.test(nome.trim());
+  const n = nome.trim();
+  return !LIQ_EXCL.test(n) && (LIQ_START.test(n) || LIQ_MARCA.test(n));
 }
 
 // medidas padrão por tipo de bebida (aplicadas quando o item não tem nenhuma)
 const LIQ_MEASURES = [
   [/cerveja/i, [['lata (350 ml)', 350], ['long neck (330 ml)', 330], ['garrafa (600 ml)', 600]]],
   [/chope/i, [['tulipa (300 ml)', 300], ['caldereta (350 ml)', 350]]],
-  [/refrigerante/i, [['lata (350 ml)', 350], ['copo (250 ml)', 250], ['garrafa (600 ml)', 600]]],
+  [/refrigerante|coca-?cola|pepsi|fanta|sprite|sprit|schweppes|sukita|tuba[íi]na|dolly|kuat|h2oh|guaran[áa]/i, [['lata (350 ml)', 350], ['copo (250 ml)', 250], ['garrafa (600 ml)', 600]]],
+  [/gatorade|powerade/i, [['garrafa (500 ml)', 500], ['copo (250 ml)', 250]]],
+  [/toddynho/i, [['unidade (200 ml)', 200]]],
+  [/yakult/i, [['frasco (80 ml)', 80]]],
+  [/q-suco|terer[ée]/i, [['copo (250 ml)', 250]]],
   [/suco|n[ée]ctar|refresco|garapa|caldo de cana/i, [['copo (250 ml)', 250], ['caixinha (200 ml)', 200]]],
   [/[áa]gua de coco/i, [['copo (250 ml)', 250], ['caixinha (200 ml)', 200]]],
   [/[áa]gua/i, [['copo (250 ml)', 250], ['garrafa (500 ml)', 500]]],
@@ -1063,11 +1076,15 @@ async function main() {
   // 3) Camada curada de "vida real" (suplementos, salgados, redes, japonesa)
   let nCurados = 0;
   for (const cItem of CURADOS) {
-    if (push({
+    const food = {
       i: stableId('r', cItem.n), n: cItem.n, f: 'r',
       kcal: round1(cItem.kcal), p: round1(cItem.p), c: round1(cItem.c), g: round1(cItem.g),
       m: (cItem.m || []).map(([l, gr]) => [l, gr]),
-    }, true)) nCurados++;
+    };
+    // o l:1 escrito no arquivo tem que chegar aqui: sem isto a bebida vira
+    // sólida e some do gráfico de líquidos (marcas já fazia, curados não)
+    if (cItem.l) food.l = 1;
+    if (push(food, true)) nCurados++;
   }
 
   // 4) Marcas brasileiras (valores de rótulo)
@@ -1153,7 +1170,15 @@ async function main() {
     if (isLiquid(f.n)) {
       f.l = 1;
       nLiquidos++;
-      if (!f.m || !f.m.length) f.m = liquidMeasures(f.n);
+      // Medida de sólido em bebida não serve: o suco de uva herdava "cacho
+      // pequeno" da fruta e o de laranja herdava "unidade". Se nenhuma das
+      // medidas fala em ml ou L, elas vieram do alimento sólido de origem e
+      // são trocadas pelas de bebida.
+      const temVolume = (f.m || []).some(([rot]) => /\bml\b|\bL\b|litro/i.test(rot));
+      if (!f.m || !f.m.length || !temVolume) {
+        const liq = liquidMeasures(f.n);
+        if (liq.length) f.m = liq;
+      }
     }
   }
 

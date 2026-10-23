@@ -216,7 +216,11 @@ python3 -m http.server 8000
 
   Em cima da água vêm empilhados, em âmbar, os **outros líquidos** do dia —
   café, refrigerante, suco, leite, qualquer coisa registrada em ml que não seja
-  água. Empilhados e não lado a lado porque o que interessa é quanto o dia
+  água — e isso depende de a bebida estar marcada como líquida na base, o que
+  nem sempre estava: refrigerante de marca importado do IBGE ("Coca-cola
+  tradicional") vinha em grama e sem medida, e o `l: 1` escrito à mão em
+  `curados.mjs` era descartado no build. Os dois casos estão corrigidos, e a
+  base passou de 909 para 1.040 líquidos. Empilhados e não lado a lado porque o que interessa é quanto o dia
   rendeu de líquido no total, e lado a lado isso vira conta de cabeça. Mas a
   meta continua sendo **de água**: a cor cheia da barra e a contagem de dias
   cumpridos seguem olhando só a água, então o refrigerante não empurra ninguém
