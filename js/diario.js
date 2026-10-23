@@ -1631,6 +1631,50 @@
   let baseCarregando = null;
 
   // Começa a base (e o índice de busca) só depois que a tela está desenhada.
+  /* Bebida antiga anotada como sólida.
+
+     A marca de líquido é copiada do alimento para o registro na hora de
+     salvar. Quando a base conserta um alimento — refrigerante que estava em
+     grama e virou ml —, o que já está anotado não muda sozinho, e a Coca de
+     ontem fica de fora do gráfico de líquidos.
+
+     A revisão roda uma vez por versão da base, porque é aí que alimentos
+     mudam de lado. Ela só ACRESCENTA a marca a quem virou líquido: não mexe
+     em peso, caloria nem macro, e não tira a marca de ninguém. Por isso não
+     tem o que desfazer, e dizer o que fez é o suficiente — não é uma decisão
+     que precise de permissão, é um conserto de contabilidade. */
+  const CHAVE_REVISAO = 'liquidosRevisados';
+
+  async function revisarLiquidosDoHistorico() {
+    const marca = String(MacroDB.foodsInfo().versao ?? '');
+    if (!marca || localStorage.getItem(CHAVE_REVISAO) === marca) return;
+    try {
+      const r = await MacroDB.revisarLiquidos();
+      localStorage.setItem(CHAVE_REVISAO, marca);
+      if (r.atualizados > 0) {
+        avisarRevisao(r);
+        await render();
+      }
+    } catch {
+      /* conserto cosmético: se falhar, tenta na próxima abertura */
+    }
+  }
+
+  function avisarRevisao(r) {
+    const el = document.createElement('div');
+    el.className = 'aviso-revisao';
+    const n = r.atualizados;
+    const lista = r.nomes.length
+      ? ` — ${esc(r.nomes.join(', '))}${r.nomes.length < r.distintos ? ' e outras' : ''}`
+      : '';
+    el.innerHTML = `
+      <span><b>${n} ${n === 1 ? 'registro de bebida passou' : 'registros de bebida passaram'}</b>
+      a contar como líquido${lista}. Peso e calorias não mudaram.</span>
+      <button class="btn btn-mini btn-ghost" type="button">ok</button>`;
+    el.querySelector('button').addEventListener('click', () => el.remove());
+    historico.parentNode.insertBefore(el, historico);
+  }
+
   const carregarBase = () => {
     if (!baseCarregando)
       baseCarregando = MacroDB.ensureFoods().then((foods) => {
@@ -1741,7 +1785,7 @@
     restaurarCesta();
     await render();
     // diário na tela: agora sim a base, sem disputar a primeira pintura
-    carregarBase();
+    carregarBase().then(revisarLiquidosDoHistorico);
     // Refeição recuperada de uma recarga: reabre o modal onde o usuário parou.
     // Só quando há item ATIVO — cesta só com guardados é tralha para depois, e
     // reabrir o modal a cada visita por causa dela seria um estorvo.

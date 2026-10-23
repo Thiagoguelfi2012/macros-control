@@ -4,7 +4,7 @@ const MacroDB = (() => {
   const DB_VERSION = 4;
   const FOODS_URL = 'data/foods.json';
   const MANIFESTO_URL = 'data/foods-manifest.json';
-  const FOODS_VERSION = 87; // deve acompanhar o campo v de data/foods.json
+  const FOODS_VERSION = 88; // deve acompanhar o campo v de data/foods.json
   let dbPromise = null;
   let foodsCache = null; // array em memória para busca instantânea
   let versaoCarregada = null; // versão que de fato entrou na busca
@@ -287,6 +287,67 @@ const MacroDB = (() => {
     }
     notifyChange('entries');
     return entry.id;
+  }
+
+  /* ---- Revisão: bebida antiga que estava marcada como sólida ---- */
+
+  // O gráfico de líquidos conta pelo campo `ml` do REGISTRO, que é copiado do
+  // alimento na hora de salvar. Quando um alimento é corrigido na base — um
+  // refrigerante que estava em grama e virou ml —, os registros antigos ficam
+  // com a marcação velha e a Coca de ontem continua fora da conta.
+  //
+  // Esta revisão não toca em peso, caloria nem macro: só acrescenta a marca de
+  // líquido a quem virou líquido na base. E nunca TIRA a marca de ninguém —
+  // quem anotou água na mão, ou cadastrou a própria bebida, continua com ela.
+  // Por isso rodar de novo não desfaz nada e não há o que reverter.
+  const chaveNome = (n) =>
+    String(n || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+  async function revisarLiquidos() {
+    const foods = await ensureFoods();
+    const porId = new Map();
+    const porNome = new Map();
+    for (const f of foods) {
+      porId.set(f.i, f);
+      const k = chaveNome(f.n);
+      if (!porNome.has(k)) porNome.set(k, f);
+    }
+    const entries = await getAllEntries();
+    const mudar = [];
+    for (const e of entries) {
+      if (e.ml) continue; // já é líquido: não mexe
+      const f = (e.foodId && porId.get(e.foodId)) || porNome.get(chaveNome(e.nome));
+      if (f && f.l) mudar.push({ ...e, ml: 1 });
+    }
+    if (mudar.length) {
+      try {
+        const db = await open();
+        // uma transação só: 500 registros não podem virar 500 gravações
+        const t = db.transaction('entries', 'readwrite');
+        const st = t.objectStore('entries');
+        for (const e of mudar) st.put(e);
+        await new Promise((ok, erro) => {
+          t.oncomplete = ok;
+          t.onerror = () => erro(t.error);
+        });
+      } catch {
+        const alterados = new Map(mudar.map((e) => [e.id, e]));
+        lsSave(lsAll().map((e) => alterados.get(e.id) || e));
+      }
+      notifyChange('entries');
+    }
+    const nomes = [...new Set(mudar.map((e) => e.nome))];
+    return {
+      total: entries.length,
+      atualizados: mudar.length,
+      distintos: nomes.length,
+      nomes: nomes.slice(0, 6),
+    };
   }
 
   async function deleteEntry(id) {
@@ -586,6 +647,7 @@ const MacroDB = (() => {
     addEntry,
     updateEntry,
     deleteEntry,
+    revisarLiquidos,
     getEntry,
     getAllEntries,
     getEntriesBetween,

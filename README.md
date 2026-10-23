@@ -220,7 +220,15 @@ python3 -m http.server 8000
   nem sempre estava: refrigerante de marca importado do IBGE ("Coca-cola
   tradicional") vinha em grama e sem medida, e o `l: 1` escrito à mão em
   `curados.mjs` era descartado no build. Os dois casos estão corrigidos, e a
-  base passou de 909 para 1.040 líquidos. Empilhados e não lado a lado porque o que interessa é quanto o dia
+  base passou de 909 para 1.040 líquidos.
+
+  Consertar a base, porém, não conserta o que já foi anotado: a marca de
+  líquido é **copiada do alimento para o registro** na hora de salvar, então a
+  Coca de ontem continuaria fora da conta. Na primeira abertura depois de uma
+  base nova, o Diário faz uma **revisão do histórico** — acrescenta a marca aos
+  registros cujo alimento virou líquido e avisa quantos foram. Ela só
+  acrescenta: não mexe em peso, caloria nem macro, e não tira a marca de
+  ninguém, então rodar de novo não desfaz nada e não há o que reverter. Empilhados e não lado a lado porque o que interessa é quanto o dia
   rendeu de líquido no total, e lado a lado isso vira conta de cabeça. Mas a
   meta continua sendo **de água**: a cor cheia da barra e a contagem de dias
   cumpridos seguem olhando só a água, então o refrigerante não empurra ninguém
