@@ -320,6 +320,79 @@ export const MARCAS = [
   { n: "Leite Piracanjuba zero lactose integral", kcal: 60, p: 3, c: 4.7, g: 3.2, l: 1, m: [["copo (200 ml)", 200]] },
   { n: "Leite Elegê integral", kcal: 60, p: 3, c: 4.7, g: 3.2, l: 1, m: [["copo (200 ml)", 200]] },
   { n: "Leite Jussara integral", kcal: 61, p: 3.1, c: 4.8, g: 3.3, l: 1, m: [["copo (200 ml)", 200]] },
+
+  // ---- Leite: o resto das marcas ----
+  // Aqui vale dizer o que a lista NÃO é: um levantamento de rótulo marca a
+  // marca. Leite de caixinha não varia por marca — varia por teor de gordura,
+  // que é o que a lei fixa. Integral é no mínimo 3% de gordura, semidesnatado
+  // fica entre 0,6% e 2,9%, desnatado no máximo 0,5%, e o resto (proteína e
+  // lactose) é o mesmo leite de vaca em todas elas. Por isso os valores novos
+  // se repetem entre marcas: não é preguiça, é que o produto é o mesmo.
+  //
+  // As entradas mais antigas desta lista ficaram com o número que eu havia
+  // anotado do rótulo de cada uma, e por isso aparecem com 33, 35 ou 36 kcal
+  // no desnatado em vez de um valor único. Não uniformizei: três kcal em cem
+  // mililitros não mudam decisão nenhuma, e sobrescrever rótulo com média é
+  // trocar informação por arrumação.
+  //
+  // Quem muda de verdade é a classe. O copo de 200 ml vai de 66 kcal no
+  // integral a 46 no semidesnatado e 33 no desnatado — metade da caloria some
+  // entre o primeiro e o último, e toda ela é gordura.
+  //
+  // Xandô e Fazenda Bela Vista são leite tipo A de garrafa, não UHT: vêm de
+  // uma fazenda só, são pasteurizados sem padronizar a gordura para baixo, e
+  // por isso o integral delas fica um pouco acima do de caixinha. Os sites de
+  // varejo publicam a tabela deles com erro grosseiro — a mesma garrafa
+  // aparece com 64 e com 124 kcal porque alguém rotulou a coluna de 100 ml
+  // como se fosse de 200. Os valores aqui saem do teor de gordura declarado.
+  { n: "Leite semidesnatado Piracanjuba", kcal: 46, p: 3.2, c: 4.8, g: 1.5, l: 1, m: [["copo (200 ml)", 200], ["caixa (1 L)", 1000]] },
+  { n: "Leite semidesnatado Parmalat", kcal: 46, p: 3.2, c: 4.8, g: 1.5, l: 1, m: [["copo (200 ml)", 200], ["caixa (1 L)", 1000]] },
+  { n: "Leite semidesnatado Tirol", kcal: 46, p: 3.2, c: 4.8, g: 1.5, l: 1, m: [["copo (200 ml)", 200], ["caixa (1 L)", 1000]] },
+  { n: "Leite desnatado Tirol", kcal: 33, p: 3.2, c: 4.7, g: 0.2, l: 1, m: [["copo (200 ml)", 200], ["caixa (1 L)", 1000]] },
+  { n: "Leite semidesnatado Jussara", kcal: 46, p: 3.2, c: 4.8, g: 1.5, l: 1, m: [["copo (200 ml)", 200], ["caixa (1 L)", 1000]] },
+  { n: "Leite desnatado Jussara", kcal: 33, p: 3.2, c: 4.7, g: 0.2, l: 1, m: [["copo (200 ml)", 200], ["caixa (1 L)", 1000]] },
+  { n: "Leite integral Shefa", kcal: 61, p: 3.2, c: 4.7, g: 3.3, l: 1, m: [["copo (200 ml)", 200], ["caixa (1 L)", 1000]] },
+  { n: "Leite semidesnatado Shefa", kcal: 46, p: 3.2, c: 4.8, g: 1.5, l: 1, m: [["copo (200 ml)", 200], ["caixa (1 L)", 1000]] },
+  { n: "Leite desnatado Shefa", kcal: 33, p: 3.2, c: 4.7, g: 0.2, l: 1, m: [["copo (200 ml)", 200], ["caixa (1 L)", 1000]] },
+  { n: "Leite integral Camponesa", kcal: 61, p: 3.2, c: 4.7, g: 3.3, l: 1, m: [["copo (200 ml)", 200], ["caixa (1 L)", 1000]] },
+  { n: "Leite semidesnatado Camponesa", kcal: 46, p: 3.2, c: 4.8, g: 1.5, l: 1, m: [["copo (200 ml)", 200], ["caixa (1 L)", 1000]] },
+  { n: "Leite desnatado Camponesa", kcal: 33, p: 3.2, c: 4.7, g: 0.2, l: 1, m: [["copo (200 ml)", 200], ["caixa (1 L)", 1000]] },
+  { n: "Leite integral Betânia", kcal: 61, p: 3.2, c: 4.7, g: 3.3, l: 1, m: [["copo (200 ml)", 200], ["caixa (1 L)", 1000]] },
+  { n: "Leite semidesnatado Betânia", kcal: 46, p: 3.2, c: 4.8, g: 1.5, l: 1, m: [["copo (200 ml)", 200], ["caixa (1 L)", 1000]] },
+  { n: "Leite desnatado Betânia", kcal: 33, p: 3.2, c: 4.7, g: 0.2, l: 1, m: [["copo (200 ml)", 200], ["caixa (1 L)", 1000]] },
+  { n: "Leite integral Cemil", kcal: 61, p: 3.2, c: 4.7, g: 3.3, l: 1, m: [["copo (200 ml)", 200], ["caixa (1 L)", 1000]] },
+  { n: "Leite semidesnatado Cemil", kcal: 46, p: 3.2, c: 4.8, g: 1.5, l: 1, m: [["copo (200 ml)", 200], ["caixa (1 L)", 1000]] },
+  { n: "Leite desnatado Cemil", kcal: 33, p: 3.2, c: 4.7, g: 0.2, l: 1, m: [["copo (200 ml)", 200], ["caixa (1 L)", 1000]] },
+  { n: "Leite integral Líder", kcal: 61, p: 3.2, c: 4.7, g: 3.3, l: 1, m: [["copo (200 ml)", 200], ["caixa (1 L)", 1000]] },
+  { n: "Leite semidesnatado Líder", kcal: 46, p: 3.2, c: 4.8, g: 1.5, l: 1, m: [["copo (200 ml)", 200], ["caixa (1 L)", 1000]] },
+  { n: "Leite desnatado Líder", kcal: 33, p: 3.2, c: 4.7, g: 0.2, l: 1, m: [["copo (200 ml)", 200], ["caixa (1 L)", 1000]] },
+  { n: "Leite integral Frimesa", kcal: 61, p: 3.2, c: 4.7, g: 3.3, l: 1, m: [["copo (200 ml)", 200], ["caixa (1 L)", 1000]] },
+  { n: "Leite semidesnatado Frimesa", kcal: 46, p: 3.2, c: 4.8, g: 1.5, l: 1, m: [["copo (200 ml)", 200], ["caixa (1 L)", 1000]] },
+  { n: "Leite desnatado Frimesa", kcal: 33, p: 3.2, c: 4.7, g: 0.2, l: 1, m: [["copo (200 ml)", 200], ["caixa (1 L)", 1000]] },
+  { n: "Leite integral Danby", kcal: 61, p: 3.2, c: 4.7, g: 3.3, l: 1, m: [["copo (200 ml)", 200], ["caixa (1 L)", 1000]] },
+  { n: "Leite semidesnatado Danby", kcal: 46, p: 3.2, c: 4.8, g: 1.5, l: 1, m: [["copo (200 ml)", 200], ["caixa (1 L)", 1000]] },
+  { n: "Leite desnatado Danby", kcal: 33, p: 3.2, c: 4.7, g: 0.2, l: 1, m: [["copo (200 ml)", 200], ["caixa (1 L)", 1000]] },
+  { n: "Leite integral Leitíssimo", kcal: 61, p: 3.2, c: 4.7, g: 3.3, l: 1, m: [["copo (200 ml)", 200], ["caixa (1 L)", 1000]] },
+  { n: "Leite semidesnatado Leitíssimo", kcal: 46, p: 3.2, c: 4.8, g: 1.5, l: 1, m: [["copo (200 ml)", 200], ["caixa (1 L)", 1000]] },
+  { n: "Leite desnatado Leitíssimo", kcal: 33, p: 3.2, c: 4.7, g: 0.2, l: 1, m: [["copo (200 ml)", 200], ["caixa (1 L)", 1000]] },
+
+  { n: "Leite tipo A integral Xandô (garrafa)", kcal: 64, p: 3.3, c: 4.6, g: 3.6, l: 1, m: [["copo (200 ml)", 200], ["garrafa (1 L)", 1000]] },
+  { n: "Leite tipo A semidesnatado Xandô (garrafa)", kcal: 47, p: 3.3, c: 4.7, g: 1.5, l: 1, m: [["copo (200 ml)", 200], ["garrafa (1 L)", 1000]] },
+  { n: "Leite tipo A desnatado Xandô (garrafa)", kcal: 34, p: 3.3, c: 4.7, g: 0.2, l: 1, m: [["copo (200 ml)", 200], ["garrafa (1 L)", 1000]] },
+  { n: "Leite tipo A integral Fazenda Bela Vista (garrafa)", kcal: 64, p: 3.3, c: 4.6, g: 3.6, l: 1, m: [["copo (200 ml)", 200], ["garrafa (1 L)", 1000]] },
+  { n: "Leite tipo A semidesnatado Fazenda Bela Vista (garrafa)", kcal: 47, p: 3.3, c: 4.7, g: 1.5, l: 1, m: [["copo (200 ml)", 200], ["garrafa (1 L)", 1000]] },
+  { n: "Leite tipo A desnatado Fazenda Bela Vista (garrafa)", kcal: 34, p: 3.3, c: 4.7, g: 0.2, l: 1, m: [["copo (200 ml)", 200], ["garrafa (1 L)", 1000]] },
+
+  { n: "Leite tipo A semidesnatado zero lactose Xandô (garrafa)", kcal: 47, p: 3.3, c: 4.7, g: 1.5, l: 1, m: [["copo (200 ml)", 200], ["garrafa (1 L)", 1000]] },
+  { n: "Leite tipo A semidesnatado zero lactose Fazenda Bela Vista (garrafa)", kcal: 47, p: 3.3, c: 4.7, g: 1.5, l: 1, m: [["copo (200 ml)", 200], ["garrafa (1 L)", 1000]] },
+  { n: "Leite integral zero lactose Italac", kcal: 61, p: 3.2, c: 4.7, g: 3.3, l: 1, m: [["copo (200 ml)", 200], ["caixa (1 L)", 1000]] },
+  { n: "Leite integral zero lactose Itambé", kcal: 61, p: 3.2, c: 4.7, g: 3.3, l: 1, m: [["copo (200 ml)", 200], ["caixa (1 L)", 1000]] },
+  { n: "Leite integral zero lactose Parmalat", kcal: 61, p: 3.2, c: 4.7, g: 3.3, l: 1, m: [["copo (200 ml)", 200], ["caixa (1 L)", 1000]] },
+  { n: "Leite integral zero lactose Elegê", kcal: 61, p: 3.2, c: 4.7, g: 3.3, l: 1, m: [["copo (200 ml)", 200], ["caixa (1 L)", 1000]] },
+  { n: "Leite integral zero lactose Shefa", kcal: 61, p: 3.2, c: 4.7, g: 3.3, l: 1, m: [["copo (200 ml)", 200], ["caixa (1 L)", 1000]] },
+  { n: "Leite desnatado zero lactose Italac", kcal: 33, p: 3.2, c: 4.7, g: 0.2, l: 1, m: [["copo (200 ml)", 200], ["caixa (1 L)", 1000]] },
+  { n: "Leite desnatado zero lactose Piracanjuba", kcal: 33, p: 3.2, c: 4.7, g: 0.2, l: 1, m: [["copo (200 ml)", 200], ["caixa (1 L)", 1000]] },
+  { n: "Leite desnatado zero lactose Parmalat", kcal: 33, p: 3.2, c: 4.7, g: 0.2, l: 1, m: [["copo (200 ml)", 200], ["caixa (1 L)", 1000]] },
   { n: "Bebida de soja Ades original", kcal: 40, p: 2.4, c: 3.5, g: 1.8, l: 1, m: [["copo (200 ml)", 200], ["caixinha (200 ml)", 200]] },
   { n: "Bebida de soja Ades maçã", kcal: 43, p: 0.6, c: 9.8, g: 0.3, l: 1, m: [["caixinha (200 ml)", 200]] },
   { n: "Bebida vegetal Naveia (aveia) original", kcal: 45, p: 0.8, c: 7.5, g: 1.4, l: 1, m: [["copo (200 ml)", 200]] },
