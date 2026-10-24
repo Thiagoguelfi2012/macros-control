@@ -233,8 +233,8 @@ export const CURADOS = [
   { n: 'Salgadinho de pacote (tipo Doritos)', kcal: 500, p: 7, c: 60, g: 26, m: [['pacote pequeno (55 g)', 55]] },
   { n: 'Pipoca de micro-ondas (pronta)', kcal: 480, p: 9, c: 55, g: 25, m: [['pacote (50 g)', 50]] },
   { n: 'Sorvete de massa (bola)', kcal: 200, p: 3.5, c: 25, g: 10, m: [['bola (60 g)', 60]] },
-  { n: 'Açaí na tigela com granola e banana', kcal: 160, p: 2, c: 28, g: 5, m: [['tigela pequena (300 g)', 300], ['tigela média (500 g)', 500]] },
-  { n: 'Açaí puro (polpa batida com xarope de guaraná)', kcal: 110, p: 1, c: 21, g: 3.5, m: [['copo (300 g)', 300], ['copo (500 g)', 500]] },
+  { n: 'Açaí na tigela com granola e banana', kcal: 160, p: 2, c: 26.7, g: 5, m: [['tigela pequena (300 g)', 300], ['tigela média (500 g)', 500]] },
+  { n: 'Açaí puro (polpa batida com xarope de guaraná)', kcal: 110, p: 1, c: 18.6, g: 3.5, m: [['copo (300 g)', 300], ['copo (500 g)', 500]] },
 
   // ---- Docinhos de festa e doces gourmet ----
   { n: 'Brigadeiro tradicional', kcal: 330, p: 4, c: 55, g: 11, m: [['unidade (20 g)', 20], ['colher (brigadeiro de colher)', 40]] },
@@ -295,7 +295,7 @@ export const CURADOS = [
   { n: 'Chocolate branco (barra)', kcal: 560, p: 6, c: 58, g: 33, m: [['quadrado (10 g)', 10], ['barra (25 g)', 25]] },
   { n: 'Picolé de frutas', kcal: 90, p: 0, c: 22, g: 0, m: [['unidade (60 g)', 60]] },
   { n: 'Picolé de chocolate', kcal: 220, p: 3, c: 28, g: 10, m: [['unidade (65 g)', 65]] },
-  { n: 'Açaí com leite ninho e Nutella (copo)', kcal: 200, p: 3, c: 30, g: 8, m: [['copo (300 g)', 300], ['copo (500 g)', 500]] },
+  { n: 'Açaí com leite ninho e Nutella (copo)', kcal: 200, p: 3, c: 29.0, g: 8, m: [['copo (300 g)', 300], ['copo (500 g)', 500]] },
   { n: 'Milk-shake de chocolate', kcal: 160, p: 3, c: 24, g: 6, m: [['copo (400 ml)', 400]] },
   { n: 'Chocolate quente cremoso', kcal: 120, p: 3, c: 18, g: 4, m: [['xícara (200 ml)', 200]] },
   { n: 'Gelatina (pote)', kcal: 60, p: 1, c: 14, g: 0, m: [['pote (110 g)', 110]] },
@@ -353,6 +353,36 @@ export const CURADOS = [
   { n: 'Suco de melancia com limão natural (sem açúcar)', kcal: 30, p: 0.6, c: 6.7, g: 0.1, l: 1, m: [['copo (250 ml)', 250], ['copo grande (400 ml)', 400]] },
   { n: 'Limonada suíça (com açúcar)', kcal: 60, p: 0.4, c: 14.6, g: 0.2, l: 1, m: [['copo (250 ml)', 250], ['copo grande (400 ml)', 400]] },
   { n: 'Suco verde (couve, limão, gengibre)', kcal: 30, p: 1, c: 6.4, g: 0, l: 1, m: [['copo (300 ml)', 300], ['copo (250 ml)', 250]] },
+
+  // ---- Açaí ----
+  // Duas coisas diferentes com o mesmo nome, e misturá-las erra a conta pela
+  // metade. O SUCO é a polpa batida com água, bebida de copo, e vai aqui em
+  // ml. O CREME é a polpa batida grossa que se come de colher, e vai em grama
+  // logo abaixo — o mesmo copo de 300 traz 93 kcal de suco com banana e 118
+  // de creme com banana, porque o creme é quase só polpa.
+  //
+  // A gordura é a assinatura do açaí e a razão de ele não se parecer com suco
+  // de fruta nenhum: mesmo o puro sem açúcar tem 2,4 g de gordura por 100 ml,
+  // mais que qualquer outro suco desta lista. Metade da caloria dele vem daí,
+  // não do açúcar — por isso a versão "sem açúcar" ainda tem 47 kcal, enquanto
+  // o suco de morango sem açúcar tem 32.
+  { n: 'Suco de açaí puro', kcal: 47, p: 0.9, c: 5.5, g: 2.4, l: 1, m: [['copo (300 ml)', 300], ['copo pequeno (200 ml)', 200], ['copo grande (500 ml)', 500]] },
+  { n: 'Suco de açaí com açúcar (tradicional)', kcal: 81, p: 0.9, c: 14, g: 2.4, l: 1, m: [['copo (300 ml)', 300], ['copo pequeno (200 ml)', 200], ['copo grande (500 ml)', 500]] },
+  { n: 'Suco de açaí com guaraná (xarope)', kcal: 88, p: 0.8, c: 16, g: 2.3, l: 1, m: [['copo (300 ml)', 300], ['copo pequeno (200 ml)', 200], ['copo grande (500 ml)', 500]] },
+  { n: 'Suco de açaí com banana', kcal: 93, p: 1.2, c: 16.5, g: 2.5, l: 1, m: [['copo (300 ml)', 300], ['copo pequeno (200 ml)', 200], ['copo grande (500 ml)', 500]] },
+  { n: 'Suco de açaí com morango', kcal: 78, p: 1, c: 13, g: 2.4, l: 1, m: [['copo (300 ml)', 300], ['copo pequeno (200 ml)', 200], ['copo grande (500 ml)', 500]] },
+  { n: 'Suco de açaí com kiwi', kcal: 82, p: 1.1, c: 14, g: 2.4, l: 1, m: [['copo (300 ml)', 300], ['copo pequeno (200 ml)', 200], ['copo grande (500 ml)', 500]] },
+  { n: 'Suco de açaí com manga', kcal: 88, p: 1, c: 15.5, g: 2.4, l: 1, m: [['copo (300 ml)', 300], ['copo pequeno (200 ml)', 200], ['copo grande (500 ml)', 500]] },
+  { n: 'Suco de açaí com abacaxi', kcal: 83, p: 0.9, c: 14.5, g: 2.4, l: 1, m: [['copo (300 ml)', 300], ['copo pequeno (200 ml)', 200], ['copo grande (500 ml)', 500]] },
+  { n: 'Suco de açaí com maracujá', kcal: 82, p: 1, c: 14, g: 2.4, l: 1, m: [['copo (300 ml)', 300], ['copo pequeno (200 ml)', 200], ['copo grande (500 ml)', 500]] },
+  { n: 'Suco de açaí com laranja', kcal: 82, p: 1, c: 14, g: 2.4, l: 1, m: [['copo (300 ml)', 300], ['copo pequeno (200 ml)', 200], ['copo grande (500 ml)', 500]] },
+  { n: 'Suco de açaí com leite', kcal: 95, p: 2.6, c: 13.5, g: 3.4, l: 1, m: [['copo (300 ml)', 300], ['copo pequeno (200 ml)', 200], ['copo grande (500 ml)', 500]] },
+  { n: 'Suco de açaí com leite condensado', kcal: 118, p: 2.2, c: 20, g: 3.2, l: 1, m: [['copo (300 ml)', 300], ['copo pequeno (200 ml)', 200], ['copo grande (500 ml)', 500]] },
+
+  { n: 'Açaí no copo com banana', kcal: 118, p: 1.5, c: 20, g: 3.5, m: [['copo (300 g)', 300], ['copo pequeno (200 g)', 200], ['copo grande (500 g)', 500]] },
+  { n: 'Açaí no copo com morango', kcal: 108, p: 1.3, c: 18, g: 3.4, m: [['copo (300 g)', 300], ['copo pequeno (200 g)', 200], ['copo grande (500 g)', 500]] },
+  { n: 'Açaí no copo com banana e granola', kcal: 149, p: 2.2, c: 25, g: 4.5, m: [['copo (300 g)', 300], ['copo pequeno (200 g)', 200], ['copo grande (500 g)', 500]] },
+  { n: 'Açaí no copo com morango e leite em pó', kcal: 138, p: 2.4, c: 23, g: 4, m: [['copo (300 g)', 300], ['copo pequeno (200 g)', 200], ['copo grande (500 g)', 500]] },
 
   // ---- Vitaminas: a fruta que não vira suco ----
   { n: 'Suco de banana — na verdade vitamina, com leite', kcal: 85, p: 3.2, c: 14, g: 1.8, l: 1, m: [['copo (300 ml)', 300], ['copo (250 ml)', 250], ['copo grande (400 ml)', 400]] },
