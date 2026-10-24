@@ -311,9 +311,56 @@ export const CURADOS = [
   { n: 'Energético zero', kcal: 3, p: 0, c: 0.5, g: 0, m: [['lata (250 ml)', 250], ['lata (473 ml)', 473]] },
   { n: 'Café com leite (média, sem açúcar)', kcal: 35, p: 2, c: 3, g: 1.5, m: [['xícara (150 ml)', 150], ['copo (200 ml)', 200]] },
   { n: 'Cappuccino de máquina', kcal: 45, p: 2, c: 6, g: 1.5, m: [['xícara (180 ml)', 180]] },
-  { n: 'Suco de laranja natural', kcal: 45, p: 0.7, c: 10, g: 0.2, m: [['copo (250 ml)', 250]] },
-  { n: 'Suco verde (couve, limão, gengibre)', kcal: 30, p: 1, c: 7, g: 0, m: [['copo (300 ml)', 300]] },
-  { n: 'Vitamina de banana com aveia e leite', kcal: 90, p: 3, c: 15, g: 2, m: [['copo (300 ml)', 300]] },
+  // ---- Sucos naturais: a fruta batida na hora, sem açúcar ----
+  // O banco tinha suco de quase toda fruta, mas vindo das tabelas
+  // internacionais: "Suco, pêssego, enlatado, em calda", "Suco de uva,
+  // enlatado ou bottled". Nenhum deles é o copo que sai do liquidificador de
+  // casa ou do balcão da lanchonete, que é o que se toma aqui.
+  //
+  // Todos sem açúcar — é o "puro" que se pede. Quem adoça soma à parte: uma
+  // colher de sopa rasa num copo de 250 ml põe cerca de 48 kcal.
+  //
+  // Banana e abacate não dão suco, dão vitamina: a fruta não solta líquido, vai
+  // batida com leite. Estão mais abaixo, com o nome que as pessoas usam entre
+  // parênteses, senão quem procura "suco de banana" não acha nada — que foi
+  // exatamente o que aconteceu.
+  { n: 'Suco de laranja natural (sem açúcar)', kcal: 45, p: 0.7, c: 10.4, g: 0.2, l: 1, m: [['copo (250 ml)', 250], ['copo pequeno (200 ml)', 200], ['copo grande (400 ml)', 400], ['jarra (1 L)', 1000]] },
+  { n: 'Suco de kiwi natural (sem açúcar)', kcal: 45, p: 0.9, c: 10, g: 0.3, l: 1, m: [['copo (250 ml)', 250], ['copo pequeno (200 ml)', 200], ['copo grande (400 ml)', 400]] },
+  { n: 'Suco de morango natural (sem açúcar)', kcal: 32, p: 0.6, c: 7, g: 0.2, l: 1, m: [['copo (250 ml)', 250], ['copo pequeno (200 ml)', 200], ['copo grande (400 ml)', 400]] },
+  { n: 'Suco de abacaxi natural (sem açúcar)', kcal: 48, p: 0.4, c: 11.5, g: 0.1, l: 1, m: [['copo (250 ml)', 250], ['copo pequeno (200 ml)', 200], ['copo grande (400 ml)', 400]] },
+  { n: 'Suco de maracujá natural (sem açúcar)', kcal: 45, p: 0.8, c: 10.2, g: 0.2, l: 1, m: [['copo (250 ml)', 250], ['copo pequeno (200 ml)', 200], ['copo grande (400 ml)', 400]] },
+  { n: 'Suco de limão natural (limonada sem açúcar)', kcal: 22, p: 0.4, c: 4.7, g: 0.2, l: 1, m: [['copo (250 ml)', 250], ['copo grande (400 ml)', 400]] },
+  { n: 'Suco de melancia natural (sem açúcar)', kcal: 30, p: 0.6, c: 6.7, g: 0.1, l: 1, m: [['copo (250 ml)', 250], ['copo grande (400 ml)', 400]] },
+  { n: 'Suco de manga natural (sem açúcar)', kcal: 55, p: 0.5, c: 13.2, g: 0.2, l: 1, m: [['copo (250 ml)', 250], ['copo pequeno (200 ml)', 200]] },
+  { n: 'Suco de goiaba natural (sem açúcar)', kcal: 45, p: 0.7, c: 10.4, g: 0.2, l: 1, m: [['copo (250 ml)', 250], ['copo pequeno (200 ml)', 200]] },
+  { n: 'Suco de acerola natural (sem açúcar)', kcal: 25, p: 0.4, c: 5.4, g: 0.2, l: 1, m: [['copo (250 ml)', 250], ['copo grande (400 ml)', 400]] },
+  { n: 'Suco de caju natural (sem açúcar)', kcal: 42, p: 0.8, c: 9.6, g: 0.1, l: 1, m: [['copo (250 ml)', 250], ['copo grande (400 ml)', 400]] },
+  { n: 'Suco de uva integral natural (sem açúcar)', kcal: 60, p: 0.4, c: 14.6, g: 0.1, l: 1, m: [['copo (250 ml)', 250], ['copo pequeno (200 ml)', 200]] },
+  { n: 'Suco de maçã natural (sem açúcar)', kcal: 48, p: 0.2, c: 11.7, g: 0.1, l: 1, m: [['copo (250 ml)', 250], ['copo pequeno (200 ml)', 200]] },
+  { n: 'Suco de mamão natural (sem açúcar)', kcal: 40, p: 0.6, c: 9.4, g: 0.1, l: 1, m: [['copo (250 ml)', 250], ['copo grande (400 ml)', 400]] },
+  { n: 'Suco de melão natural (sem açúcar)', kcal: 32, p: 0.6, c: 7.2, g: 0.1, l: 1, m: [['copo (250 ml)', 250], ['copo grande (400 ml)', 400]] },
+  { n: 'Suco de pêssego natural (sem açúcar)', kcal: 42, p: 0.7, c: 9.8, g: 0.1, l: 1, m: [['copo (250 ml)', 250], ['copo pequeno (200 ml)', 200]] },
+  { n: 'Suco de tangerina / mexerica natural (sem açúcar)', kcal: 43, p: 0.6, c: 10, g: 0.2, l: 1, m: [['copo (250 ml)', 250], ['copo grande (400 ml)', 400]] },
+  { n: 'Suco de graviola natural (sem açúcar)', kcal: 48, p: 0.7, c: 11.2, g: 0.2, l: 1, m: [['copo (250 ml)', 250], ['copo pequeno (200 ml)', 200]] },
+  { n: 'Suco de cajá natural (sem açúcar)', kcal: 40, p: 0.6, c: 9.3, g: 0.2, l: 1, m: [['copo (250 ml)', 250], ['copo grande (400 ml)', 400]] },
+
+  // ---- Misturas de balcão ----
+  { n: 'Suco de laranja com acerola natural (sem açúcar)', kcal: 42, p: 0.6, c: 9.8, g: 0.2, l: 1, m: [['copo (250 ml)', 250], ['copo grande (400 ml)', 400]] },
+  { n: 'Suco de laranja com morango natural (sem açúcar)', kcal: 40, p: 0.7, c: 8.9, g: 0.2, l: 1, m: [['copo (250 ml)', 250], ['copo grande (400 ml)', 400]] },
+  { n: 'Suco de morango com kiwi natural (sem açúcar)', kcal: 38, p: 0.8, c: 8.3, g: 0.2, l: 1, m: [['copo (250 ml)', 250], ['copo grande (400 ml)', 400]] },
+  { n: 'Suco de abacaxi com hortelã natural (sem açúcar)', kcal: 45, p: 0.4, c: 10.8, g: 0.1, l: 1, m: [['copo (250 ml)', 250], ['copo grande (400 ml)', 400]] },
+  { n: 'Suco de abacaxi com gengibre natural (sem açúcar)', kcal: 46, p: 0.4, c: 11, g: 0.1, l: 1, m: [['copo (250 ml)', 250], ['copo grande (400 ml)', 400]] },
+  { n: 'Suco de melancia com limão natural (sem açúcar)', kcal: 30, p: 0.6, c: 6.7, g: 0.1, l: 1, m: [['copo (250 ml)', 250], ['copo grande (400 ml)', 400]] },
+  { n: 'Limonada suíça (com açúcar)', kcal: 60, p: 0.4, c: 14.6, g: 0.2, l: 1, m: [['copo (250 ml)', 250], ['copo grande (400 ml)', 400]] },
+  { n: 'Suco verde (couve, limão, gengibre)', kcal: 30, p: 1, c: 6.4, g: 0, l: 1, m: [['copo (300 ml)', 300], ['copo (250 ml)', 250]] },
+
+  // ---- Vitaminas: a fruta que não vira suco ----
+  { n: 'Suco de banana — na verdade vitamina, com leite', kcal: 85, p: 3.2, c: 14, g: 1.8, l: 1, m: [['copo (300 ml)', 300], ['copo (250 ml)', 250], ['copo grande (400 ml)', 400]] },
+  { n: 'Vitamina de banana com aveia e leite', kcal: 90, p: 3, c: 15, g: 2, l: 1, m: [['copo (300 ml)', 300], ['copo (250 ml)', 250]] },
+  { n: 'Vitamina de banana com morango e leite', kcal: 78, p: 3.1, c: 12.5, g: 1.8, l: 1, m: [['copo (300 ml)', 300], ['copo (250 ml)', 250]] },
+  { n: 'Vitamina de morango com leite', kcal: 65, p: 3, c: 9.5, g: 1.7, l: 1, m: [['copo (300 ml)', 300], ['copo (250 ml)', 250]] },
+  { n: 'Suco de abacate — na verdade vitamina, com leite', kcal: 120, p: 2.8, c: 9, g: 8, l: 1, m: [['copo (300 ml)', 300], ['copo (250 ml)', 250]] },
+  { n: 'Vitamina de mamão com leite', kcal: 70, p: 3, c: 11, g: 1.7, l: 1, m: [['copo (300 ml)', 300], ['copo (250 ml)', 250]] },
   { n: 'Caipirinha', kcal: 190, p: 0, c: 21, g: 0, m: [['copo (200 ml)', 200]] },
   { n: 'Gin tônica', kcal: 76, p: 0, c: 7, g: 0, m: [['taça (300 ml)', 300]] },
   { n: 'Chope (claro)', kcal: 41, p: 0.5, c: 3.3, g: 0, m: [['tulipa (300 ml)', 300], ['caldereta (350 ml)', 350]] },
