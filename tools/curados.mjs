@@ -354,6 +354,32 @@ export const CURADOS = [
   { n: 'Limonada suíça (com açúcar)', kcal: 60, p: 0.4, c: 14.6, g: 0.2, l: 1, m: [['copo (250 ml)', 250], ['copo grande (400 ml)', 400]] },
   { n: 'Suco verde (couve, limão, gengibre)', kcal: 30, p: 1, c: 6.4, g: 0, l: 1, m: [['copo (300 ml)', 300], ['copo (250 ml)', 250]] },
 
+  // ---- Montevérgine: o resto do catálogo ----
+  // O site da marca está fora do alcance daqui (o proxy de saída não resolve
+  // o domínio), então a lista de linhas veio de resumo de busca e as tabelas
+  // destes itens não vieram de lugar nenhum. Os valores são de categoria, e
+  // por isso estão aqui e não em marcas.mjs.
+  //
+  // Entra o que dá para afirmar o que É: a própria marca se descreve como
+  // líder em torrone e em bombom de cereja, e os nomes de Tomallows, Pingo de
+  // Leite, Nougat Whey, Mix Nuts, barra de cereais e doce de leite dizem a
+  // categoria sozinhos. Ficaram de fora Tubin, Tu-Big, Tocata, Palitos,
+  // Matinal e Torrone Sports: sei que existem, não sei o que são — chutar
+  // entre wafer e barra move a conta em 100 kcal, e isso não é estimativa, é
+  // invenção.
+  { n: 'Pastilha Mentinha Montevérgine 70% cacau (chocolate amargo com menta)', kcal: 570, p: 6, c: 44, g: 40, m: [['pastilha (3,5 g)', 3.5], ['porção 7 pastilhas (25 g)', 25], ['caixa (70 g)', 70]] },
+  { n: 'Torrone Vermelho Montevérgine (o clássico)', kcal: 415, p: 6, c: 74, g: 10.5, m: [['unidade (17 g)', 17], ['barra (45 g)', 45], ['barra (90 g)', 90]] },
+  { n: 'Torrone Premium Montevérgine (com castanhas)', kcal: 430, p: 7, c: 70, g: 13, m: [['barra (45 g)', 45], ['barra (90 g)', 90]] },
+  { n: 'Pick Nick Montevérgine (torrone com chocolate)', kcal: 440, p: 6, c: 68, g: 16, m: [['unidade (20 g)', 20], ['barra (45 g)', 45]] },
+  { n: 'Pick Nick Zero Montevérgine (sem açúcar)', kcal: 400, p: 6, c: 60, g: 16, m: [['unidade (20 g)', 20], ['barra (45 g)', 45]] },
+  { n: 'Nougat Whey Montevérgine (nougat proteico)', kcal: 380, p: 20, c: 50, g: 10, m: [['unidade (30 g)', 30], ['barra (45 g)', 45]] },
+  { n: 'Bombom de cereja Montevérgine', kcal: 400, p: 3, c: 62, g: 16, m: [['unidade (15 g)', 15], ['caixa (100 g)', 100]] },
+  { n: 'Tomallows Montevérgine (marshmallow)', kcal: 330, p: 4, c: 78, g: 0.5, m: [['unidade (7 g)', 7], ['pacote (80 g)', 80]] },
+  { n: 'Pingo de Leite Montevérgine (bala de leite)', kcal: 390, p: 1.5, c: 88, g: 3.5, m: [['unidade (5 g)', 5], ['pacote (100 g)', 100]] },
+  { n: 'Barra de cereais Montevérgine', kcal: 400, p: 6, c: 70, g: 10, m: [['unidade (25 g)', 25]] },
+  { n: 'Mix Nuts Montevérgine', kcal: 600, p: 18, c: 20, g: 50, m: [['punhado (30 g)', 30], ['pacote (100 g)', 100]] },
+  { n: 'Doce de leite Montevérgine', kcal: 315, p: 5.5, c: 58, g: 6.5, m: [['colher de sopa (20 g)', 20], ['pote (400 g)', 400]] },
+
   // ---- Açaí ----
   // Duas coisas diferentes com o mesmo nome, e misturá-las erra a conta pela
   // metade. O SUCO é a polpa batida com água, bebida de copo, e vai aqui em

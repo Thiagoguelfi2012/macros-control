@@ -756,6 +756,20 @@ export const MARCAS = [
   { n: "Hambúrguer vegetal Sadia Veg&Tal", kcal: 210, p: 11, c: 10, g: 13.5, m: [["unidade (80 g)", 80]] },
   { n: "Proteína de soja texturizada (hidratada)", kcal: 105, p: 16, c: 7, g: 0.5, m: [["porção (100 g)", 100]] },
 
+  // ---- Montevérgine: as três com tabela publicada ----
+  // A marca é a Indústria de Torrone N. S. de Montevergine, e o torrone é o
+  // produto-mãe dela — a Mentinha, que é o que as pessoas procuram pelo nome,
+  // é pastilha de chocolate ao leite com menta, outra categoria.
+  //
+  // Mentinha: o rótulo traz a porção de 25 g (7 pastilhas) com 140 kcal, 13 g
+  // de carboidrato e 9 g de gordura. A pastilha de 3,5 g dá 20 kcal, que é o
+  // número que o varejo publica — os dois fecham entre si, o que dá confiança
+  // na tabela. Por 100 g são 560 kcal: mais da metade do peso é gordura e
+  // açúcar, porque é chocolate, não bala de menta.
+  { n: "Pastilha Mentinha Montevérgine (chocolate ao leite com menta)", kcal: 560, p: 4.4, c: 52, g: 36, m: [["pastilha (3,5 g)", 3.5], ["porção 7 pastilhas (25 g)", 25], ["caixa (70 g)", 70], ["saco (300 g)", 300]] },
+  { n: "Torrone Montevérgine com amendoim", kcal: 415, p: 6, c: 74, g: 10.5, m: [["unidade (17 g)", 17], ["mini (25 g)", 25], ["barra (45 g)", 45], ["barra (90 g)", 90], ["barra (200 g)", 200]] },
+  { n: "Torrone Montevérgine com castanha de caju", kcal: 407, p: 3.7, c: 76.7, g: 9, m: [["terço de barra (30 g)", 30], ["barra (90 g)", 90]] },
+
   // Cereais matinais e granolas
   { n: "Sucrilhos Kellogg's original", kcal: 380, p: 6.7, c: 84, g: 0.7, m: [["porção (30 g)", 30], ["xícara (30 g)", 30]] },
   { n: "Cereal Nescau (Nestlé)", kcal: 380, p: 7, c: 82, g: 2.7, m: [["porção (30 g)", 30], ["xícara (30 g)", 30]] },
