@@ -1158,21 +1158,27 @@ export const CURADOS = [
   { n: "Queijo de coalho Scala", kcal: 325, p: 22.5, c: 3.2, g: 25.5, m: [["fatia (30 g)", 30], ["espeto (100 g)", 100]] },
   { n: "Manteiga Scala com sal", kcal: 733, p: 0.7, c: 0, g: 81.3, m: [["colher de chá (10 g)", 10], ["ponta de faca (5 g)", 5]] },
 
-  // ---- Café puro: o caso comum, que faltava ----
-  // As tabelas brasileiras guardam o café pela FORÇA da infusão — 6%, 8%,
-  // 10% —, que é quanto pó entra por 100 ml de água. A de 10% é a que a busca
-  // devolvia primeiro, e ela descreve uma xícara de 150 ml feita com 15 g de
-  // pó: café muito mais forte que o coado de casa. Os 15 kcal e 1 g de
-  // proteína que saem daí não são erro da tabela — 15 g de pó têm 2,2 g de
-  // proteína, e cerca de metade passa para a bebida. É só uma xícara que
-  // quase ninguém faz.
+  // ---- Café puro ----
+  // Correção de valor. Estes itens entraram com 4 kcal e 0,3 g de proteína
+  // por 100 ml, por eu ter ficado no meio do caminho entre a TBCA (6 a 10
+  // kcal, conforme a força da infusão) e as medições internacionais (1 a 2).
+  // Esse meio-termo estava errado, e o erro tem explicação física.
   //
-  // Um coado comum fica perto de 7% de pó, e é ele que está aqui. O expresso
-  // vem separado porque é concentrado: menos volume, mais sólidos dissolvidos
-  // por ml.
-  { n: 'Café coado sem açúcar', kcal: 4, p: 0.3, c: 0.7, g: 0, l: 1, m: [['xícara (150 ml)', 150], ['xícara pequena (50 ml)', 50], ['copo americano (100 ml)', 100], ['caneca (200 ml)', 200]] },
-  { n: 'Café expresso sem açúcar', kcal: 9, p: 0.5, c: 1.5, g: 0.1, l: 1, m: [['dose (30 ml)', 30], ['xícara (50 ml)', 50], ['duplo (60 ml)', 60]] },
-  { n: 'Café descafeinado coado sem açúcar', kcal: 3, p: 0.2, c: 0.6, g: 0, l: 1, m: [['xícara (150 ml)', 150], ['xícara pequena (50 ml)', 50], ['caneca (200 ml)', 200]] },
+  // A TBCA conta como CARBOIDRATO tudo que a água extrai do pó, e boa parte
+  // do que ela extrai não é alimento: cafeína, ácidos clorogênicos,
+  // melanoidinas e minerais são massa dissolvida que o corpo não queima. São
+  // 1 a 2 kcal por 100 ml de verdade, e é isso que está aqui agora.
+  //
+  // Sobre a proteína: ela existe, só é quase nada. O grão tem proteína e um
+  // pouco dela passa para a bebida — as medições dão 0,1 g por 100 ml, ou
+  // 0,15 g na xícara de 150. Zerar seria tão errado quanto os 0,45 g que a
+  // versão anterior mostrava; o certo é o número pequeno de verdade.
+  //
+  // O expresso continua em 9 kcal porque é medido assim: mesma bebida, muito
+  // menos água por grama de pó.
+  { n: 'Café coado sem açúcar', kcal: 2, p: 0.1, c: 0.3, g: 0, l: 1, m: [['xícara (150 ml)', 150], ['xícara pequena (50 ml)', 50], ['copo americano (100 ml)', 100], ['caneca (200 ml)', 200]] },
+  { n: 'Café expresso sem açúcar', kcal: 9, p: 0.1, c: 1.7, g: 0.2, l: 1, m: [['dose (30 ml)', 30], ['xícara (50 ml)', 50], ['duplo (60 ml)', 60]] },
+  { n: 'Café descafeinado coado sem açúcar', kcal: 1, p: 0.1, c: 0.2, g: 0, l: 1, m: [['xícara (150 ml)', 150], ['xícara pequena (50 ml)', 50], ['caneca (200 ml)', 200]] },
 
   // ---- Água: o que o app precisa para acompanhar a meta de hidratação ----
   { n: 'Água', kcal: 0, p: 0, c: 0, g: 0, l: 1, m: [['copo (200 ml)', 200], ['copo grande (300 ml)', 300], ['garrafinha (330 ml)', 330], ['garrafa (500 ml)', 500], ['garrafa (1 L)', 1000], ['garrafa (1,5 L)', 1500], ['garrafa (2 L)', 2000]] },
