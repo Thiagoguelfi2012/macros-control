@@ -1180,6 +1180,13 @@ export const CURADOS = [
   { n: 'Café expresso sem açúcar', kcal: 9, p: 0.1, c: 1.7, g: 0.2, l: 1, m: [['dose (30 ml)', 30], ['xícara (50 ml)', 50], ['duplo (60 ml)', 60]] },
   { n: 'Café descafeinado coado sem açúcar', kcal: 1, p: 0.1, c: 0.2, g: 0, l: 1, m: [['xícara (150 ml)', 150], ['xícara pequena (50 ml)', 50], ['caneca (200 ml)', 200]] },
 
+  // ---- Garoto meio amargo com amendoim ----
+  // O tablete existe (a linha tradicional tem duas versões meio amargo), mas
+  // não achei a tabela publicada. Estimativa: parte do Garoto meio amargo e
+  // aplica a diferença medida entre o ao leite puro e o ao leite com amendoim
+  // (mais proteína e gordura, menos carboidrato, calorias quase iguais).
+  { n: 'Chocolate Garoto meio amargo com amendoim (tablete)', kcal: 524, p: 9.1, c: 45, g: 34.3, m: [['barra (90 g)', 90], ['meia barra (45 g)', 45], ['porção (25 g)', 25]] },
+
   // ---- Água: o que o app precisa para acompanhar a meta de hidratação ----
   { n: 'Água', kcal: 0, p: 0, c: 0, g: 0, l: 1, m: [['copo (200 ml)', 200], ['copo grande (300 ml)', 300], ['garrafinha (330 ml)', 330], ['garrafa (500 ml)', 500], ['garrafa (1 L)', 1000], ['garrafa (1,5 L)', 1500], ['garrafa (2 L)', 2000]] },
   { n: 'Água com gás', kcal: 0, p: 0, c: 0, g: 0, l: 1, m: [['copo (200 ml)', 200], ['garrafa (300 ml)', 300], ['garrafa (500 ml)', 500]] },

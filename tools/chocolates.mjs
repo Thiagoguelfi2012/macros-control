@@ -146,6 +146,15 @@ export const CHOCOLATES = [
   { n: 'Chocolate Garoto meio amargo', kcal: 520, p: 6, c: 55, g: 30, m: [['tablete (80 g)', 80]] },
   { n: 'Chocolate Garoto branco', kcal: 560, p: 6, c: 58, g: 33, m: [['tablete (80 g)', 80]] },
   { n: 'Chocolate Talento ao leite', kcal: 545, p: 7, c: 55, g: 32, m: [['barra (85 g)', 85], ['quadrado (10,6 g)', 10.6]] },
+
+  // Tabletes de 90 g com amendoim e castanha de caju. Rótulo Nestlé por porção
+  // de 25 g: amendoim 136 kcal / P 2,4 / C 12 / G 8,7; castanha de caju
+  // 135 kcal / P 2,0 / C 13 / G 8,3. Convertidos para 100 g abaixo.
+  { n: 'Chocolate Garoto ao leite com amendoim (tablete)', kcal: 544, p: 9.6, c: 48, g: 34.8, m: [['barra (90 g)', 90], ['meia barra (45 g)', 45], ['porção (25 g)', 25]] },
+  { n: 'Chocolate Garoto ao leite com castanha de caju (tablete)', kcal: 540, p: 8, c: 52, g: 33.2, m: [['barra (90 g)', 90], ['meia barra (45 g)', 45], ['porção (25 g)', 25]] },
+  // Talento castanha-do-pará: o carro-chefe da linha, que faltava aqui.
+  { n: 'Chocolate Talento ao leite com castanha do Pará', kcal: 552, p: 7.2, c: 52, g: 34.4, m: [['barra (90 g)', 90], ['mini (25 g)', 25], ['quadrado (10,6 g)', 10.6]] },
+  { n: 'Chocolate Talento Artesão castanha de caju, castanha do Pará e nibs de cacau', kcal: 544, p: 7.2, c: 52, g: 33.2, m: [['barra (75 g)', 75], ['porção (25 g)', 25]] },
   { n: 'Chocolate Talento branco com castanhas', kcal: 565, p: 7.5, c: 53, g: 35, m: [['barra (85 g)', 85], ['quadrado (10,6 g)', 10.6]] },
   { n: 'Chocolate Talento meio amargo com amêndoas', kcal: 555, p: 8.5, c: 46, g: 36, m: [['barra (85 g)', 85], ['quadrado (10,6 g)', 10.6]] },
   { n: 'Chocolate Talento 70% cacau', kcal: 560, p: 9, c: 34, g: 41, m: [['barra (85 g)', 85]] },
