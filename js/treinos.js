@@ -380,7 +380,14 @@
     });
     const feitos = dias.filter((d) => d.nomes.length).length;
 
-    // ritmo das 4 semanas anteriores à exibida, para dar contexto ao número
+    // ritmo das 4 semanas anteriores à exibida, para dar contexto ao número.
+    // Semanas zeradas contam na média — só ficam de fora as anteriores ao
+    // primeiro registro, que estariam vazias por falta de histórico e não por
+    // falta de treino.
+    const primeiroTs = finalizadas().reduce((min, s) => {
+      const t = new Date(s.ts).getTime();
+      return Number.isFinite(t) && (min == null || t < min) ? t : min;
+    }, null);
     const semanas = [];
     for (let i = 1; i <= 4; i++) {
       const ini = new Date(segunda);
@@ -397,11 +404,11 @@
           .filter((d) => d >= ini && d < fim)
           .map(chave)
       ).size;
-      semanas.push(n);
+      semanas.push({ n, comHistorico: primeiroTs != null && primeiroTs < fim.getTime() });
     }
-    const anteriores = semanas.filter((n) => n > 0);
+    const anteriores = semanas.filter((sem) => sem.comHistorico);
     const media = anteriores.length
-      ? Math.round((anteriores.reduce((a, b) => a + b, 0) / anteriores.length) * 10) / 10
+      ? Math.round((anteriores.reduce((a, sem) => a + sem.n, 0) / anteriores.length) * 10) / 10
       : null;
 
     const domingo = new Date(segunda);
@@ -1494,7 +1501,16 @@
       x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); // segunda-feira
       return x;
     };
+    // toda semana da janela entra na lista, inclusive as zeradas: uma semana
+    // sem treino é informação, e omiti-la faz o gráfico parecer mais constante
+    // do que foi
     const semanas = new Map();
+    for (let seg = chaveSemana(inicioJanela); seg.getTime() <= hojeMeiaNoite.getTime(); ) {
+      semanas.set(seg.getTime(), { inicio: seg, dias: 0 });
+      const prox = new Date(seg);
+      prox.setDate(prox.getDate() + 7);
+      seg = prox;
+    }
     for (const dia of diasComTreino) {
       const [y, m, dd] = dia.split('-').map(Number);
       const seg = chaveSemana(new Date(y, m, dd));
@@ -1515,9 +1531,9 @@
         ${listaSemanas.length > 1 ? `
         <div class="freq-semanas">
           ${listaSemanas.map((sem) => `
-            <div class="freq-sem" title="Semana de ${sem.inicio.toLocaleDateString('pt-BR')}: ${sem.dias} ${sem.dias === 1 ? 'dia' : 'dias'}">
-              <span class="freq-qtd">${sem.dias}</span>
-              <span class="freq-barra" style="height:${Math.round((sem.dias / maxSemana) * 100)}%"></span>
+            <div class="freq-sem" title="Semana de ${sem.inicio.toLocaleDateString('pt-BR')}: ${sem.dias === 0 ? 'nenhum treino' : `${sem.dias} ${sem.dias === 1 ? 'dia' : 'dias'}`}">
+              <span class="freq-qtd${sem.dias === 0 ? ' zero' : ''}">${sem.dias}</span>
+              <span class="freq-barra${sem.dias === 0 ? ' zero' : ''}" style="height:${Math.round((sem.dias / maxSemana) * 100)}%"></span>
               <span class="freq-rot">${sem.inicio.getDate()}/${sem.inicio.getMonth() + 1}</span>
             </div>`).join('')}
         </div>
