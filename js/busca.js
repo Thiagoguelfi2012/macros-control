@@ -110,6 +110,13 @@ const FoodSearch = (() => {
       .replace(/\bcacau (com|e) cafe\b/g, 'chocolate com cafe')
       .replace(/\bchocolate e cafe\b/g, 'chocolate com cafe')
       .replace(/\bmc ?donalds?\b/g, 'mcdonalds')
+      // O cardápio cola o "Mc" no resto ("McMelt", "McNuggets", "McFlurry"),
+      // quem digita costuma separar ("mc melt"). Eram dois tokens contra um:
+      // "mc" até casava como prefixo de "mcmelt", mas "melt" não casava com
+      // nada e a busca voltava vazia. Colar os dois no índice e na busca faz
+      // as duas grafias virarem o mesmo token. Nenhum nome da base tem "mc"
+      // como palavra solta, então só o que é digitado muda.
+      .replace(/\bmc (?=[a-z])/g, 'mc')
       // "Jr." no cardápio, "júnior" na boca de quem pede — e nenhum dos dois é
       // prefixo do outro, então "whopper junior" não achava o Whopper Jr.
       .replace(/\bjr\b/g, 'junior')

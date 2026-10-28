@@ -772,7 +772,18 @@ export const CURADOS = [
   { n: "McDonald's Big Tasty", kcal: 233, p: 12, c: 14, g: 14, m: [['unidade (348 g)', 348]] },
   { n: "McDonald's Big Tasty Bacon", kcal: 245, p: 13, c: 14, g: 15, m: [['unidade (365 g)', 365]] },
   { n: "McDonald's McNífico Bacon", kcal: 250, p: 13, c: 20, g: 13, m: [['unidade (232 g)', 232]] },
-  { n: "McDonald's Cheddar McMelt", kcal: 245, p: 12, c: 21, g: 12.5, m: [['unidade (232 g)', 232]] },
+  // Cheddar McMelt: o carboidrato que estava aqui (21 g/100 g, ou 48,7 g no
+  // sanduíche) não sobrevive à conta por componente — é mais de um pão e meio
+  // num lanche de um pão só. Duas tabelas de terceiros independentes põem o
+  // sanduíche em 29-33 g, e a soma pão australiano + molho cheddar + cebola
+  // grelhada dá algo nessa faixa. Corrigido para 509 kcal / P 29 / C 33 / G 29
+  // no sanduíche de 232 g.
+  { n: "McDonald's Cheddar McMelt", kcal: 219.4, p: 12.5, c: 14.2, g: 12.5, m: [['unidade (232 g)', 232]] },
+  // O duplo leva um segundo hambúrguer e mais molho cheddar: a diferença para
+  // o simples (+345 kcal, +23 g de proteína, +27 g de gordura, +3 g de
+  // carboidrato) é exatamente isso. 854 kcal no sanduíche, que estimo em 335 g
+  // (os 232 g do simples mais o hambúrguer e o molho extras).
+  { n: "McDonald's Duplo Cheddar McMelt (Cheddar McMelt duplo)", kcal: 255, p: 15.5, c: 10.7, g: 16.7, m: [['unidade (335 g)', 335]] },
   { n: "McDonald's Duplo Burger", kcal: 260, p: 14, c: 22, g: 13, m: [['unidade (155 g)', 155]] },
   { n: "McDonald's Quarteirão com Queijo", kcal: 244, p: 14, c: 18, g: 13, m: [['unidade (215 g)', 215]] },
   { n: "McDonald's Quarteirão Duplo", kcal: 262, p: 17, c: 14, g: 16, m: [['unidade (280 g)', 280]] },
