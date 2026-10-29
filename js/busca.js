@@ -58,6 +58,8 @@ const FoodSearch = (() => {
       // token (em vez de somar outro) não cobra nada a mais de quem digita
       // "barra", então não quebra a busca de ninguém.
       .replace(/\bbarrinhas?\b/g, 'barra')
+      // "Mukebar" é uma palavra só na embalagem, mas quem procura separa.
+      .replace(/\bmuke ?bar(s)?\b/g, 'mukebar')
       // Estrogonofe tem quatro grafias vivas — a das tabelas ("Estrogonofe"),
       // a do cardápio ("Strogonoff"), a russa ("Stroganoff") e a híbrida
       // ("Estrogonoffe") —, e o app tinha alimentos em todas elas. Quem

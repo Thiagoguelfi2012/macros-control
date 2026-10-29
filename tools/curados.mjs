@@ -1191,6 +1191,19 @@ export const CURADOS = [
   { n: 'Café expresso sem açúcar', kcal: 9, p: 0.1, c: 1.7, g: 0.2, l: 1, m: [['dose (30 ml)', 30], ['xícara (50 ml)', 50], ['duplo (60 ml)', 60]] },
   { n: 'Café descafeinado coado sem açúcar', kcal: 1, p: 0.1, c: 0.2, g: 0, l: 1, m: [['xícara (150 ml)', 150], ['xícara pequena (50 ml)', 50], ['caneca (200 ml)', 200]] },
 
+  // ---- Mukebar (+Mu, Santa Helena): o resto da linha ----
+  // Toda a linha é barra de 60 g com 15 g de proteína e zero açúcar
+  // adicionado — isso é constante e vem do rótulo. O que estimo é a divisão
+  // entre carboidrato e gordura de cada sabor, ancorada nos dois rótulos que
+  // achei (Paçoquita 238 kcal, chocolate Duo 225 kcal, ambos em marcas.mjs).
+  // Avelã e coco levam um pouco mais de gordura; pão de mel, mais carboidrato.
+  { n: "Barra de proteína Mukebar chocolate (+Mu Santa Helena)", kcal: 383.3, p: 25, c: 30, g: 19.2, m: [['unidade (60 g)', 60]] },
+  { n: "Barra de proteína Mukebar chocolate branco (+Mu Santa Helena)", kcal: 391.7, p: 25, c: 30, g: 20, m: [['unidade (60 g)', 60]] },
+  { n: "Barra de proteína Mukebar chocolate com avelã (+Mu Santa Helena)", kcal: 400, p: 25, c: 28.3, g: 21.7, m: [['unidade (60 g)', 60]] },
+  { n: "Barra de proteína Mukebar chocolate com coco (+Mu Santa Helena)", kcal: 400, p: 25, c: 28.3, g: 21.7, m: [['unidade (60 g)', 60]] },
+  { n: "Barra de proteína Mukebar cookies & cream (+Mu Santa Helena)", kcal: 386.7, p: 25, c: 30.8, g: 19.2, m: [['unidade (60 g)', 60]] },
+  { n: "Barra de proteína Mukebar pão de mel (+Mu Santa Helena)", kcal: 380, p: 25, c: 31.7, g: 18.3, m: [['unidade (60 g)', 60]] },
+
   // ---- Garoto meio amargo com amendoim ----
   // O tablete existe (a linha tradicional tem duas versões meio amargo), mas
   // não achei a tabela publicada. Estimativa: parte do Garoto meio amargo e

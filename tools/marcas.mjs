@@ -954,6 +954,12 @@ export const MARCAS = [
   { n: "Polenta palito congelada Bem Brasil (frita)", kcal: 150, p: 2, c: 25, g: 4.5, m: [["porção (100 g)", 100]] },
 
   // Pastas e geleias
+  // ---- Mukebar (+Mu, Santa Helena): barra de 60 g com 15 g de proteína ----
+  // Destes dois a tabela está publicada por dois lojistas cada, e as duas
+  // fecham em Atwater com menos de 1% de folga. Os outros seis sabores da
+  // linha estão em curados.mjs como estimativa.
+  { n: "Barra de proteína Mukebar Paçoquita (paçoca, +Mu Santa Helena)", kcal: 396.7, p: 25, c: 30, g: 20, m: [["unidade (60 g)", 60]] },
+  { n: "Barra de proteína Mukebar chocolate Duo (+Mu Santa Helena)", kcal: 375, p: 25, c: 28.3, g: 18.3, m: [["unidade (60 g)", 60]] },
   { n: "Amendocrem tradicional (creme de amendoim)", kcal: 533, p: 13, c: 40, g: 36, m: [["colher de sopa (15 g)", 15]] },
   { n: "Geleia Queensberry morango", kcal: 240, p: 0.4, c: 58, g: 0, m: [["colher de sopa (20 g)", 20]] },
   { n: "Geleia Queensberry diet morango", kcal: 120, p: 0.5, c: 29, g: 0, m: [["colher de sopa (20 g)", 20]] },
