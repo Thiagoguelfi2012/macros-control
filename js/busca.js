@@ -3,7 +3,12 @@
 const FoodSearch = (() => {
   // alimentos do usuário primeiro; fontes em português nativo (TACO/TBCA/curados)
   // na frente; USDA traduzido por último
-  const SOURCE_RANK = { p: -1, t: 0, b: 0, r: 0, m: 0, i: 1, u: 3 };
+  // Quanto menor, mais acima no desempate. 'o' é o Open Food Facts (rótulo
+  // real, mas transcrito por colaborador: fica abaixo do que curamos à mão) e
+  // 'v' é varejo (transcrição de terceiro, menos confiável ainda). Letra que
+  // não esteja aqui vira NaN no score e embaralha a ordem, então toda origem
+  // nova precisa de uma linha.
+  const SOURCE_RANK = { p: -1, t: 0, b: 0, r: 0, m: 0, i: 1, o: 1, v: 2, u: 3 };
 
   const normalize = (s) =>
     s

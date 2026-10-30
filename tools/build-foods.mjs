@@ -1037,6 +1037,19 @@ async function main() {
   // ruído que só atrapalha quem procura barra de proteína. Marcas e nomes de
   // verdade vêm pelas camadas curadas.
   const LIXO = [/^formulated /i, /^papinha infantil, fortified /i, /\bsnackfood us\b/i];
+  // camada opcional: só existe depois que alguém roda tools/importar-off.mjs
+  const loadOff = () => {
+    const caminho = join(ROOT, 'tools', 'off-brasil.json');
+    if (!existsSync(caminho)) return [];
+    try {
+      const lista = JSON.parse(readFileSync(caminho, 'utf8'));
+      return Array.isArray(lista) ? lista : [];
+    } catch (e) {
+      console.warn(`  aviso: off-brasil.json ilegível (${e.message}); camada ignorada`);
+      return [];
+    }
+  };
+
   const push = (food, permiteZerado = false) => {
     const key = norm(food.n);
     if (!key || seen.has(key)) return false;
@@ -1129,6 +1142,22 @@ async function main() {
     }, true)) nSorvetes++;
   }
 
+  // 4e) Open Food Facts, recorte Brasil (gerado por tools/importar-off.mjs).
+  // Entra depois de tudo que curamos à mão e antes de IBGE/USDA: é rótulo
+  // real, mas transcrito por colaborador, então não deve sobrescrever o que
+  // conferimos — e deve ganhar do USDA traduzido por máquina. O arquivo é
+  // opcional: sem ele o build roda igual.
+  let nOff = 0;
+  for (const it of loadOff()) {
+    if (push({
+      i: stableId('o', it.n), n: it.n, f: 'o',
+      kcal: round1(it.kcal), p: round1(it.p), c: round1(it.c), g: round1(it.g),
+      m: (it.m || []).map(([l, gr]) => [l, gr]),
+      ...(it.l ? { l: 1 } : {}),
+      ...(it.cod ? { cod: it.cod } : {}),
+    }, true)) nOff++;
+  }
+
   // 5) IBGE
   const antesIbge = foods.length;
   for (const t of loadIbge()) {
@@ -1200,7 +1229,7 @@ async function main() {
   const bytes = readFileSync(OUT).length;
   console.log(`manifesto: v${VERSAO} · hash ${hash}`);
   console.log(`foods.json gerado: ${foods.length} alimentos (${(bytes / 1024 / 1024).toFixed(2)} MB)`);
-  console.log(`  TACO: ${nTaco} | TBCA: ${nTbca} | Curados: ${nCurados} | Marcas: ${nMarcas} | Chocolates: ${nChocolates} | Pastas: ${nPastas} | Sorvetes: ${nSorvetes} | IBGE: ${nIbge} | USDA SR28 traduzido: ${nUsda}`);
+  console.log(`  TACO: ${nTaco} | TBCA: ${nTbca} | Curados: ${nCurados} | Marcas: ${nMarcas} | Chocolates: ${nChocolates} | Pastas: ${nPastas} | Sorvetes: ${nSorvetes} | Open Food Facts: ${nOff} | IBGE: ${nIbge} | USDA SR28 traduzido: ${nUsda}`);
   const comMedidas = foods.filter((f) => f.m && f.m.length).length;
   console.log(`  Alimentos com medidas caseiras (unidades): ${comMedidas}`);
   console.log(`  Líquidos (unidade base em ml): ${nLiquidos}`);

@@ -1,2 +1,7 @@
 node_modules/
 tools/.cache/
+
+# Camada do Open Food Facts: gerada por tools/importar-off.mjs a partir do
+# dump (que passa de 9 GB). O importador e o build versionam; o dado, não.
+tools/off-brasil.json
+tools/off-amostra.jsonl
