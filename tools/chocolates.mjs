@@ -217,7 +217,10 @@ export const CHOCOLATES = [
 
   // ---- Arcor: a linha de chocolate que faltava (o Block é o tablete de
   // chocolate ao leite com amendoim, valores do rótulo de 140 g) ----
-  { n: 'Chocolate Block ao leite com amendoim (Arcor)', kcal: 556, p: 13, c: 44.5, g: 36, m: [['barra (140 g)', 140], ['barra pequena (38 g)', 38], ['pedaço (17 g)', 17]] },
+  // O quadradinho tem 14 g, conferido na embalagem: 10 deles fecham a barra
+  // de 140 g. Antes havia aqui um "pedaço (17 g)" estimado, que além de
+  // errado não dividia a barra em número inteiro — saiu.
+  { n: 'Chocolate Block ao leite com amendoim (Arcor)', kcal: 556, p: 13, c: 44.5, g: 36, m: [['barra (140 g)', 140], ['barra pequena (38 g)', 38], ['quadradinho (14 g)', 14]] },
   { n: 'Bombom Bon o Bon ao leite (Arcor)', kcal: 547, p: 8, c: 50, g: 34, m: [['unidade (15 g)', 15], ['caixa 6 un (90 g)', 90]] },
   { n: 'Bombom Bon o Bon branco (Arcor)', kcal: 555, p: 7.5, c: 52, g: 34.5, m: [['unidade (15 g)', 15], ['caixa 6 un (90 g)', 90]] },
   { n: 'Bombom Bon o Bon amargo (Arcor)', kcal: 540, p: 8, c: 48, g: 34, m: [['unidade (15 g)', 15], ['caixa 6 un (90 g)', 90]] },
