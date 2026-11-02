@@ -113,7 +113,7 @@ export const CHOCOLATES = [
   { n: 'Bombom Brasil Cacau', kcal: 535, p: 6.5, c: 55, g: 31, m: [['unidade (13 g)', 13]] },
 
   /* ============ Gourmet e bean-to-bar brasileiros ============ */
-  { n: 'Chocolate Dengo ao leite 45% cacau', kcal: 545, p: 8, c: 48, g: 34.5, m: [['tablete (80 g)', 80], ['quadradinho (10 g)', 10]] },
+  { n: 'Chocolate Dengo ao leite 36% cacau', kcal: 545, p: 8, c: 48, g: 34.5, m: [['tablete (80 g)', 80], ['quadradinho (10 g)', 10]] },
   { n: 'Chocolate Dengo 70% cacau', kcal: 570, p: 9, c: 32, g: 43, m: [['tablete (80 g)', 80], ['quadradinho (10 g)', 10]] },
   { n: 'Chocolate Dengo branco com pistache', kcal: 580, p: 7.5, c: 50, g: 39, m: [['tablete (80 g)', 80]] },
   { n: 'Chocolate Amma 75% cacau', kcal: 575, p: 9.5, c: 30, g: 45, m: [['tablete (80 g)', 80], ['quadradinho (10 g)', 10]] },

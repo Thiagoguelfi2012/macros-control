@@ -1191,6 +1191,27 @@ export const CURADOS = [
   { n: 'Café expresso sem açúcar', kcal: 9, p: 0.1, c: 1.7, g: 0.2, l: 1, m: [['dose (30 ml)', 30], ['xícara (50 ml)', 50], ['duplo (60 ml)', 60]] },
   { n: 'Café descafeinado coado sem açúcar', kcal: 1, p: 0.1, c: 0.2, g: 0, l: 1, m: [['xícara (150 ml)', 150], ['xícara pequena (50 ml)', 50], ['caneca (200 ml)', 200]] },
 
+  // ---- Dengo: o resto da linha de tabletes ----
+  // A existência de cada um está confirmada (loja oficial da marca e páginas
+  // de produto da Dengo); os valores é que são estimados a partir do teor de
+  // cacau, que para chocolate amargo é bem previsível — quanto mais cacau,
+  // menos açúcar e mais gordura. Todos fecham em Atwater dentro de 2,5%.
+  // A Dengo publica uma tabela nutricional oficial da linha inteira em PDF;
+  // quando der para alcançá-la, estes valores saem e entram os do rótulo.
+  { n: 'Chocolate Dengo 50% cacau', kcal: 550, p: 8, c: 44, g: 37, m: [['tablete (80 g)', 80], ['quadradinho (10 g)', 10]] },
+  { n: 'Chocolate Dengo 65% cacau', kcal: 555, p: 8.5, c: 35, g: 41, m: [['tablete (80 g)', 80], ['quadradinho (10 g)', 10]] },
+  { n: 'Chocolate Dengo 65% cacau zero açúcar', kcal: 530, p: 9, c: 34, g: 42, m: [['tablete (80 g)', 80], ['quadradinho (10 g)', 10]] },
+  { n: 'Chocolate Dengo 70% cacau Amazônico', kcal: 570, p: 9, c: 32, g: 43, m: [['tablete (80 g)', 80], ['quadradinho (10 g)', 10]] },
+  { n: 'Chocolate Dengo 70% cacau Varietal Parazinho', kcal: 570, p: 9, c: 32, g: 43, m: [['tablete (80 g)', 80], ['quadradinho (10 g)', 10]] },
+  { n: 'Chocolate Dengo 85% cacau Intenso', kcal: 600, p: 11, c: 20, g: 52, m: [['tablete (80 g)', 80], ['quadradinho (10 g)', 10]] },
+  { n: 'Chocolate Dengo branco com nibs de cacau', kcal: 580, p: 7, c: 50, g: 38, m: [['tablete (80 g)', 80], ['quadradinho (10 g)', 10]] },
+  // Banana com castanha de caju: duas lojas publicam a tabela e elas brigam no
+  // carboidrato (16 g contra 13 g na porção de 25 g). Fiquei com a menor, que
+  // é a que fecha em Atwater (+0,2% contra +5,6%) e a que bate com a
+  // composição — chocolate ao leite 36%, castanha e banana desidratada.
+  // Por ter sido escolha minha entre duas fontes, entra como estimativa.
+  { n: 'Chocolate Dengo banana com castanha de caju', kcal: 532, p: 8.4, c: 52, g: 32.4, m: [['embalagem (200 g)', 200], ['porção (25 g)', 25]] },
+
   // ---- Mukebar (+Mu, Santa Helena): o resto da linha ----
   // Toda a linha é barra de 60 g com 15 g de proteína e zero açúcar
   // adicionado — isso é constante e vem do rótulo. O que estimo é a divisão
