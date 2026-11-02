@@ -532,10 +532,15 @@ const MacroDB = (() => {
       metaG: n('metaG'),
       refeicoesDia: n('refeicoesDia') || 4,
       metaAgua: n('metaAgua'),
+      dietas: getDietas(),
+      dietaAtiva: localStorage.getItem('dietaAtiva') || null,
     };
   }
 
-  function saveSettings({ gastoBasal, gastoDiario, metaKcal, metaP, metaC, metaG, refeicoesDia, metaAgua }) {
+  function saveSettings({
+    gastoBasal, gastoDiario, metaKcal, metaP, metaC, metaG, refeicoesDia, metaAgua,
+    dietas, dietaAtiva,
+  }) {
     const set = (k, v) => {
       if (v != null) localStorage.setItem(k, String(v));
     };
@@ -547,7 +552,92 @@ const MacroDB = (() => {
     set('metaG', metaG);
     set('refeicoesDia', refeicoesDia);
     set('metaAgua', metaAgua);
+    if (Array.isArray(dietas)) localStorage.setItem('dietas', JSON.stringify(dietas));
+    set('dietaAtiva', dietaAtiva);
     notifyChange('settings');
+  }
+
+  /* ---- Dietas alvo guardadas ----
+     As telas todas leem metaKcal/metaP/metaC/metaG; essas quatro continuam
+     sendo "a dieta que vale hoje". A lista aqui é só um armário: ativar uma
+     dieta copia os números dela para as quatro chaves de sempre, então nada
+     do que consome as metas precisou mudar. */
+
+  function getDietas() {
+    try {
+      const lista = JSON.parse(localStorage.getItem('dietas') || '[]');
+      return Array.isArray(lista) ? lista.filter((d) => d && d.id) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  // Quem já usava o app tem metas salvas e nenhuma dieta na lista. Em vez de
+  // mostrar um armário vazio, a primeira abertura guarda o que já existe como
+  // uma dieta ativa — ninguém perde a configuração nem precisa redigitar.
+  function migrarDietaAtual() {
+    if (getDietas().length) return getDietas();
+    const { metaKcal, metaP, metaC, metaG } = getSettings();
+    if (!metaKcal && !metaP && !metaC && !metaG) return [];
+    const d = {
+      id: novoId(), nome: 'Minha dieta',
+      kcal: metaKcal || 0, p: metaP || 0, c: metaC || 0, g: metaG || 0,
+    };
+    localStorage.setItem('dietas', JSON.stringify([d]));
+    localStorage.setItem('dietaAtiva', d.id);
+    return [d];
+  }
+
+  // Grava uma dieta nova ou atualiza a existente pelo id. Se a que mudou é a
+  // ativa, as metas em uso acompanham na hora — senão a tela mostraria um
+  // número e o diário contaria outro.
+  function salvarDieta(dieta) {
+    const lista = getDietas();
+    const d = {
+      id: dieta.id || novoId(),
+      nome: String(dieta.nome || '').trim() || 'Sem nome',
+      kcal: Number(dieta.kcal) || 0,
+      p: Number(dieta.p) || 0,
+      c: Number(dieta.c) || 0,
+      g: Number(dieta.g) || 0,
+    };
+    const i = lista.findIndex((x) => x.id === d.id);
+    if (i >= 0) lista[i] = d;
+    else lista.push(d);
+    localStorage.setItem('dietas', JSON.stringify(lista));
+    if (lista.length === 1 || localStorage.getItem('dietaAtiva') === d.id) ativarDieta(d.id);
+    else notifyChange('settings');
+    return d;
+  }
+
+  // Apagar a dieta ativa não pode deixar o app sem meta: outra assume. Se era
+  // a última, as metas vão a zero, que é o estado de quem nunca configurou.
+  function excluirDieta(id) {
+    const lista = getDietas().filter((d) => d.id !== id);
+    localStorage.setItem('dietas', JSON.stringify(lista));
+    if (localStorage.getItem('dietaAtiva') === id) {
+      if (lista.length) ativarDieta(lista[0].id);
+      else {
+        localStorage.removeItem('dietaAtiva');
+        for (const k of ['metaKcal', 'metaP', 'metaC', 'metaG']) localStorage.removeItem(k);
+        notifyChange('settings');
+      }
+    } else {
+      notifyChange('settings');
+    }
+    return lista;
+  }
+
+  function ativarDieta(id) {
+    const d = getDietas().find((x) => x.id === id);
+    if (!d) return null;
+    localStorage.setItem('dietaAtiva', d.id);
+    localStorage.setItem('metaKcal', String(d.kcal || 0));
+    localStorage.setItem('metaP', String(d.p || 0));
+    localStorage.setItem('metaC', String(d.c || 0));
+    localStorage.setItem('metaG', String(d.g || 0));
+    notifyChange('settings');
+    return d;
   }
 
   /* ---- Versão da base e atualização forçada ---- */
@@ -703,6 +793,11 @@ const MacroDB = (() => {
     getEntriesBetween,
     getSettings,
     saveSettings,
+    getDietas,
+    salvarDieta,
+    excluirDieta,
+    ativarDieta,
+    migrarDietaAtual,
     getTreinos,
     getTreino,
     saveTreino,

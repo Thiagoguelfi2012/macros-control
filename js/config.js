@@ -55,18 +55,129 @@
     $('#' + id).addEventListener('input', atualizarHintAlvo);
   }
   atualizarHintAlvo();
-  $('#btn-salvar-alvo').addEventListener('click', () => {
-    MacroDB.saveSettings({
-      metaKcal: parseFloat($('#inp-meta-kcal').value) || 0,
-      metaP: parseFloat($('#inp-meta-p').value) || 0,
-      metaC: parseFloat($('#inp-meta-c').value) || 0,
-      metaG: parseFloat($('#inp-meta-g').value) || 0,
-    });
+
+  /* ---- Dietas guardadas: várias salvas, uma ativa por vez ---- */
+
+  // id da dieta que os campos estão editando. Começa na ativa; "Salvar como
+  // nova" o zera, para o próximo Salvar criar em vez de sobrescrever.
+  let editando = null;
+
+  const esc = (t) =>
+    String(t).replace(/[&<>"']/g, (c) =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+
+  const camposDieta = () => ({
+    nome: $('#inp-dieta-nome').value,
+    kcal: parseFloat($('#inp-meta-kcal').value) || 0,
+    p: parseFloat($('#inp-meta-p').value) || 0,
+    c: parseFloat($('#inp-meta-c').value) || 0,
+    g: parseFloat($('#inp-meta-g').value) || 0,
+  });
+
+  function preencherCampos(d) {
+    $('#inp-dieta-nome').value = d ? d.nome : '';
+    $('#inp-meta-kcal').value = d && d.kcal ? d.kcal : '';
+    $('#inp-meta-p').value = d && d.p ? d.p : '';
+    $('#inp-meta-c').value = d && d.c ? d.c : '';
+    $('#inp-meta-g').value = d && d.g ? d.g : '';
+    atualizarHintAlvo();
+  }
+
+  function renderDietas() {
+    const { dietas, dietaAtiva } = MacroDB.getSettings();
+    const wrap = $('#dietas-lista');
+    if (!dietas.length) {
+      wrap.innerHTML = '<p class="cad-hint">Nenhuma dieta guardada ainda. Preencha abaixo e salve.</p>';
+    } else {
+      wrap.innerHTML = dietas
+        .map((d) => {
+          const ativa = d.id === dietaAtiva;
+          return `<div class="dieta-item${ativa ? ' ativa' : ''}" data-id="${esc(d.id)}">
+            <label class="dieta-escolha">
+              <input type="radio" name="dieta-ativa" value="${esc(d.id)}" ${ativa ? 'checked' : ''}
+                aria-label="Ativar ${esc(d.nome)}" />
+              <span class="dieta-nome">${esc(d.nome)}${ativa ? ' <b class="dieta-tag">ativa</b>' : ''}</span>
+            </label>
+            <span class="dieta-macros">${fmt(d.kcal, 0)} kcal · P ${fmt(d.p)} · C ${fmt(d.c)} · G ${fmt(d.g)}</span>
+            <span class="dieta-acoes">
+              <button type="button" class="btn btn-ghost btn-mini" data-acao="editar">Editar</button>
+              <button type="button" class="btn btn-ghost btn-mini" data-acao="excluir">Excluir</button>
+            </span>
+          </div>`;
+        })
+        .join('');
+    }
+    // Editar uma dieta que não é a ativa é legítimo (guardar o cutting
+    // enquanto o bulking vale), mas sem dizer isso a tela mostra um número e
+    // o diário conta outro. O aviso deixa os dois estados visíveis.
+    const emEdicao = dietas.find((x) => x.id === editando);
+    const ativa = dietas.find((x) => x.id === dietaAtiva);
+    $('#dieta-editando').textContent = !emEdicao
+      ? (dietas.length ? 'Salvar vai criar uma dieta nova.' : '')
+      : emEdicao.id === dietaAtiva
+        ? `Editando "${emEdicao.nome}", que é a dieta ativa — Salvar atualiza as metas em uso.`
+        : `Editando "${emEdicao.nome}", que está guardada. A dieta em uso é "${ativa ? ativa.nome : '—'}" — Salvar aqui não muda suas metas de hoje.`;
+  }
+
+  $('#dietas-lista').addEventListener('change', (ev) => {
+    const radio = ev.target.closest('input[name="dieta-ativa"]');
+    if (!radio) return;
+    MacroDB.ativarDieta(radio.value);
+    editando = radio.value;
+    preencherCampos(MacroDB.getDietas().find((d) => d.id === radio.value));
+    renderDietas();
+    avisarTelas();
+  });
+
+  $('#dietas-lista').addEventListener('click', (ev) => {
+    const botao = ev.target.closest('button[data-acao]');
+    if (!botao) return;
+    const id = botao.closest('.dieta-item').dataset.id;
+    const d = MacroDB.getDietas().find((x) => x.id === id);
+    if (!d) return;
+    if (botao.dataset.acao === 'editar') {
+      editando = id;
+      preencherCampos(d);
+      renderDietas();
+      return;
+    }
+    const { dietaAtiva } = MacroDB.getSettings();
+    const aviso = d.id === dietaAtiva
+      ? `Excluir "${d.nome}"? Ela é a dieta ativa — outra assume no lugar, ou as metas ficam em branco se for a última.`
+      : `Excluir "${d.nome}"?`;
+    if (!confirm(aviso)) return;
+    MacroDB.excluirDieta(id);
+    if (editando === id) editando = MacroDB.getSettings().dietaAtiva;
+    preencherCampos(MacroDB.getDietas().find((x) => x.id === editando));
+    renderDietas();
+    avisarTelas();
+  });
+
+  function salvarDieta(comoNova) {
+    const campos = camposDieta();
+    if (!campos.kcal && !campos.p && !campos.c && !campos.g) {
+      alert('Preencha ao menos um valor antes de salvar.');
+      return;
+    }
+    const d = MacroDB.salvarDieta({ ...campos, id: comoNova ? null : editando });
+    editando = d.id;
+    preencherCampos(d);
+    renderDietas();
     const ok = $('#save-ok-alvo');
     ok.hidden = false;
     setTimeout(() => (ok.hidden = true), 2000);
     avisarTelas();
-  });
+  }
+
+  $('#btn-salvar-alvo').addEventListener('click', () => salvarDieta(false));
+  $('#btn-nova-dieta').addEventListener('click', () => salvarDieta(true));
+
+  // quem já usava o app entra aqui com as metas que tinha viradas dieta
+  MacroDB.migrarDietaAtual();
+  editando = MacroDB.getSettings().dietaAtiva;
+  const dietaInicial = MacroDB.getDietas().find((d) => d.id === editando);
+  if (dietaInicial) preencherCampos(dietaInicial);
+  renderDietas();
 
   /* ---- Meta de água ---- */
 

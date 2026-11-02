@@ -642,6 +642,25 @@ main { max-width: 860px; margin: 0 auto; padding: 20px 16px 110px; }
 .settings-row .field { margin-bottom: 0; min-width: 180px; }
 .save-ok { color: var(--good-text); font-size: 13px; margin-left: 8px; }
 
+/* ---- Dietas guardadas (uma ativa por vez) ---- */
+.dietas-lista { margin: 0 0 14px; display: flex; flex-direction: column; gap: 6px; }
+.dieta-item {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  border: 1px solid var(--border); border-radius: 10px; padding: 9px 11px;
+}
+.dieta-item.ativa { border-color: var(--accent); background: var(--wash); }
+.dieta-escolha { display: flex; align-items: center; gap: 8px; cursor: pointer; flex: 1 1 160px; }
+.dieta-escolha input { accent-color: var(--accent); flex: none; }
+.dieta-nome { font-size: 14px; font-weight: 600; }
+.dieta-tag {
+  font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+  color: var(--accent); margin-left: 4px;
+}
+.dieta-macros { font-size: 12.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.dieta-acoes { display: flex; gap: 4px; margin-left: auto; }
+.btn-mini { padding: 4px 9px; font-size: 12px; }
+.settings-row .field-nome { min-width: 220px; }
+
 .loading { color: var(--muted); text-align: center; padding: 40px; }
 
 
