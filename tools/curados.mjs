@@ -1191,6 +1191,45 @@ export const CURADOS = [
   { n: 'Café expresso sem açúcar', kcal: 9, p: 0.1, c: 1.7, g: 0.2, l: 1, m: [['dose (30 ml)', 30], ['xícara (50 ml)', 50], ['duplo (60 ml)', 60]] },
   { n: 'Café descafeinado coado sem açúcar', kcal: 1, p: 0.1, c: 0.2, g: 0, l: 1, m: [['xícara (150 ml)', 150], ['xícara pequena (50 ml)', 50], ['caneca (200 ml)', 200]] },
 
+  // ---- Doceria e confeitaria: o que se compra na vitrine ----
+  // Nada disso tem rótulo — é doce de balcão, e a receita varia de casa para
+  // casa. Os valores vêm da composição (massa, creme, cobertura) e das
+  // proporções usuais, e todos fecham em Atwater dentro de 2%. Servem para
+  // ter ordem de grandeza certa; para a doceria que você frequenta sempre,
+  // vale cadastrar como alimento próprio com o que a casa informar.
+
+  // Mil folhas: massa folhada em camadas com creme. A variação está no
+  // recheio e na cobertura — o creme brûlée leva açúcar queimado por cima, a
+  // versão com chantilly é mais leve que a de creme de confeiteiro.
+  { n: 'Mil folhas de morango com creme brûlée', kcal: 355, p: 4.5, c: 38, g: 20, m: [['unidade (120 g)', 120], ['porção pequena (80 g)', 80]] },
+  { n: 'Mil folhas de morango com chantilly', kcal: 330, p: 3.5, c: 33, g: 20, m: [['unidade (120 g)', 120], ['porção pequena (80 g)', 80]] },
+  { n: 'Mil folhas tradicional com creme de confeiteiro', kcal: 400, p: 5, c: 40, g: 24, m: [['unidade (120 g)', 120], ['porção pequena (80 g)', 80]] },
+  { n: 'Mil folhas de doce de leite', kcal: 420, p: 5, c: 48, g: 23, m: [['unidade (120 g)', 120], ['porção pequena (80 g)', 80]] },
+
+  // Massa choux e folhados
+  { n: 'Profiterole com creme e calda de chocolate', kcal: 302, p: 5, c: 30, g: 18, m: [['unidade (30 g)', 30], ['porção 3 unidades (90 g)', 90]] },
+  { n: 'Danish de creme com damasco', kcal: 370, p: 6, c: 45, g: 18, m: [['unidade (80 g)', 80]] },
+  { n: 'Cannoli siciliano com ricota', kcal: 400, p: 8, c: 40, g: 23, m: [['unidade (90 g)', 90]] },
+
+  // Taças e cremes
+  { n: 'Tiramisù', kcal: 282, p: 5, c: 25, g: 18, m: [['porção (120 g)', 120], ['taça (150 g)', 150]] },
+  { n: 'Panna cotta com calda de frutas vermelhas', kcal: 254, p: 3, c: 20, g: 18, m: [['unidade (110 g)', 110]] },
+  { n: 'Creme de papaia com cassis', kcal: 133, p: 2, c: 20, g: 5, m: [['taça (200 g)', 200], ['taça pequena (120 g)', 120]] },
+
+  // Cheesecake: faltava inteiro — a busca só achava tradução do USDA
+  { n: 'Cheesecake tradicional (fatia)', kcal: 334, p: 6, c: 28, g: 22, m: [['fatia (110 g)', 110]] },
+  { n: 'Cheesecake de frutas vermelhas (fatia)', kcal: 304, p: 5.5, c: 30, g: 18, m: [['fatia (110 g)', 110]] },
+  { n: 'Cheesecake de goiabada (fatia)', kcal: 324, p: 5.5, c: 35, g: 18, m: [['fatia (110 g)', 110]] },
+
+  // Docinhos de bandeja e vitrine
+  { n: 'Casadinho (biscoito com doce de leite)', kcal: 440, p: 5, c: 60, g: 20, m: [['unidade (20 g)', 20]] },
+  { n: 'Petit four amanteigado', kcal: 479, p: 6, c: 62, g: 23, m: [['unidade (8 g)', 8], ['punhado (30 g)', 30]] },
+  { n: 'Macaron', kcal: 419, p: 7, c: 55, g: 19, m: [['unidade (15 g)', 15]] },
+  { n: 'Brigadeiro gourmet (chocolate meio amargo)', kcal: 390, p: 5, c: 45, g: 21, m: [['unidade (20 g)', 20], ['colher (brigadeiro de colher)', 40]] },
+
+  { n: 'Cupcake de baunilha com buttercream', kcal: 422, p: 4, c: 52, g: 22, m: [['unidade (70 g)', 70]] },
+  { n: 'Cupcake de chocolate com ganache', kcal: 435, p: 5, c: 52, g: 23, m: [['unidade (70 g)', 70]] },
+
   // ---- Dengo: o resto da linha de tabletes ----
   // A existência de cada um está confirmada (loja oficial da marca e páginas
   // de produto da Dengo); os valores é que são estimados a partir do teor de

@@ -34,6 +34,10 @@ const FoodSearch = (() => {
       // linhas escritas de várias formas pelo público
       .replace(/\bla ?creme\b/g, 'lacreme') // "la creme" → Lacreme (Cacau Show)
       .replace(/\bmil ?folhas?\b/g, 'mil folhas')
+      // "éclair" é o nome francês da bomba; sem isto a busca caía em tradução
+      // ruim do USDA ("Creme puff, bomba (éclair)") em vez da bomba daqui.
+      .replace(/\b[ée]clairs?\b/g, 'bomba')
+      .replace(/\bpain au chocolat\b/g, 'croissant de chocolate')
       .replace(/\bnha ?benta\b/g, 'nha benta')
       .replace(/\bkopen ?hagen\b/g, 'kopenhagen')
       .replace(/\bcacaushow\b/g, 'cacau show')

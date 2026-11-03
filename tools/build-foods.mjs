@@ -25,7 +25,7 @@ const OUT = join(ROOT, 'data', 'foods.json');
 const MANIFESTO = join(ROOT, 'data', 'foods-manifest.json');
 
 // Versão da base. Deve acompanhar o FOODS_VERSION de js/db.js.
-const VERSAO = 100;
+const VERSAO = 101;
 const TARGET_TOTAL = 25000; // efetivamente "tudo": inclui todas as fontes
 
 const SOURCES = {
@@ -715,6 +715,8 @@ const PT_MEASURES = [
   [/^sopa|^caldo|^canja/i, [['concha (130 g)', 130], ['tigela (300 g)', 300]]],
   [/^panqueca/i, [['unidade (80 g)', 80]]],
   [/^torta/i, [['fatia (100 g)', 100]]],
+  [/^mil ?folhas?/i, [['unidade (120 g)', 120], ['porção pequena (80 g)', 80]]],
+  [/^cr[èe]me br[ûu]l[ée]e?|^creme br[ûu]l[ée]e?/i, [['ramequim (110 g)', 110], ['taça (150 g)', 150]]],
   [/^vitamina|^smoothie/i, [['copo (300 ml)', 300]]],
   [/^p[ãa]o de queijo/i, [['unidade média (40 g)', 40], ['mini (20 g)', 20]]],
   [/^sandu[íi]che|^bauru|^misto/i, [['unidade (160 g)', 160]]],
