@@ -553,6 +553,20 @@ export const MARCAS = [
   { n: "Whey protein em pó Parmalat Fit WheyFit chocolate", kcal: 394, p: 63.6, c: 21.2, g: 6, m: [["dose (33 g)", 33], ["pote (450 g)", 450]] },
   { n: "Whey protein em pó Parmalat Fit WheyFit morango", kcal: 394, p: 63.6, c: 21.2, g: 6, m: [["dose (33 g)", 33], ["pote (450 g)", 450]] },
 
+  // Iogurte Parmalat Fit: a terceira sublinha, e a única em pote de colher —
+  // as outras duas são caixinha e pó. Copo de 120 g com 10 g de proteína,
+  // zero lactose, zero açúcar adicionado e baixo em gorduras totais.
+  // Valores da tabela publicada pela própria Parmalat para o copo de 120 g
+  // (tradicional e morango 75 kcal, coco 77), convertidos para 100 g. As três
+  // fecham em Atwater com menos de 0,5% de folga, assinatura de rótulo.
+  //
+  // Cuidado com tabela de loja aqui: uma delas publica 61 kcal / C 4,8 /
+  // P 8,3 sob o título "porção de 120 g" — esses são os valores por 100 g da
+  // própria Parmalat, mostrados com a unidade errada.
+  { n: "Iogurte Parmalat Fit tradicional (10 g de proteína, zero lactose)", kcal: 62.5, p: 8.3, c: 5, g: 1, m: [["copo (120 g)", 120]] },
+  { n: "Iogurte Parmalat Fit morango (10 g de proteína, zero lactose)", kcal: 62.5, p: 8.3, c: 5, g: 1, m: [["copo (120 g)", 120]] },
+  { n: "Iogurte Parmalat Fit coco (10 g de proteína, zero lactose)", kcal: 64.2, p: 8.3, c: 5, g: 1.2, m: [["copo (120 g)", 120]] },
+
   // Linha Itambé Protein (a caixinha também é vendida como "Itambé Whey", e o
   // nome mudou sem o produto mudar — por isso os dois estão no nome daqui).
   // São 15 g de proteína na caixinha de 250 ml, zero lactose e zero açúcar
