@@ -4,7 +4,7 @@ const MacroDB = (() => {
   const DB_VERSION = 4;
   const FOODS_URL = 'data/foods.json';
   const MANIFESTO_URL = 'data/foods-manifest.json';
-  const FOODS_VERSION = 102; // deve acompanhar o campo v de data/foods.json
+  const FOODS_VERSION = 103; // deve acompanhar o campo v de data/foods.json
   let dbPromise = null;
   let foodsCache = null; // array em memória para busca instantânea
   let versaoCarregada = null; // versão que de fato entrou na busca
@@ -340,6 +340,35 @@ const MacroDB = (() => {
       .replace(/\s+/g, ' ')
       .trim();
 
+  // Os mesmos formatos de refrigerante que a base usa (tools/build-foods.mjs).
+  // Alimento próprio lido de código de barras nasce com a porção e a
+  // embalagem daquele código e nada mais — quem escaneou a 2 L fica sem a
+  // lata. Aqui a ficha ganha os formatos que faltam.
+  const REFRI_FORMATOS = [
+    ['lata (350 ml)', 350], ['copo (250 ml)', 250], ['lata mini (220 ml)', 220],
+    ['lata sleek (310 ml)', 310], ['garrafa KS (290 ml)', 290], ['latão (473 ml)', 473],
+    ['garrafa (600 ml)', 600], ['garrafa (1 L)', 1000], ['garrafa (1,5 L)', 1500],
+    ['garrafa (2 L)', 2000], ['garrafa (2,5 L)', 2500],
+  ];
+  const REFRI_RE = /(^|[ ,(/-])(refrigerante|refrigerantes|coca-?cola|pepsi|fanta|sprite|sprit|schweppes|sukita|tuba[íi]na|dolly|kuat|h2oh|guaran[áa])([ ,)/-]|$)/i;
+  const REFRI_EXCL = /suco|xarope|n[ée]ctar|polpa|concentrado|em p[óo]|energ[ée]tic[oa]|isot[ôo]nico|powerade|gatorade|minute maid|hi-?c |lemonade|ponche|company|cerveja/i;
+  const pareceRefrigerante = (nome) => {
+    const n = String(nome || '').trim();
+    return !!n && REFRI_RE.test(n) && !REFRI_EXCL.test(n);
+  };
+
+  // Acrescenta os formatos que faltam, sem tirar nenhum: a medida que a
+  // pessoa já tinha pode ter vindo do rótulo que ela escaneou, e o volume é
+  // que identifica a medida — um rótulo escrito diferente para o mesmo
+  // volume não vira duplicata.
+  const completarFormatos = (medidas) => {
+    const atuais = Array.isArray(medidas) ? medidas.filter((x) => Array.isArray(x) && x.length === 2) : [];
+    const volumes = new Set(atuais.map(([, ml]) => Number(ml)));
+    const faltando = REFRI_FORMATOS.filter(([, ml]) => !volumes.has(ml));
+    if (!faltando.length) return null;
+    return [...atuais, ...faltando].sort((a, b) => a[1] - b[1]);
+  };
+
   async function revisarLiquidos() {
     const foods = await ensureFoods();
     const porId = new Map();
@@ -365,12 +394,27 @@ const MacroDB = (() => {
     // o registro, que manda no rótulo da medida que o modal oferece.
     const proprios = await getCustomFoods();
     let alimentos = 0;
+    let formatos = 0;
     for (const f of proprios) {
-      if (f.l || !pareceLiquido(f.n)) continue;
-      const corrigido = { ...f, l: 1 };
-      if (Array.isArray(f.m)) corrigido.m = f.m.map(([rot, gr]) => [rotuloEmMl(rot), gr]);
-      await addCustomFood(corrigido);
-      alimentos++;
+      const ehLiq = f.l || pareceLiquido(f.n);
+      if (!ehLiq) continue;
+      const corrigido = { ...f };
+      let mexeu = false;
+      if (!f.l) {
+        corrigido.l = 1;
+        if (Array.isArray(f.m)) corrigido.m = f.m.map(([rot, gr]) => [rotuloEmMl(rot), gr]);
+        mexeu = true;
+        alimentos++;
+      }
+      if (pareceRefrigerante(f.n)) {
+        const completo = completarFormatos(corrigido.m);
+        if (completo) {
+          corrigido.m = completo;
+          if (!mexeu) formatos++;
+          mexeu = true;
+        }
+      }
+      if (mexeu) await addCustomFood(corrigido);
     }
     if (mudar.length) {
       try {
@@ -394,6 +438,7 @@ const MacroDB = (() => {
       total: entries.length,
       atualizados: mudar.length,
       alimentos,
+      formatos,
       distintos: nomes.length,
       nomes: nomes.slice(0, 6),
     };

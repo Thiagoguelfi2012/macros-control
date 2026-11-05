@@ -25,7 +25,7 @@ const OUT = join(ROOT, 'data', 'foods.json');
 const MANIFESTO = join(ROOT, 'data', 'foods-manifest.json');
 
 // Versão da base. Deve acompanhar o FOODS_VERSION de js/db.js.
-const VERSAO = 102;
+const VERSAO = 103;
 const TARGET_TOTAL = 25000; // efetivamente "tudo": inclui todas as fontes
 
 const SOURCES = {
@@ -1003,11 +1003,46 @@ function isLiquid(nome) {
 }
 
 // medidas padrão por tipo de bebida (aplicadas quando o item não tem nenhuma)
+// Formatos em que refrigerante é vendido no Brasil. A lista é a mesma para
+// todos, porque quem toma Coca toma nos mesmos tamanhos em que toma Guaraná.
+// Antes cada marca carregava um subconjunto escrito à mão — a Coca zero tinha
+// lata e 600, a Fanta só lata, a Pepsi só lata — e quem bebia uma KS ou uma
+// 2 L tinha de converter para ml na mão.
+const REFRI_FORMATOS = [
+  ['lata (350 ml)', 350],
+  ['copo (250 ml)', 250],
+  ['lata mini (220 ml)', 220],
+  ['lata sleek (310 ml)', 310],
+  ['garrafa KS (290 ml)', 290],
+  ['latão (473 ml)', 473],
+  ['garrafa (600 ml)', 600],
+  ['garrafa (1 L)', 1000],
+  ['garrafa (1,5 L)', 1500],
+  ['garrafa (2 L)', 2000],
+  ['garrafa (2,5 L)', 2500],
+];
+
+// Refrigerante de verdade, não bebida que só cita um deles: "suco de açaí com
+// guaraná" e "xarope de guaraná" não são vendidos em lata nem em KS, e levam
+// as medidas da própria categoria.
+const REFRI_RE = /(^|[ ,(/-])(refrigerante|refrigerantes|coca-?cola|pepsi|fanta|sprite|sprit|schweppes|sukita|tuba[íi]na|dolly|kuat|h2oh|guaran[áa])([ ,)/-]|$)/i;
+// "coca-cola company" aparece no nome de produto do USDA que não é
+// refrigerante — Powerade, Minute Maid, energético NOS. Nenhum refrigerante
+// brasileiro tem "company" no nome, então a palavra serve de corte. E
+// "energético" precisa dos dois gêneros: o USDA escreve "energética bebida".
+const REFRI_EXCL = /suco|xarope|n[ée]ctar|polpa|concentrado|em p[óo]|p[óo] para|energ[ée]tic[oa]|isot[ôo]nico|powerade|gatorade|minute maid|hi-?c |lemonade|ponche|company|cerveja|sorvete|picol[ée]|gelatina|bala|p[ãa]o|bolo/i;
+const ehRefrigerante = (nome) => REFRI_RE.test(nome) && !REFRI_EXCL.test(nome);
+
 const LIQ_MEASURES = [
   [/cerveja/i, [['lata (350 ml)', 350], ['long neck (330 ml)', 330], ['garrafa (600 ml)', 600]]],
   [/chope/i, [['tulipa (300 ml)', 300], ['caldereta (350 ml)', 350]]],
+  // Estes vêm ANTES do refrigerante de propósito: a primeira regra que casa
+  // é a que vale, e nomes como "COCA-COLA POWERADE" e "THE COCA-COLA
+  // COMPANY, nos energética" casavam como refrigerante e levavam lata de
+  // 350 em vez da garrafa de 500 do isotônico.
+  [/gatorade|powerade|isot[ôo]nico/i, [['garrafa (500 ml)', 500], ['copo (250 ml)', 250]]],
+  [/energ[ée]tic[oa]|red bull|monster|\bnos\b/i, [['lata (250 ml)', 250], ['lata (473 ml)', 473], ['lata (355 ml)', 355]]],
   [/refrigerante|coca-?cola|pepsi|fanta|sprite|sprit|schweppes|sukita|tuba[íi]na|dolly|kuat|h2oh|guaran[áa]/i, [['lata (350 ml)', 350], ['copo (250 ml)', 250], ['garrafa (600 ml)', 600]]],
-  [/gatorade|powerade/i, [['garrafa (500 ml)', 500], ['copo (250 ml)', 250]]],
   [/toddynho/i, [['unidade (200 ml)', 200]]],
   [/yakult/i, [['frasco (80 ml)', 80]]],
   [/q-suco|terer[ée]/i, [['copo (250 ml)', 250]]],
@@ -1019,8 +1054,6 @@ const LIQ_MEASURES = [
   [/ch[áa]|mate|kombucha/i, [['xícara (200 ml)', 200], ['copo (300 ml)', 300]]],
   [/vinho|espumante|champanhe|sidra/i, [['taça (150 ml)', 150]]],
   [/cacha[çc]a|aguardente|pinga|vodka|whisky|u[íi]sque|rum|gim|gin\b|licor/i, [['dose (50 ml)', 50]]],
-  [/energ[ée]tico/i, [['lata (250 ml)', 250], ['lata (473 ml)', 473]]],
-  [/isot[ôo]nico/i, [['garrafa (500 ml)', 500]]],
   [/vitamina|smoothie|milk|batida|coquetel|caipirinha|gemada|chocolate quente/i, [['copo (300 ml)', 300]]],
 ];
 
@@ -1201,6 +1234,13 @@ async function main() {
     if (isLiquid(f.n)) {
       f.l = 1;
       nLiquidos++;
+      // Refrigerante recebe a lista inteira de formatos, por cima do que
+      // houver: as medidas escritas à mão eram todas subconjunto dela, e um
+      // subconjunto diferente por marca é o que obrigava a converter na mão.
+      if (ehRefrigerante(f.n)) {
+        f.m = REFRI_FORMATOS.map(([rot, ml]) => [rot, ml]);
+        continue;
+      }
       // Medida de sólido em bebida não serve: o suco de uva herdava "cacho
       // pequeno" da fruta e o de laranja herdava "unidade". Se nenhuma das
       // medidas fala em ml ou L, elas vieram do alimento sólido de origem e

@@ -1656,7 +1656,7 @@
       // montado com a lista velha, e sem remontar o modal continuaria
       // oferecendo "porção (200 g)" até a próxima abertura — que foi
       // exatamente o que apareceu na tela de quem relatou.
-      if (r.alimentos > 0) FoodSearch.buildIndex(await MacroDB.ensureFoods());
+      if (r.alimentos > 0 || r.formatos > 0) FoodSearch.buildIndex(await MacroDB.ensureFoods());
       if (r.atualizados > 0) {
         avisarRevisao(r);
         await render();
