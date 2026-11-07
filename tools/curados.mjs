@@ -596,9 +596,9 @@ export const CURADOS = [
   { n: 'Burrito de carne', kcal: 200, p: 10, c: 24, g: 7, m: [['unidade (300 g)', 300]] },
   { n: 'Shawarma / churrasco grego (no pão sírio)', kcal: 220, p: 12, c: 24, g: 9, m: [['unidade (300 g)', 300]] },
   { n: 'Espetinho de churrasco (carne)', kcal: 220, p: 26, c: 2, g: 12, m: [['espeto (100 g)', 100]] },
-  { n: 'Pizza de mussarela (fatia de pizzaria)', kcal: 270, p: 12, c: 31, g: 11, m: [['fatia (125 g)', 125]] },
-  { n: 'Pizza de calabresa (fatia de pizzaria)', kcal: 280, p: 11, c: 30, g: 13, m: [['fatia (125 g)', 125]] },
-  { n: 'Pizza de frango com catupiry (fatia de pizzaria)', kcal: 265, p: 13, c: 30, g: 11, m: [['fatia (125 g)', 125]] },
+  { n: 'Pizza de mussarela (fatia de pizzaria)', kcal: 270, p: 12, c: 31, g: 11, m: [['fatia (125 g)', 125], ['fatia grande (160 g)', 160], ['pizza inteira (8 fatias, 1 kg)', 1000]] },
+  { n: 'Pizza de calabresa (fatia de pizzaria)', kcal: 280, p: 11, c: 30, g: 13, m: [['fatia (125 g)', 125], ['fatia grande (160 g)', 160], ['pizza inteira (8 fatias, 1 kg)', 1000]] },
+  { n: 'Pizza de frango com catupiry (fatia de pizzaria)', kcal: 265, p: 13, c: 30, g: 11, m: [['fatia (125 g)', 125], ['fatia grande (160 g)', 160], ['pizza inteira (8 fatias, 1 kg)', 1000]] },
   // ---- Frutos do mar e cozinha japonesa/peruana (complemento) ----
   { n: "Sashimi de polvo", kcal: 82, p: 15, c: 2.2, g: 1, m: [["fatia (15 g)", 15], ["porção 5 fatias (75 g)", 75]] },
   { n: "Sashimi de kani", kcal: 95, p: 7.5, c: 14, g: 0.4, m: [["fatia (20 g)", 20]] },
@@ -1190,6 +1190,39 @@ export const CURADOS = [
   { n: 'Café coado sem açúcar', kcal: 2, p: 0.1, c: 0.3, g: 0, l: 1, m: [['xícara (150 ml)', 150], ['xícara pequena (50 ml)', 50], ['copo americano (100 ml)', 100], ['caneca (200 ml)', 200]] },
   { n: 'Café expresso sem açúcar', kcal: 9, p: 0.1, c: 1.7, g: 0.2, l: 1, m: [['dose (30 ml)', 30], ['xícara (50 ml)', 50], ['duplo (60 ml)', 60]] },
   { n: 'Café descafeinado coado sem açúcar', kcal: 1, p: 0.1, c: 0.2, g: 0, l: 1, m: [['xícara (150 ml)', 150], ['xícara pequena (50 ml)', 50], ['caneca (200 ml)', 200]] },
+
+  // ---- Mais sabores de pizzaria ----
+  // Pizzaria não publica tabela nutricional, e rede de pizza também não —
+  // procurei a da Pizza Prime e ela não existe. Então aqui não há entrada por
+  // marca: a fatia genérica serve a Prime, a da esquina e qualquer outra, e
+  // não finge um número de rede que ninguém divulgou.
+  //
+  // Os valores partem das três fatias que já estavam aqui (mussarela 270,
+  // calabresa 280, frango com catupiry 265 por 100 g) e deslocam conforme a
+  // cobertura: carne e queijo puxam proteína e gordura, legume puxa para
+  // baixo, doce troca gordura por carboidrato. Todos fecham em Atwater
+  // dentro de 1,2%.
+  { n: 'Pizza de carne seca com cream cheese (fatia de pizzaria)', kcal: 295, p: 15, c: 28, g: 14, m: [['fatia (125 g)', 125], ['fatia grande (160 g)', 160], ['pizza inteira (8 fatias, 1 kg)', 1000]] },
+  { n: 'Pizza de carne de sol com catupiry (fatia de pizzaria)', kcal: 290, p: 15, c: 28, g: 13.5, m: [['fatia (125 g)', 125], ['fatia grande (160 g)', 160], ['pizza inteira (8 fatias, 1 kg)', 1000]] },
+  { n: 'Pizza portuguesa (fatia de pizzaria)', kcal: 270, p: 13, c: 28, g: 12, m: [['fatia (125 g)', 125], ['fatia grande (160 g)', 160], ['pizza inteira (8 fatias, 1 kg)', 1000]] },
+  { n: 'Pizza de quatro queijos (fatia de pizzaria)', kcal: 305, p: 15, c: 27, g: 15, m: [['fatia (125 g)', 125], ['fatia grande (160 g)', 160], ['pizza inteira (8 fatias, 1 kg)', 1000]] },
+  { n: 'Pizza margherita (fatia de pizzaria)', kcal: 255, p: 11, c: 32, g: 9, m: [['fatia (125 g)', 125], ['fatia grande (160 g)', 160], ['pizza inteira (8 fatias, 1 kg)', 1000]] },
+  { n: 'Pizza de pepperoni (fatia de pizzaria)', kcal: 288, p: 13, c: 29, g: 13, m: [['fatia (125 g)', 125], ['fatia grande (160 g)', 160], ['pizza inteira (8 fatias, 1 kg)', 1000]] },
+  { n: 'Pizza de bacon (fatia de pizzaria)', kcal: 300, p: 13, c: 28, g: 15, m: [['fatia (125 g)', 125], ['fatia grande (160 g)', 160], ['pizza inteira (8 fatias, 1 kg)', 1000]] },
+  { n: 'Pizza de lombo canadense com catupiry (fatia de pizzaria)', kcal: 282, p: 15, c: 28, g: 12, m: [['fatia (125 g)', 125], ['fatia grande (160 g)', 160], ['pizza inteira (8 fatias, 1 kg)', 1000]] },
+  { n: 'Pizza de atum (fatia de pizzaria)', kcal: 250, p: 15, c: 29, g: 8, m: [['fatia (125 g)', 125], ['fatia grande (160 g)', 160], ['pizza inteira (8 fatias, 1 kg)', 1000]] },
+  { n: 'Pizza de palmito (fatia de pizzaria)', kcal: 245, p: 10, c: 31, g: 9, m: [['fatia (125 g)', 125], ['fatia grande (160 g)', 160], ['pizza inteira (8 fatias, 1 kg)', 1000]] },
+  { n: 'Pizza vegetariana (fatia de pizzaria)', kcal: 235, p: 10, c: 31, g: 8, m: [['fatia (125 g)', 125], ['fatia grande (160 g)', 160], ['pizza inteira (8 fatias, 1 kg)', 1000]] },
+  { n: 'Pizza de brócolis com bacon (fatia de pizzaria)', kcal: 272, p: 13, c: 28, g: 12, m: [['fatia (125 g)', 125], ['fatia grande (160 g)', 160], ['pizza inteira (8 fatias, 1 kg)', 1000]] },
+  { n: 'Pizza de camarão (fatia de pizzaria)', kcal: 262, p: 14, c: 29, g: 10, m: [['fatia (125 g)', 125], ['fatia grande (160 g)', 160], ['pizza inteira (8 fatias, 1 kg)', 1000]] },
+  { n: 'Pizza de escarola (fatia de pizzaria)', kcal: 247, p: 11, c: 30, g: 9, m: [['fatia (125 g)', 125], ['fatia grande (160 g)', 160], ['pizza inteira (8 fatias, 1 kg)', 1000]] },
+  { n: 'Pizza toscana (fatia de pizzaria)', kcal: 282, p: 12, c: 29, g: 13, m: [['fatia (125 g)', 125], ['fatia grande (160 g)', 160], ['pizza inteira (8 fatias, 1 kg)', 1000]] },
+  { n: 'Pizza de strogonofe de frango (fatia de pizzaria)', kcal: 280, p: 14, c: 29, g: 12, m: [['fatia (125 g)', 125], ['fatia grande (160 g)', 160], ['pizza inteira (8 fatias, 1 kg)', 1000]] },
+  { n: 'Pizza de costela (fatia de pizzaria)', kcal: 295, p: 15, c: 28, g: 14, m: [['fatia (125 g)', 125], ['fatia grande (160 g)', 160], ['pizza inteira (8 fatias, 1 kg)', 1000]] },
+  { n: 'Pizza de chocolate (fatia de pizzaria)', kcal: 325, p: 8, c: 44, g: 13, m: [['fatia (125 g)', 125], ['fatia grande (160 g)', 160], ['pizza inteira (8 fatias, 1 kg)', 1000]] },
+  { n: 'Pizza Romeu e Julieta (goiabada com queijo, fatia de pizzaria)', kcal: 300, p: 9, c: 46, g: 9, m: [['fatia (125 g)', 125], ['fatia grande (160 g)', 160], ['pizza inteira (8 fatias, 1 kg)', 1000]] },
+  { n: 'Pizza de banana com canela (fatia de pizzaria)', kcal: 259, p: 7, c: 42, g: 7, m: [['fatia (125 g)', 125], ['fatia grande (160 g)', 160], ['pizza inteira (8 fatias, 1 kg)', 1000]] },
+  { n: 'Pizza de Nutella com morango (fatia de pizzaria)', kcal: 338, p: 8, c: 45, g: 14, m: [['fatia (125 g)', 125], ['fatia grande (160 g)', 160], ['pizza inteira (8 fatias, 1 kg)', 1000]] },
 
   // ---- Doceria e confeitaria: o que se compra na vitrine ----
   // Nada disso tem rótulo — é doce de balcão, e a receita varia de casa para

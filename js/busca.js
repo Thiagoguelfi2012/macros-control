@@ -34,6 +34,12 @@ const FoodSearch = (() => {
       // linhas escritas de várias formas pelo público
       .replace(/\bla ?creme\b/g, 'lacreme') // "la creme" → Lacreme (Cacau Show)
       .replace(/\bmil ?folhas?\b/g, 'mil folhas')
+      // A Pizza Prime não publica tabela nutricional, então não há entrada da
+      // rede: quem procura por ela chega às fatias genéricas de pizzaria, que
+      // é o dado honesto que temos. Só dispara na sequência exata — "prime"
+      // sozinho é grau de carne no USDA ("contrafilé ... prime, cru") e
+      // prefixo de "primeira", e nenhum desses fica perto de "pizza".
+      .replace(/\bpizza ?prime\b/g, 'pizza')
       // "éclair" é o nome francês da bomba; sem isto a busca caía em tradução
       // ruim do USDA ("Creme puff, bomba (éclair)") em vez da bomba daqui.
       .replace(/\b[ée]clairs?\b/g, 'bomba')
