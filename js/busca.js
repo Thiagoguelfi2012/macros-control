@@ -40,6 +40,11 @@ const FoodSearch = (() => {
       // sozinho é grau de carne no USDA ("contrafilé ... prime, cru") e
       // prefixo de "primeira", e nenhum desses fica perto de "pizza".
       .replace(/\bpizza ?prime\b/g, 'pizza')
+      // O cardápio escreve "Gyu-don" (o hífen vira espaço na normalização) e
+      // quem digita costuma comer o i de Sukiya. Os dois trocam um nome por
+      // outro, sem cobrar token a mais de ninguém.
+      .replace(/\bgyu don\b/g, 'gyudon')
+      .replace(/\bsuki?ya\b/g, 'sukiya')
       // "éclair" é o nome francês da bomba; sem isto a busca caía em tradução
       // ruim do USDA ("Creme puff, bomba (éclair)") em vez da bomba daqui.
       .replace(/\b[ée]clairs?\b/g, 'bomba')

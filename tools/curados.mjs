@@ -1191,6 +1191,32 @@ export const CURADOS = [
   { n: 'Café expresso sem açúcar', kcal: 9, p: 0.1, c: 1.7, g: 0.2, l: 1, m: [['dose (30 ml)', 30], ['xícara (50 ml)', 50], ['duplo (60 ml)', 60]] },
   { n: 'Café descafeinado coado sem açúcar', kcal: 1, p: 0.1, c: 0.2, g: 0, l: 1, m: [['xícara (150 ml)', 150], ['xícara pequena (50 ml)', 50], ['caneca (200 ml)', 200]] },
 
+  // ---- Gyudon da Sukiya ----
+  // A Sukiya do Brasil não publica tabela nutricional, mas a matriz japonesa
+  // publica, e é o mesmo prato: arroz japonês com carne fatiada em molho.
+  // Os números do gyudon simples vêm de lá, por tamanho — mini 464 kcal,
+  // 並盛 695, 大盛 908 — e são coerentes entre si: a gordura fica em 30% das
+  // calorias nos três, e o arroz que a tabela implica (151, 243, 325 g) bate
+  // com o que a rede declara servir (150, 260, 320 g).
+  //
+  // O que é estimativa minha, e por isso a linha inteira entra como tal:
+  //   1. o encaixe P/M/G/GG do Brasil nos tamanhos japoneses. Adotei
+  //      M = 並盛, que é o tamanho padrão lá. Se o M daqui for outra coisa,
+  //      todos os números escorregam junto.
+  //   2. as coberturas (shimeji, queijo, bacon, camarão), somadas a partir
+  //      da composição que o cardápio brasileiro descreve.
+  //
+  // Os pesos de cada tamanho são proporcionais às kcal publicadas, o que
+  // reproduz os três tamanhos oficiais dentro de 1% — 235 g dá 467 kcal
+  // contra 464 declaradas, 455 g dá 904 contra 908.
+  { n: 'Gyudon tradicional (Sukiya)', kcal: 198.6, p: 6.2, c: 28.5, g: 6.6, m: [['tamanho P (235 g)', 235], ['tamanho M (350 g)', 350], ['tamanho G (455 g)', 455], ['tamanho GG (550 g)', 550]] },
+  { n: 'Gyudon de shimeji na manteiga (Sukiya)', kcal: 178.4, p: 5.6, c: 24.3, g: 6.5, m: [['tamanho P (289 g)', 289], ['tamanho M (430 g)', 430], ['tamanho G (559 g)', 559], ['tamanho GG (676 g)', 676]] },
+  { n: 'Gyudon de queijo cremoso (Sukiya)', kcal: 210.1, p: 7.5, c: 25.6, g: 8.6, m: [['tamanho P (265 g)', 265], ['tamanho M (395 g)', 395], ['tamanho G (514 g)', 514], ['tamanho GG (621 g)', 621]] },
+  { n: 'Gyudon de queijo com shimeji (Sukiya)', kcal: 189.9, p: 6.8, c: 22.3, g: 8.2, m: [['tamanho P (319 g)', 319], ['tamanho M (475 g)', 475], ['tamanho G (618 g)', 618], ['tamanho GG (746 g)', 746]] },
+  { n: 'Gyudon BBQ com bacon e queijo (Sukiya)', kcal: 225.5, p: 8.7, c: 25.3, g: 9.9, m: [['tamanho P (295 g)', 295], ['tamanho M (440 g)', 440], ['tamanho G (572 g)', 572], ['tamanho GG (691 g)', 691]] },
+  { n: 'Gyudon de camarão (Sukiya)', kcal: 182.1, p: 8.5, c: 23.8, g: 5.8, m: [['tamanho P (282 g)', 282], ['tamanho M (420 g)', 420], ['tamanho G (546 g)', 546], ['tamanho GG (660 g)', 660]] },
+  { n: 'Shimeji don sem carne (Sukiya)', kcal: 117.4, p: 2.7, c: 21.1, g: 2.4, m: [['tamanho P (255 g)', 255], ['tamanho M (380 g)', 380], ['tamanho G (494 g)', 494], ['tamanho GG (597 g)', 597]] },
+
   // ---- Mais sabores de pizzaria ----
   // Pizzaria não publica tabela nutricional, e rede de pizza também não —
   // procurei a da Pizza Prime e ela não existe. Então aqui não há entrada por
