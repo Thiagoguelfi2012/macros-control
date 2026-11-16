@@ -968,6 +968,13 @@ export const MARCAS = [
   { n: "Polenta palito congelada Bem Brasil (frita)", kcal: 150, p: 2, c: 25, g: 4.5, m: [["porção (100 g)", 100]] },
 
   // Pastas e geleias
+  // ---- Bel: o Moranguete tradicional ----
+  // Quatro lojas publicam a tabela em porções diferentes (26 g, 13 g, 9 g).
+  // Normalizadas para 100 g elas convergem — 431, 415, 422 e 392 kcal —, e a
+  // média fecha em Atwater exatamente. A divergência aparente entre as fontes
+  // era só tamanho de porção.
+  { n: "Bombom Moranguete (Bel)", kcal: 415, p: 1, c: 78, g: 11, m: [["unidade (13 g)", 13], ["mini (9 g)", 9], ["caixa 36 unidades (468 g)", 468]] },
+
   // ---- Mukebar (+Mu, Santa Helena): barra de 60 g com 15 g de proteína ----
   // Destes dois a tabela está publicada por dois lojistas cada, e as duas
   // fecham em Atwater com menos de 1% de folga. Os outros seis sabores da

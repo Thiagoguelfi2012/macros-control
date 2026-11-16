@@ -1191,6 +1191,22 @@ export const CURADOS = [
   { n: 'Café expresso sem açúcar', kcal: 9, p: 0.1, c: 1.7, g: 0.2, l: 1, m: [['dose (30 ml)', 30], ['xícara (50 ml)', 50], ['duplo (60 ml)', 60]] },
   { n: 'Café descafeinado coado sem açúcar', kcal: 1, p: 0.1, c: 0.2, g: 0, l: 1, m: [['xícara (150 ml)', 150], ['xícara pequena (50 ml)', 50], ['caneca (200 ml)', 200]] },
 
+  // ---- Linha Pro da Bel (Moranguete) ----
+  // Da barra, três números são do rótulo: porção de 45 g (1 unidade), 12 g de
+  // proteína e 4,9 g de fibra, sem açúcar adicionado. As 187 kcal vêm de base
+  // de terceiro. Carboidrato e gordura são meus, por fechamento: com 187 kcal
+  // e 12 g de proteína sobram 139 kcal para os dois, e 22 g de carboidrato
+  // com 6 g de gordura é a divisão que bate com barra proteica coberta de
+  // chocolate (fecha em Atwater com 1,6% de folga).
+  //
+  // A tabela está impressa na embalagem; quando alguém fotografar, estes dois
+  // números saem e entram os do rótulo.
+  { n: 'Barra de proteína Moranguete Pro morango (Bel, 12 g de proteína, 45 g)', kcal: 415.6, p: 26.7, c: 48.9, g: 13.3, m: [['unidade (45 g)', 45]] },
+  // Marshmallow com morango e chocolate. Não achei tabela nenhuma; o valor
+  // parte do Moranguete tradicional com marshmallow no lugar de parte do
+  // recheio, o que baixa a densidade. O peso da unidade também é estimado.
+  { n: 'Bombom TopBel Moranguete (marshmallow, Bel)', kcal: 380, p: 2, c: 75, g: 8, m: [['unidade (18 g)', 18]] },
+
   // ---- Gyudon da Sukiya ----
   // A Sukiya do Brasil não publica tabela nutricional, mas a matriz japonesa
   // publica, e é o mesmo prato: arroz japonês com carne fatiada em molho.
