@@ -1191,6 +1191,33 @@ export const CURADOS = [
   { n: 'Café expresso sem açúcar', kcal: 9, p: 0.1, c: 1.7, g: 0.2, l: 1, m: [['dose (30 ml)', 30], ['xícara (50 ml)', 50], ['duplo (60 ml)', 60]] },
   { n: 'Café descafeinado coado sem açúcar', kcal: 1, p: 0.1, c: 0.2, g: 0, l: 1, m: [['xícara (150 ml)', 150], ['xícara pequena (50 ml)', 50], ['caneca (200 ml)', 200]] },
 
+  // ---- Filé de panga (pangasius) ----
+  // Peixe branco magro, dos mais vendidos congelados aqui, e que não estava
+  // na base em forma nenhuma.
+  //
+  // As tabelas públicas vão de 65 a 173 kcal por 100 g, e a maior parte não
+  // serve. Passei cada uma por duas peneiras: fechar em Atwater, e ter
+  // gordura compatível com peixe branco magro (3-5 g/100 g na literatura
+  // para Pangasius hypophthalmus). As de 7 a 13 g de gordura são coerentes
+  // entre si mas descrevem outra coisa — provavelmente a versão empanada —,
+  // e uma delas erra 21% no próprio fechamento. Sobrou a tabela de um
+  // produtor (103 kcal, P 17, G 3,8), que fecha e é plausível.
+  //
+  // O valor do cru fica um pouco abaixo dela de propósito: o filé de panga
+  // de supermercado costuma vir glaciado, com água adicionada, e isso dilui
+  // a proteína por 100 g. Quem comprar um filé "premium", menos glaciado,
+  // terá um pouco mais de proteína do que está aqui — e quem olhar o próprio
+  // rótulo e vir número mais baixo não está enganado, é mais água.
+  //
+  // Os preparos saem do cru por rendimento: grelhar sem óleo perde cerca de
+  // um quarto do peso em água, o que concentra tudo; com óleo soma o que a
+  // frigideira deixa. Todos fecham em Atwater dentro de 2,5%.
+  { n: 'Filé de panga (pangasius), cru', kcal: 95, p: 16, c: 0, g: 3.3, m: [['filé (120 g)', 120], ['filé grande (180 g)', 180]] },
+  { n: 'Filé de panga (pangasius), grelhado sem óleo', kcal: 127, p: 21.3, c: 0, g: 4.4, m: [['filé (120 g)', 120], ['filé grande (180 g)', 180]] },
+  { n: 'Filé de panga (pangasius), grelhado com óleo', kcal: 163, p: 20.9, c: 0, g: 8.7, m: [['filé (120 g)', 120], ['filé grande (180 g)', 180]] },
+  { n: 'Filé de panga (pangasius), ensopado', kcal: 130, p: 15, c: 2, g: 6.5, m: [['filé (120 g)', 120], ['filé grande (180 g)', 180]] },
+  { n: 'Filé de panga (pangasius), à milanesa, frito', kcal: 270, p: 19, c: 12, g: 15.5, m: [['filé (120 g)', 120], ['filé grande (180 g)', 180]] },
+
   // ---- Linha Pro da Bel (Moranguete) ----
   // Da barra, três números são do rótulo: porção de 45 g (1 unidade), 12 g de
   // proteína e 4,9 g de fibra, sem açúcar adicionado. As 187 kcal vêm de base

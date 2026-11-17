@@ -45,6 +45,14 @@ const FoodSearch = (() => {
       // outro, sem cobrar token a mais de ninguém.
       .replace(/\bgyu don\b/g, 'gyudon')
       .replace(/\bsuki?ya\b/g, 'sukiya')
+      // "Empanado" e "à milanesa" são o mesmo preparo, e a base usa os dois sem
+      // nada ligando: 143 itens dizem milanesa, 112 dizem empanado, e quem
+      // digitava um nunca achava os do outro. Vira milanesa dos dois lados —
+      // como a troca vale também para os nomes indexados, as duas grafias
+      // passam a ser o mesmo token.
+      // A empanada argentina é outro alimento e fica de fora: a única da base
+      // traz "latino" no nome, que serve de guarda.
+      .replace(/\bempanad[oa]s?\b/g, (m, pos, txt) => (/latino/.test(txt) ? m : 'milanesa'))
       // "éclair" é o nome francês da bomba; sem isto a busca caía em tradução
       // ruim do USDA ("Creme puff, bomba (éclair)") em vez da bomba daqui.
       .replace(/\b[ée]clairs?\b/g, 'bomba')
