@@ -968,6 +968,13 @@ export const MARCAS = [
   { n: "Polenta palito congelada Bem Brasil (frita)", kcal: 150, p: 2, c: 25, g: 4.5, m: [["porção (100 g)", 100]] },
 
   // Pastas e geleias
+  // Chocolícia (Mondelez, recheio feito com chocolate Lacta). A tabela da
+  // embalagem — porção de 30 g, cerca de 3 biscoitos: 145 kcal, P 1,6,
+  // C 21, G 6,1 — fecha em Atwater exatamente (145,3 contra 145), que é
+  // assinatura de rótulo. Convertida para 100 g abaixo. Vendida em 132 g e
+  // em 143 g.
+  { n: "Biscoito recheado Chocolícia chocolate (Lacta)", kcal: 483.3, p: 5.3, c: 70, g: 20.3, m: [["unidade (10 g)", 10], ["porção 3 unidades (30 g)", 30], ["pacote (132 g)", 132], ["pacote (143 g)", 143]] },
+
   // ---- Bel: o Moranguete tradicional ----
   // Quatro lojas publicam a tabela em porções diferentes (26 g, 13 g, 9 g).
   // Normalizadas para 100 g elas convergem — 431, 415, 422 e 392 kcal —, e a

@@ -156,7 +156,27 @@ const FoodSearch = (() => {
       .replace(/\bx (burguer|burger|salada|tudo|bacon|egg)\b/g, 'x$1')
       // "bolacha" e "biscoito" são a mesma coisa (varia por região): as tabelas
       // e os rótulos usam "biscoito", então normaliza tudo para ele
-      .replace(/\bbolach(a|as|inha|inhas)\b/g, 'biscoito');
+      .replace(/\bbolach(a|as|inha|inhas)\b/g, 'biscoito')
+      // Gênero. A base escreve o particípio conforme o alimento que ele
+      // qualifica — "Biscoito recheado", mas "Bolacha recheada" —, e quem
+      // digita faz o mesmo. Resultado: "bolacha recheada" não achava nenhum
+      // dos onze "Biscoito recheado" de marca, porque "recheada" não é
+      // prefixo de "recheado". São 50 raízes de particípio presentes nos dois
+      // gêneros na base, e só as catorze maiores somam 9 mil ocorrências:
+      // cozido tem 3.074 contra 451 de cozida, cru tem 1.729 contra 350.
+      //
+      // Tudo vai para o masculino, dos dois lados, então as duas grafias
+      // viram o mesmo token. Três particípios são irregulares e não terminam
+      // em -ado/-ido, por isso vêm antes com regra própria.
+      //
+      // Substantivo feminino que não é particípio (salada, cocada, feijoada)
+      // também é trocado pela regra geral, e isso não faz mal: ela roda nos
+      // nomes indexados e na busca igualmente, nenhum "salado" existe na base
+      // para colidir, e o nome que aparece na tela não passa por aqui.
+      .replace(/\bcru(a|as|s)?\b/g, 'cru')
+      .replace(/\bfrit[oa]s?\b/g, 'frito')
+      .replace(/\bmoid[oa]s?\b/g, 'moido')
+      .replace(/\b([a-z]{3,})(ad|id)[oa]s?\b/g, '$1$2o');
 
   // palavras de ligação: não contam para o match nem para a posição —
   // "file catupiry" encontra "Filé mignon ao catupiry"
