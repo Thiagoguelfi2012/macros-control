@@ -686,7 +686,13 @@ export const CURADOS = [
   { n: "Torta de maçã (fatia)", kcal: 240, p: 2.5, c: 35, g: 10, m: [["fatia (110 g)", 110]] },
   { n: "Torta mousse de chocolate (fatia)", kcal: 350, p: 5, c: 35, g: 22, m: [["fatia (110 g)", 110]] },
   { n: "Torta de nozes com doce de leite (fatia)", kcal: 400, p: 6, c: 40, g: 25, m: [["fatia (110 g)", 110]] },
-  { n: "Carolina com recheio de doce de leite", kcal: 330, p: 6, c: 42, g: 15, m: [["unidade (25 g)", 25]] },
+  // Carolina: a massa choux pequena da bandeja de padaria. O nome antigo era
+  // só "Carolina com recheio de doce de leite", e com ele "carolina de
+  // padaria" não devolvia nada. Os três recheios que a bandeja costuma ter,
+  // com "(padaria)" no nome para a frase funcionar.
+  { n: "Carolina de doce de leite (padaria)", kcal: 330, p: 6, c: 42, g: 15, m: [["unidade (25 g)", 25], ["bandeja 6 unidades (150 g)", 150]] },
+  { n: "Carolina de brigadeiro (padaria)", kcal: 345, p: 6, c: 43, g: 16, m: [["unidade (25 g)", 25], ["bandeja 6 unidades (150 g)", 150]] },
+  { n: "Carolina de creme (padaria)", kcal: 310, p: 6.5, c: 38, g: 15, m: [["unidade (25 g)", 25], ["bandeja 6 unidades (150 g)", 150]] },
   { n: "Pastel de nata (pastel de Belém)", kcal: 300, p: 6, c: 38, g: 14, m: [["unidade (45 g)", 45]] },
 
   // ---- Pavlova ----

@@ -25,7 +25,7 @@ const OUT = join(ROOT, 'data', 'foods.json');
 const MANIFESTO = join(ROOT, 'data', 'foods-manifest.json');
 
 // Versão da base. Deve acompanhar o FOODS_VERSION de js/db.js.
-const VERSAO = 109;
+const VERSAO = 110;
 const TARGET_TOTAL = 25000; // efetivamente "tudo": inclui todas as fontes
 
 const SOURCES = {
@@ -714,6 +714,28 @@ const PT_MEASURES = [
   [/^feijoada/i, [['concha (140 g)', 140]]],
   [/^sopa|^caldo|^canja/i, [['concha (130 g)', 130], ['tigela (300 g)', 300]]],
   [/^panqueca/i, [['unidade (80 g)', 80]]],
+  // ---- salgados e doces de padaria que se compram por unidade ----
+  // A TBCA e o IBGE trazem estes sem medida caseira nenhuma, então só dava
+  // para lançá-los em grama — e ninguém pede cem gramas de bomba. Os pesos
+  // vêm dos equivalentes já curados em curados.mjs, para a mesma coisa não
+  // ficar com dois pesos diferentes na base.
+  [/^bomba\b/i, [['unidade (90 g)', 90]]],
+  [/^carolina\b/i, [['unidade (25 g)', 25]]],
+  [/^sonho\b/i, [['unidade (90 g)', 90], ['mini (40 g)', 40]]],
+  [/^croissant/i, [['unidade (70 g)', 70], ['mini (35 g)', 35]]],
+  [/^riss?ole/i, [['unidade (60 g)', 60], ['mini (30 g)', 30]]],
+  [/^croquete/i, [['unidade (60 g)', 60]]],
+  [/^enroladinho/i, [['unidade (90 g)', 90], ['mini (35 g)', 35]]],
+  [/^churros/i, [['unidade (80 g)', 80], ['mini (30 g)', 30]]],
+  [/^quiche/i, [['fatia (110 g)', 110], ['mini quiche (50 g)', 50]]],
+  [/^bolinho/i, [['unidade (40 g)', 40]]],
+  [/^(brigadeiro|beijinho|cajuzinho)/i, [['unidade (20 g)', 20], ['colher (brigadeiro de colher)', 40]]],
+  // Rosquinha é duas coisas: a frita de padaria, do tamanho de um sonho, e a
+  // de pacote, que é biscoito. A frita vem primeiro porque a primeira regra
+  // que casa é a que vale.
+  [/^rosquinha.*frit/i, [['unidade (50 g)', 50]]],
+  [/^rosquinha/i, [['unidade (8 g)', 8], ['punhado (30 g)', 30], ['pacote (100 g)', 100]]],
+  [/^pastelaria/i, [['unidade (52 g)', 52]]],
   [/^torta/i, [['fatia (100 g)', 100]]],
   [/^mil ?folhas?/i, [['unidade (120 g)', 120], ['porção pequena (80 g)', 80]]],
   [/^cr[èe]me br[ûu]l[ée]e?|^creme br[ûu]l[ée]e?/i, [['ramequim (110 g)', 110], ['taça (150 g)', 150]]],
