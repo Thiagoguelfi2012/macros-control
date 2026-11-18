@@ -110,7 +110,31 @@ export const CURADOS = [
   { n: 'Enroladinho de salsicha', kcal: 300, p: 9, c: 35, g: 14, m: [['unidade (90 g)', 90], ['mini (35 g)', 35]] },
   { n: 'Enroladinho de presunto e queijo', kcal: 310, p: 12, c: 34, g: 14, m: [['unidade (90 g)', 90], ['mini (35 g)', 35]] },
   { n: 'Joelho (pão com presunto e queijo)', kcal: 300, p: 12, c: 36, g: 12, m: [['unidade (120 g)', 120]] },
-  { n: 'Folhado de frango', kcal: 330, p: 9, c: 30, g: 19, m: [['unidade (100 g)', 100]] },
+  // ---- Folhados salgados de padaria ----
+  // Havia só o de frango, e um de calabresa escondido na TBCA com nome que
+  // ninguém digita ("Salgado, massa folhada, com recheio de...").
+  //
+  // A massa folhada é quase toda a caloria e não muda de recheio para
+  // recheio; o que muda é o que vai dentro, que mexe na proteína e na
+  // gordura. Por isso os sabores saem do de frango, que já estava aqui,
+  // variando só o recheio — peito de peru com queijo branco puxa proteína e
+  // baixa gordura, calabresa e bacon fazem o contrário. Todos fecham em
+  // Atwater dentro de 2%.
+  //
+  // Os nomes levam "(padaria)" para que buscar "folhado de padaria" traga a
+  // família inteira; o de frango foi renomeado junto, para não ficar fora da
+  // própria família.
+  { n: 'Folhado de queijo branco com peito de peru (padaria)', kcal: 300, p: 14, c: 29, g: 14, m: [['unidade (100 g)', 100], ['mini (50 g)', 50]] },
+  { n: 'Folhado de presunto e queijo (padaria)', kcal: 325, p: 13, c: 29, g: 17.5, m: [['unidade (100 g)', 100], ['mini (50 g)', 50]] },
+  { n: 'Folhado de calabresa (padaria)', kcal: 370, p: 11, c: 28, g: 23, m: [['unidade (100 g)', 100], ['mini (50 g)', 50]] },
+  { n: 'Folhado de frango (padaria)', kcal: 330, p: 9, c: 30, g: 19, m: [['unidade (100 g)', 100], ['mini (50 g)', 50]] },
+  { n: 'Folhado de frango com catupiry (padaria)', kcal: 340, p: 11, c: 29, g: 19.5, m: [['unidade (100 g)', 100], ['mini (50 g)', 50]] },
+  { n: 'Folhado de queijo (padaria)', kcal: 345, p: 12, c: 30, g: 19, m: [['unidade (100 g)', 100], ['mini (50 g)', 50]] },
+  { n: 'Folhado de carne moída (padaria)', kcal: 330, p: 13, c: 29, g: 17.5, m: [['unidade (100 g)', 100], ['mini (50 g)', 50]] },
+  { n: 'Folhado de palmito (padaria)', kcal: 310, p: 7, c: 31, g: 17, m: [['unidade (100 g)', 100], ['mini (50 g)', 50]] },
+  { n: 'Folhado de bacon com queijo (padaria)', kcal: 380, p: 13, c: 28, g: 24, m: [['unidade (100 g)', 100], ['mini (50 g)', 50]] },
+  { n: 'Folhado de pizza (queijo, tomate e orégano) (padaria)', kcal: 330, p: 11, c: 31, g: 17.5, m: [['unidade (100 g)', 100], ['mini (50 g)', 50]] },
+
   { n: 'Croissant simples', kcal: 405, p: 8, c: 45, g: 21, m: [['unidade (60 g)', 60]] },
   { n: 'Croissant de presunto e queijo', kcal: 350, p: 13, c: 35, g: 18, m: [['unidade (90 g)', 90]] },
   // Pastel de feira. A massa frita é quase toda a caloria e não muda de sabor
@@ -729,7 +753,6 @@ export const CURADOS = [
   { n: "Rosca húngara (fatia)", kcal: 380, p: 6, c: 52, g: 17, m: [["fatia (80 g)", 80]] },
   { n: "Pão de batata recheado com catupiry", kcal: 300, p: 7, c: 45, g: 10, m: [["unidade (80 g)", 80], ["mini (40 g)", 40]] },
   { n: "Croissant de chocolate", kcal: 400, p: 6, c: 45, g: 22, m: [["unidade (70 g)", 70], ["mini (35 g)", 35]] },
-  { n: "Folhado de frango", kcal: 330, p: 8, c: 32, g: 19, m: [["unidade (100 g)", 100]] },
   { n: "Torta salgada de frango de padaria (fatia)", kcal: 250, p: 10, c: 24, g: 13, m: [["fatia (120 g)", 120]] },
   { n: "Empadão de frango (fatia)", kcal: 300, p: 9, c: 28, g: 17, m: [["fatia (150 g)", 150]] },
 
